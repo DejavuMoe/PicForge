@@ -1,0 +1,154 @@
+{
+  "app": {
+    "title": "PicForge",
+    "subtitle": "Local batch image compression and resizing"
+  },
+  "dropzone": {
+    "dragActive": "Drop images here",
+    "dragDefault": "Drag & drop images here",
+    "clickHint": "or click to browse",
+    "pasteHint": "You can also paste (Ctrl/Cmd+V)"
+  },
+  "actions": {
+    "download": "Download",
+    "downloadZip": "Download ZIP ({{count}})",
+    "packing": "Packing...",
+    "clearAll": "Clear all",
+    "resetDefaults": "Reset",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "customizeImage": "Customize",
+    "useGlobalSettings": "Use global"
+  },
+  "tooltips": {
+    "downloadCurrent": "Download the currently previewed image",
+    "downloadZip": "Download all as ZIP archive",
+    "retryImage": "Retry",
+    "cancelImage": "Cancel",
+    "removeImage": "Remove",
+    "github": "GitHub",
+    "toggleColorMode": "Toggle color mode",
+    "formatHint": "JPEG: best for photos | WebP: good balance | PNG: lossless | AVIF: smallest size",
+    "adv": {
+      "progressive": "Load image progressively (better perceived loading speed)",
+      "chromaSubsample": "4:4:4 = full color detail; 4:2:0 = smaller file, slight color loss",
+      "trellis": "Optimize compression (slower, slightly smaller file)",
+      "lossless": "No quality loss, but larger file size",
+      "method": "0 = fastest, 6 = smallest file (0-6)",
+      "alphaCompression": "Compress transparent areas (smaller file)",
+      "interlace": "Progressive loading (slower compression, better for large images)",
+      "speed": "0 = best quality, 10 = fastest encoding (0-10)",
+      "subsample": "4:4:4 = full color; 4:2:0 = smaller file, slight color loss"
+    }
+  },
+  "presets": {
+    "balanced": {
+      "label": "Balanced",
+      "description": "WebP 75% — good quality, small size"
+    },
+    "web-photo": {
+      "label": "Web Photo",
+      "description": "JPEG 80% — photos for web"
+    },
+    "lossless": {
+      "label": "Lossless",
+      "description": "PNG 100% — no quality loss"
+    },
+    "high-compress": {
+      "label": "High Compression",
+      "description": "AVIF 50% — smallest size"
+    }
+  },
+  "fileQueue": {
+    "title_one": "{{count}} file queued",
+    "title_other": "{{count}} files queued"
+  },
+  "status": {
+    "pending": "Pending",
+    "processing": "{{progress}}%",
+    "done": "Done",
+    "error": "Error"
+  },
+  "progress": {
+    "processing": "{{count}} processing",
+    "failed": "{{count}} failed",
+    "noChange": "No change",
+    "loadingCodec": "Loading codec..."
+  },
+  "settings": {
+    "title": "Presets",
+    "quality": "Quality",
+    "resize": "Resize",
+    "resizeOptions": "Options",
+    "resizeSettings": "Resize settings",
+    "customImageSettings": "Image settings",
+    "width": "Width",
+    "height": "Height",
+    "absoluteMode": "Absolute",
+    "percentageMode": "Percentage",
+    "fitMethod": "Fit",
+    "fit": {
+      "contain": "Contain",
+      "cover": "Cover",
+      "stretch": "Stretch"
+    },
+    "advancedTitle": "Advanced",
+    "mode": {
+      "global": "Global",
+      "custom": "Custom"
+    },
+    "adv": {
+      "progressive": "Progressive",
+      "chromaSubsample": "Chroma",
+      "trellis": "Trellis",
+      "lossless": "Lossless",
+      "method": "Method",
+      "alphaCompression": "Alpha",
+      "interlace": "Interlace",
+      "speed": "Speed",
+      "subsample": "Subsample"
+    }
+  },
+  "dialog": {
+    "clearTitle": "Clear all files?",
+    "clearBody": "This will remove all files and their results.",
+    "resetTitle": "Reset to defaults?",
+    "resetBody": "All files will be re-compressed with default settings."
+  },
+  "toast": {
+    "unsupported": "No supported image files found"
+  },
+  "compat": {
+    "unsupportedTitle": "Browser not supported",
+    "unsupportedBody": "PicForge needs a modern browser with WebAssembly, Web Worker, Canvas, and local file support.",
+    "missingFeatures": "Missing: {{features}}"
+  },
+  "pwa": {
+    "updateReady": "A new version is ready",
+    "refresh": "Refresh"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "copy": "An unexpected error occurred. Your files have not been lost.",
+    "reload": "Reload page"
+  },
+  "preview": {
+    "original": "Original",
+    "compressed": "Compressed",
+    "compressing": "Compressing...",
+    "selectHint": "Select an image to preview",
+    "compareMode": "Compare mode",
+    "backToList": "Back to files",
+    "zoomReset": "Reset zoom",
+    "previous": "Previous",
+    "next": "Next",
+    "modes": {
+      "slider": "Slider compare",
+      "sideBySide": "Side-by-side compare",
+      "single": "Single image"
+    },
+    "zoom": {
+      "fit": "Fit"
+    }
+  }
+}

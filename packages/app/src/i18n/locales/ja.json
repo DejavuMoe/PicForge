@@ -1,0 +1,154 @@
+{
+  "app": {
+    "title": "PicForge",
+    "subtitle": "ローカルで一括画像圧縮とリサイズ"
+  },
+  "dropzone": {
+    "dragActive": "ここにドロップ",
+    "dragDefault": "画像をドラッグ＆ドロップ",
+    "clickHint": "またはクリックして選択",
+    "pasteHint": "貼り付けも可能 (Ctrl/Cmd+V)"
+  },
+  "actions": {
+    "download": "ダウンロード",
+    "downloadZip": "ZIP ダウンロード ({{count}})",
+    "packing": "パック中...",
+    "clearAll": "すべてクリア",
+    "resetDefaults": "リセット",
+    "confirm": "確認",
+    "cancel": "キャンセル",
+    "customizeImage": "個別設定",
+    "useGlobalSettings": "全体設定に戻す"
+  },
+  "tooltips": {
+    "downloadCurrent": "現在プレビュー中の画像をダウンロード",
+    "downloadZip": "すべて ZIP でダウンロード",
+    "retryImage": "再試行",
+    "cancelImage": "キャンセル",
+    "removeImage": "削除",
+    "github": "GitHub",
+    "toggleColorMode": "ダークモード切替",
+    "formatHint": "JPEG：写真向け | WebP：バランス良好 | PNG：ロスレス | AVIF：最小サイズ",
+    "adv": {
+      "progressive": "プログレッシブ表示（読み込み速度が速く見える）",
+      "chromaSubsample": "4:4:4 = 完全な色 detail；4:2:0 = 小さいファイル、軽微な色損失",
+      "trellis": "圧縮を最適化（遅いがファイルが少し小さくなる）",
+      "lossless": "品質劣化なし、ただしファイルサイズは大きくなる",
+      "method": "0 = 最速、6 = 最小ファイル（0-6）",
+      "alphaCompression": "透明領域を圧縮（ファイルが小さくなる）",
+      "interlace": "プログレッシブ読み込み（圧縮は遅い、大きな画像向け）",
+      "speed": "0 = 最高品質、10 = 最速エンコード（0-10）",
+      "subsample": "4:4:4 = 完全な色；4:2:0 = 小さいファイル、軽微な色損失"
+    }
+  },
+  "presets": {
+    "balanced": {
+      "label": "バランス",
+      "description": "WebP 75% — 品質と容量のバランス"
+    },
+    "web-photo": {
+      "label": "ウェブ写真",
+      "description": "JPEG 80% — ウェブ向け写真"
+    },
+    "lossless": {
+      "label": "ロスレス",
+      "description": "PNG 100% — 品質劣化なし"
+    },
+    "high-compress": {
+      "label": "高圧縮",
+      "description": "AVIF 50% — 最小容量"
+    }
+  },
+  "fileQueue": {
+    "title_one": "{{count}} ファイル追加済み",
+    "title_other": "{{count}} ファイル追加済み"
+  },
+  "status": {
+    "pending": "待機中",
+    "processing": "{{progress}}%",
+    "done": "完了",
+    "error": "エラー"
+  },
+  "progress": {
+    "processing": "{{count}} 件処理中",
+    "failed": "{{count}} 件失敗",
+    "noChange": "変化なし",
+    "loadingCodec": "コーデック読み込み中..."
+  },
+  "settings": {
+    "title": "プリセット",
+    "quality": "品質",
+    "resize": "リサイズ",
+    "resizeOptions": "オプション",
+    "resizeSettings": "リサイズ設定",
+    "customImageSettings": "画像設定",
+    "width": "幅",
+    "height": "高さ",
+    "absoluteMode": "絶対サイズ",
+    "percentageMode": "パーセント",
+    "fitMethod": "フィット",
+    "fit": {
+      "contain": "内包",
+      "cover": "カバー",
+      "stretch": "引き伸ばし"
+    },
+    "advancedTitle": "詳細",
+    "mode": {
+      "global": "全体",
+      "custom": "個別"
+    },
+    "adv": {
+      "progressive": "プログレッシブ",
+      "chromaSubsample": "クロマ",
+      "trellis": "Trellis",
+      "lossless": "ロスレス",
+      "method": "圧縮方法",
+      "alphaCompression": "Alpha",
+      "interlace": "インターレース",
+      "speed": "速度",
+      "subsample": "サブサンプル"
+    }
+  },
+  "dialog": {
+    "clearTitle": "全てのファイルを削除しますか？",
+    "clearBody": "全てのファイルと圧縮結果が削除されます。",
+    "resetTitle": "デフォルトにリセットしますか？",
+    "resetBody": "全てのファイルがデフォルト設定で再圧縮されます。"
+  },
+  "toast": {
+    "unsupported": "対応する画像ファイルが見つかりません"
+  },
+  "compat": {
+    "unsupportedTitle": "このブラウザは対応していません",
+    "unsupportedBody": "PicForge には WebAssembly、Web Worker、Canvas、ローカルファイル機能に対応したモダンブラウザが必要です。",
+    "missingFeatures": "不足している機能：{{features}}"
+  },
+  "pwa": {
+    "updateReady": "新しいバージョンがあります",
+    "refresh": "更新"
+  },
+  "errorBoundary": {
+    "title": "問題が発生しました",
+    "copy": "予期しないエラーが発生しました。ファイルはこのページに保持されています。",
+    "reload": "ページを再読み込み"
+  },
+  "preview": {
+    "original": "オリジナル",
+    "compressed": "圧縮後",
+    "compressing": "圧縮中...",
+    "selectHint": "画像を選択してプレビュー",
+    "compareMode": "比較モード",
+    "backToList": "一覧に戻る",
+    "zoomReset": "ズームリセット",
+    "previous": "前へ",
+    "next": "次へ",
+    "modes": {
+      "slider": "スライダー比較",
+      "sideBySide": "2画面比較",
+      "single": "単一画像"
+    },
+    "zoom": {
+      "fit": "フィット"
+    }
+  }
+}

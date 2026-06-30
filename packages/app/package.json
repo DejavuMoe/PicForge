@@ -1,0 +1,45 @@
+{
+  "name": "@pic-forge/app",
+  "version": "0.14.0",
+  "private": true,
+  "description": "PicForge browser app for local batch image compression",
+  "license": "MIT",
+  "author": "DejavuMoe",
+  "homepage": "https://picforge.de",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DejavuMoe/PicForge.git",
+    "directory": "packages/app"
+  },
+  "bugs": {
+    "url": "https://github.com/DejavuMoe/PicForge/issues"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@pic-forge/codecs": "workspace:*",
+    "@pic-forge/worker": "workspace:*",
+    "file-saver": "^2.0.5",
+    "i18next": "^26.3.1",
+    "i18next-browser-languagedetector": "^8.2.1",
+    "jszip": "^3.10.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^17.0.8",
+    "react-icons": "^5.0.1",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-plugin-wasm": "^3.6.0"
+  }
+}

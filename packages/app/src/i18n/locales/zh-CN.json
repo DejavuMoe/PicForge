@@ -1,0 +1,154 @@
+{
+  "app": {
+    "title": "PicForge",
+    "subtitle": "本地批量图片压缩与尺寸调整"
+  },
+  "dropzone": {
+    "dragActive": "松开以导入图片",
+    "dragDefault": "拖放图片到此处",
+    "clickHint": "或点击选择文件",
+    "pasteHint": "也可以直接粘贴 (Ctrl/Cmd+V)"
+  },
+  "actions": {
+    "download": "下载",
+    "downloadZip": "下载 ZIP ({{count}})",
+    "packing": "打包中...",
+    "clearAll": "清空全部",
+    "resetDefaults": "重置",
+    "confirm": "确定",
+    "cancel": "取消",
+    "customizeImage": "自定义此图",
+    "useGlobalSettings": "恢复全局"
+  },
+  "tooltips": {
+    "downloadCurrent": "下载当前预览的图片",
+    "downloadZip": "下载全部为 ZIP 压缩包",
+    "retryImage": "重试",
+    "cancelImage": "取消",
+    "removeImage": "移除",
+    "github": "GitHub",
+    "toggleColorMode": "切换明暗模式",
+    "formatHint": "JPEG：适合照片 | WebP：体积与质量兼顾 | PNG：无损压缩 | AVIF：最小体积",
+    "adv": {
+      "progressive": "逐行加载，提升感知加载速度",
+      "chromaSubsample": "4:4:4 = 完整色彩细节；4:2:0 = 更小文件，轻微色彩损失",
+      "trellis": "优化压缩算法（更慢，文件略小）",
+      "lossless": "无质量损失，但文件更大",
+      "method": "0 = 最快，6 = 最小文件（0-6）",
+      "alphaCompression": "压缩透明区域（更小文件）",
+      "interlace": "逐行加载（压缩更慢，适合大图）",
+      "speed": "0 = 最佳质量，10 = 最快编码（0-10）",
+      "subsample": "4:4:4 = 完整色彩；4:2:0 = 更小文件，轻微色彩损失"
+    }
+  },
+  "presets": {
+    "balanced": {
+      "label": "均衡",
+      "description": "WebP 75% — 质量与体积兼顾"
+    },
+    "web-photo": {
+      "label": "网页照片",
+      "description": "JPEG 80% — 适合网页照片"
+    },
+    "lossless": {
+      "label": "无损",
+      "description": "PNG 100% — 无质量损失"
+    },
+    "high-compress": {
+      "label": "高压缩",
+      "description": "AVIF 50% — 最小体积"
+    }
+  },
+  "fileQueue": {
+    "title_one": "已添加 {{count}} 个文件",
+    "title_other": "已添加 {{count}} 个文件"
+  },
+  "status": {
+    "pending": "等待中",
+    "processing": "{{progress}}%",
+    "done": "完成",
+    "error": "失败"
+  },
+  "progress": {
+    "processing": "{{count}} 个处理中",
+    "failed": "{{count}} 个失败",
+    "noChange": "无变化",
+    "loadingCodec": "加载编解码器..."
+  },
+  "settings": {
+    "title": "预设",
+    "quality": "质量",
+    "resize": "尺寸调整",
+    "resizeOptions": "选项",
+    "resizeSettings": "尺寸设置",
+    "customImageSettings": "单图设置",
+    "width": "宽度",
+    "height": "高度",
+    "absoluteMode": "绝对尺寸",
+    "percentageMode": "百分比",
+    "fitMethod": "适配",
+    "fit": {
+      "contain": "包含",
+      "cover": "覆盖",
+      "stretch": "拉伸"
+    },
+    "advancedTitle": "高级",
+    "mode": {
+      "global": "全局",
+      "custom": "自定义"
+    },
+    "adv": {
+      "progressive": "渐进式",
+      "chromaSubsample": "色度采样",
+      "trellis": "Trellis",
+      "lossless": "无损",
+      "method": "压缩方法",
+      "alphaCompression": "Alpha",
+      "interlace": "隔行扫描",
+      "speed": "速度",
+      "subsample": "子采样"
+    }
+  },
+  "dialog": {
+    "clearTitle": "清空所有文件？",
+    "clearBody": "这将移除所有文件及其压缩结果。",
+    "resetTitle": "重置为默认设置？",
+    "resetBody": "所有文件将使用默认设置重新压缩。"
+  },
+  "toast": {
+    "unsupported": "未发现支持的图片文件"
+  },
+  "compat": {
+    "unsupportedTitle": "当前浏览器不受支持",
+    "unsupportedBody": "PicForge 需要支持 WebAssembly、Web Worker、Canvas 与本地文件能力的现代浏览器。",
+    "missingFeatures": "缺少能力：{{features}}"
+  },
+  "pwa": {
+    "updateReady": "新版本已可用",
+    "refresh": "刷新"
+  },
+  "errorBoundary": {
+    "title": "出现了一些问题",
+    "copy": "发生了意外错误。你的文件仍保留在当前页面中。",
+    "reload": "重新加载页面"
+  },
+  "preview": {
+    "original": "原始",
+    "compressed": "压缩后",
+    "compressing": "压缩中...",
+    "selectHint": "选择图片即可预览",
+    "compareMode": "对比模式",
+    "backToList": "返回列表",
+    "zoomReset": "重置缩放",
+    "previous": "上一张",
+    "next": "下一张",
+    "modes": {
+      "slider": "滑块对比",
+      "sideBySide": "双栏对比",
+      "single": "单图预览"
+    },
+    "zoom": {
+      "fit": "适应"
+    }
+  }
+}

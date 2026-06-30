@@ -1,0 +1,154 @@
+{
+  "app": {
+    "title": "PicForge",
+    "subtitle": "로컬 일괄 이미지 압축 및 크기 조정"
+  },
+  "dropzone": {
+    "dragActive": "여기에 놓으세요",
+    "dragDefault": "이미지를 드래그 앤 드롭하세요",
+    "clickHint": "또는 클릭하여 선택",
+    "pasteHint": "붙여넣기도 가능 (Ctrl/Cmd+V)"
+  },
+  "actions": {
+    "download": "다운로드",
+    "downloadZip": "ZIP 다운로드 ({{count}})",
+    "packing": "압축 중...",
+    "clearAll": "모두 지우기",
+    "resetDefaults": "초기화",
+    "confirm": "확인",
+    "cancel": "취소",
+    "customizeImage": "개별 설정",
+    "useGlobalSettings": "전역으로 복원"
+  },
+  "tooltips": {
+    "downloadCurrent": "현재 미리보기 중인 이미지 다운로드",
+    "downloadZip": "모두 ZIP으로 다운로드",
+    "retryImage": "재시도",
+    "cancelImage": "취소",
+    "removeImage": "제거",
+    "github": "GitHub",
+    "toggleColorMode": "다크 모드 전환",
+    "formatHint": "JPEG：사진용 | WebP：균형 좋음 | PNG：무손실 | AVIF：최소 크기",
+    "adv": {
+      "progressive": "점진적 로딩 (인식 로딩 속도 향상)",
+      "chromaSubsample": "4:4:4 = 완전한 색상 디테일; 4:2:0 = 더 작은 파일, 약간의 색상 손실",
+      "trellis": "압축 최적화 (느리지만 파일이 약간 작아짐)",
+      "lossless": "품질 손실 없음, 하지만 파일 크기 증가",
+      "method": "0 = 가장 빠름, 6 = 가장 작은 파일 (0-6)",
+      "alphaCompression": "투명 영역 압축 (파일이 작아짐)",
+      "interlace": "점진적 로딩 (압축 느림, 큰 이미지에 적합)",
+      "speed": "0 = 최고 품질, 10 = 가장 빠른 인코딩 (0-10)",
+      "subsample": "4:4:4 = 완전한 색상; 4:2:0 = 더 작은 파일, 약간의 색상 손실"
+    }
+  },
+  "presets": {
+    "balanced": {
+      "label": "균형",
+      "description": "WebP 75% — 품질과 용량 균형"
+    },
+    "web-photo": {
+      "label": "웹 사진",
+      "description": "JPEG 80% — 웹용 사진"
+    },
+    "lossless": {
+      "label": "무손실",
+      "description": "PNG 100% — 품질 손실 없음"
+    },
+    "high-compress": {
+      "label": "고압축",
+      "description": "AVIF 50% — 최소 용량"
+    }
+  },
+  "fileQueue": {
+    "title_one": "{{count}}개 파일 추가됨",
+    "title_other": "{{count}}개 파일 추가됨"
+  },
+  "status": {
+    "pending": "대기 중",
+    "processing": "{{progress}}%",
+    "done": "완료",
+    "error": "오류"
+  },
+  "progress": {
+    "processing": "{{count}}개 처리 중",
+    "failed": "{{count}}개 실패",
+    "noChange": "변화 없음",
+    "loadingCodec": "코덱 로딩 중..."
+  },
+  "settings": {
+    "title": "프리셋",
+    "quality": "품질",
+    "resize": "크기 조정",
+    "resizeOptions": "옵션",
+    "resizeSettings": "크기 조정 설정",
+    "customImageSettings": "이미지 설정",
+    "width": "너비",
+    "height": "높이",
+    "absoluteMode": "절대 크기",
+    "percentageMode": "퍼센트",
+    "fitMethod": "맞춤",
+    "fit": {
+      "contain": "포함",
+      "cover": "채우기",
+      "stretch": "늘이기"
+    },
+    "advancedTitle": "고급",
+    "mode": {
+      "global": "전역",
+      "custom": "개별"
+    },
+    "adv": {
+      "progressive": "프로그레시브",
+      "chromaSubsample": "크로마",
+      "trellis": "Trellis",
+      "lossless": "무손실",
+      "method": "압축 방법",
+      "alphaCompression": "Alpha",
+      "interlace": "인터레이스",
+      "speed": "속도",
+      "subsample": "서브샘플"
+    }
+  },
+  "dialog": {
+    "clearTitle": "모든 파일을 삭제하시겠습니까?",
+    "clearBody": "모든 파일과 압축 결과가 삭제됩니다.",
+    "resetTitle": "기본값으로 재설정하시겠습니까?",
+    "resetBody": "모든 파일이 기본 설정으로 다시 압축됩니다."
+  },
+  "toast": {
+    "unsupported": "지원되는 이미지 파일이 없습니다"
+  },
+  "compat": {
+    "unsupportedTitle": "현재 브라우저는 지원되지 않습니다",
+    "unsupportedBody": "PicForge는 WebAssembly, Web Worker, Canvas, 로컬 파일 기능을 지원하는 최신 브라우저가 필요합니다.",
+    "missingFeatures": "누락된 기능: {{features}}"
+  },
+  "pwa": {
+    "updateReady": "새 버전을 사용할 수 있습니다",
+    "refresh": "새로고침"
+  },
+  "errorBoundary": {
+    "title": "문제가 발생했습니다",
+    "copy": "예상치 못한 오류가 발생했습니다. 파일은 현재 페이지에 유지됩니다.",
+    "reload": "페이지 새로고침"
+  },
+  "preview": {
+    "original": "원본",
+    "compressed": "압축 후",
+    "compressing": "압축 중...",
+    "selectHint": "이미지를 선택하여 미리보기",
+    "compareMode": "비교 모드",
+    "backToList": "목록으로 돌아가기",
+    "zoomReset": "확대/축소 초기화",
+    "previous": "이전",
+    "next": "다음",
+    "modes": {
+      "slider": "슬라이더 비교",
+      "sideBySide": "두 화면 비교",
+      "single": "단일 이미지"
+    },
+    "zoom": {
+      "fit": "맞춤"
+    }
+  }
+}

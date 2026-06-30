@@ -1,0 +1,41 @@
+{
+  "name": "pic-forge",
+  "version": "0.14.0",
+  "private": true,
+  "description": "Browser-based batch image compression tool powered by WebAssembly codecs",
+  "license": "MIT",
+  "author": "DejavuMoe",
+  "homepage": "https://picforge.de",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DejavuMoe/PicForge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DejavuMoe/PicForge/issues"
+  },
+  "packageManager": "pnpm@11.8.0",
+  "scripts": {
+    "dev": "pnpm --filter @pic-forge/app dev",
+    "build": "pnpm --filter @pic-forge/app build",
+    "preview": "pnpm --filter @pic-forge/app preview",
+    "lint": "eslint packages/*/src/**/*.{ts,tsx}",
+    "format": "prettier --write packages/*/src/**/*.{ts,tsx}",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "pnpm typecheck:app && pnpm typecheck:worker && pnpm typecheck:codecs",
+    "typecheck:app": "tsc --noEmit -p packages/app/tsconfig.json",
+    "typecheck:worker": "tsc --noEmit -p packages/worker/tsconfig.json",
+    "typecheck:codecs": "tsc --noEmit -p packages/codecs/tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.9"
+  }
+}

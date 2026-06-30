@@ -1,0 +1,327 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1280"
+  height="760"
+  viewBox="0 0 1280 760"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">PicForge workspace preview</title>
+  <desc id="desc">
+    A clean product preview of the PicForge batch image compression workspace with toolbar, file
+    queue, side-by-side preview, and export status bar.
+  </desc>
+  <defs>
+    <linearGradient id="screen" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#f6f7f8" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#111111" flood-opacity="0.16" />
+    </filter>
+  </defs>
+
+  <rect width="1280" height="760" rx="36" fill="#f4f5f6" />
+  <rect x="58" y="46" width="1164" height="668" rx="24" fill="url(#screen)" filter="url(#shadow)" />
+
+  <rect x="58" y="46" width="1164" height="52" rx="24" fill="#ffffff" />
+  <circle cx="90" cy="72" r="7" fill="#ff5f57" />
+  <circle cx="112" cy="72" r="7" fill="#ffbd2e" />
+  <circle cx="134" cy="72" r="7" fill="#28c840" />
+  <rect x="536" y="58" width="208" height="28" rx="14" fill="#f1f2f3" stroke="#e5e7eb" />
+  <text
+    x="640"
+    y="77"
+    text-anchor="middle"
+    font-family="Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="600"
+    fill="#4b5563"
+  >
+    picforge.de
+  </text>
+
+  <rect x="58" y="98" width="1164" height="54" fill="#ffffff" stroke="#e5e7eb" />
+  <rect x="82" y="114" width="28" height="28" rx="7" fill="#111111" />
+  <text
+    x="96"
+    y="134"
+    text-anchor="middle"
+    font-family="Inter, Arial, sans-serif"
+    font-size="16"
+    font-weight="800"
+    fill="#ffffff"
+  >
+    P
+  </text>
+  <text
+    x="124"
+    y="133"
+    font-family="Inter, Arial, sans-serif"
+    font-size="18"
+    font-weight="760"
+    fill="#111111"
+  >
+    PicForge
+  </text>
+  <text x="214" y="133" font-family="Inter, Arial, sans-serif" font-size="13" fill="#6b7280">
+    Local batch image compression
+  </text>
+  <text x="1110" y="133" font-family="Inter, Arial, sans-serif" font-size="13" fill="#374151">
+    English
+  </text>
+  <circle cx="1168" cy="126" r="10" fill="#f3f4f6" stroke="#e5e7eb" />
+
+  <rect x="58" y="152" width="1164" height="48" fill="#ffffff" stroke="#e5e7eb" />
+  <g font-family="Inter, Arial, sans-serif" font-size="13" font-weight="650">
+    <rect x="82" y="162" width="78" height="28" rx="6" fill="#111111" />
+    <text x="121" y="181" text-anchor="middle" fill="#ffffff">Balanced</text>
+    <rect x="168" y="162" width="86" height="28" rx="6" fill="#ffffff" stroke="#d1d5db" />
+    <text x="211" y="181" text-anchor="middle" fill="#374151">Web Photo</text>
+    <rect x="262" y="162" width="72" height="28" rx="6" fill="#ffffff" stroke="#d1d5db" />
+    <text x="298" y="181" text-anchor="middle" fill="#374151">Lossless</text>
+    <rect x="354" y="162" width="86" height="28" rx="6" fill="#ffffff" stroke="#d1d5db" />
+    <text x="397" y="181" text-anchor="middle" fill="#374151">JPEG</text>
+  </g>
+  <text
+    x="470"
+    y="181"
+    font-family="Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="650"
+    fill="#4b5563"
+  >
+    Quality
+  </text>
+  <rect x="528" y="174" width="178" height="4" rx="2" fill="#e5e7eb" />
+  <rect x="528" y="174" width="134" height="4" rx="2" fill="#111111" />
+  <circle cx="662" cy="176" r="9" fill="#111111" />
+  <text
+    x="728"
+    y="181"
+    font-family="SFMono-Regular, Consolas, monospace"
+    font-size="13"
+    font-weight="700"
+    fill="#111111"
+  >
+    75
+  </text>
+  <text
+    x="1014"
+    y="181"
+    font-family="Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="650"
+    fill="#4b5563"
+  >
+    Resize
+  </text>
+  <rect x="1066" y="164" width="34" height="20" rx="10" fill="#111111" />
+  <circle cx="1090" cy="174" r="8" fill="#ffffff" />
+
+  <rect x="58" y="200" width="292" height="462" fill="#ffffff" stroke="#e5e7eb" />
+  <text
+    x="82"
+    y="232"
+    font-family="Inter, Arial, sans-serif"
+    font-size="14"
+    font-weight="700"
+    fill="#374151"
+  >
+    7 files queued
+  </text>
+  <g font-family="Inter, Arial, sans-serif">
+    <rect x="58" y="254" width="292" height="76" fill="#f3f4f6" />
+    <rect x="82" y="270" width="44" height="44" rx="6" fill="#dbeafe" />
+    <rect x="90" y="280" width="28" height="4" rx="2" fill="#2563eb" />
+    <rect x="90" y="290" width="22" height="4" rx="2" fill="#60a5fa" />
+    <text x="142" y="288" font-size="14" font-weight="760" fill="#111111">hero-image.png</text>
+    <text x="142" y="309" font-size="12" fill="#6b7280">1.8 MB →</text>
+    <text x="204" y="309" font-size="12" font-weight="760" fill="#16a34a">224.5 KB -88%</text>
+
+    <rect x="82" y="350" width="44" height="44" rx="6" fill="#fef3c7" />
+    <rect x="90" y="360" width="28" height="4" rx="2" fill="#f59e0b" />
+    <rect x="90" y="370" width="18" height="4" rx="2" fill="#fbbf24" />
+    <text x="142" y="368" font-size="14" font-weight="760" fill="#111111">landing-photo.jpg</text>
+    <text x="142" y="389" font-size="12" fill="#6b7280">709.1 KB →</text>
+    <text x="214" y="389" font-size="12" font-weight="760" fill="#16a34a">211.2 KB -70%</text>
+
+    <rect x="82" y="430" width="44" height="44" rx="6" fill="#dcfce7" />
+    <rect x="90" y="440" width="28" height="4" rx="2" fill="#22c55e" />
+    <rect x="90" y="450" width="20" height="4" rx="2" fill="#86efac" />
+    <text x="142" y="448" font-size="14" font-weight="760" fill="#111111">product-shot.webp</text>
+    <text x="142" y="469" font-size="12" fill="#6b7280">448.2 KB →</text>
+    <text x="214" y="469" font-size="12" font-weight="760" fill="#16a34a">59.7 KB -87%</text>
+  </g>
+
+  <rect x="350" y="200" width="872" height="462" fill="#fafafa" />
+  <rect x="350" y="200" width="872" height="42" fill="#ffffff" stroke="#e5e7eb" />
+  <text
+    x="386"
+    y="226"
+    font-family="Inter, Arial, sans-serif"
+    font-size="14"
+    font-weight="760"
+    fill="#111111"
+  >
+    landing-photo.jpg
+  </text>
+  <text
+    x="998"
+    y="226"
+    font-family="Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="700"
+    fill="#374151"
+  >
+    Global
+  </text>
+  <text
+    x="1054"
+    y="226"
+    font-family="Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="700"
+    fill="#111111"
+  >
+    2x
+  </text>
+  <text
+    x="1092"
+    y="226"
+    font-family="SFMono-Regular, Consolas, monospace"
+    font-size="13"
+    fill="#6b7280"
+  >
+    200%
+  </text>
+
+  <rect x="382" y="276" width="374" height="292" rx="10" fill="#ffffff" stroke="#e5e7eb" />
+  <rect x="786" y="276" width="374" height="292" rx="10" fill="#ffffff" stroke="#e5e7eb" />
+  <rect x="416" y="324" width="306" height="172" rx="8" fill="#dbeafe" />
+  <rect x="820" y="324" width="306" height="172" rx="8" fill="#dbeafe" />
+  <path
+    d="M416 460 C500 396 566 468 630 396 C672 348 700 382 722 360 L722 496 L416 496 Z"
+    fill="#60a5fa"
+    opacity="0.7"
+  />
+  <path
+    d="M820 458 C904 394 970 466 1034 394 C1076 346 1104 380 1126 358 L1126 496 L820 496 Z"
+    fill="#60a5fa"
+    opacity="0.7"
+  />
+  <rect x="396" y="292" width="62" height="28" rx="7" fill="#111111" opacity="0.72" />
+  <text
+    x="427"
+    y="311"
+    text-anchor="middle"
+    font-family="Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="760"
+    fill="#ffffff"
+  >
+    Original
+  </text>
+  <rect x="800" y="292" width="86" height="28" rx="7" fill="#111111" opacity="0.72" />
+  <text
+    x="843"
+    y="311"
+    text-anchor="middle"
+    font-family="Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="760"
+    fill="#ffffff"
+  >
+    Compressed
+  </text>
+  <rect x="396" y="584" width="116" height="44" rx="8" fill="#111111" opacity="0.78" />
+  <text
+    x="412"
+    y="604"
+    font-family="SFMono-Regular, Consolas, monospace"
+    font-size="13"
+    font-weight="760"
+    fill="#ffffff"
+  >
+    2952×1950
+  </text>
+  <text x="412" y="622" font-family="Inter, Arial, sans-serif" font-size="12" fill="#d1d5db">
+    709.1 KB
+  </text>
+  <rect x="800" y="584" width="146" height="44" rx="8" fill="#111111" opacity="0.78" />
+  <text
+    x="816"
+    y="604"
+    font-family="SFMono-Regular, Consolas, monospace"
+    font-size="13"
+    font-weight="760"
+    fill="#ffffff"
+  >
+    2952×1950
+  </text>
+  <text x="816" y="622" font-family="Inter, Arial, sans-serif" font-size="12" fill="#d1d5db">
+    211.2 KB
+  </text>
+  <rect x="878" y="608" width="52" height="18" rx="5" fill="#16a34a" />
+  <text
+    x="904"
+    y="622"
+    text-anchor="middle"
+    font-family="Inter, Arial, sans-serif"
+    font-size="12"
+    font-weight="800"
+    fill="#ffffff"
+  >
+    -70%
+  </text>
+
+  <rect x="58" y="662" width="1164" height="52" rx="0" fill="#ffffff" stroke="#e5e7eb" />
+  <rect x="82" y="684" width="184" height="5" rx="2.5" fill="#22c55e" />
+  <text
+    x="284"
+    y="693"
+    font-family="Inter, Arial, sans-serif"
+    font-size="14"
+    font-weight="700"
+    fill="#374151"
+  >
+    7 / 7
+  </text>
+  <text
+    x="896"
+    y="693"
+    font-family="Inter, Arial, sans-serif"
+    font-size="14"
+    font-weight="800"
+    fill="#16a34a"
+  >
+    -81%
+  </text>
+  <text x="944" y="693" font-family="Inter, Arial, sans-serif" font-size="14" fill="#6b7280">
+    5.6 MB → 1.0 MB
+  </text>
+  <rect x="1070" y="676" width="70" height="28" rx="7" fill="#111111" />
+  <text
+    x="1105"
+    y="695"
+    text-anchor="middle"
+    font-family="Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="760"
+    fill="#ffffff"
+  >
+    Download
+  </text>
+  <rect x="1150" y="676" width="54" height="28" rx="7" fill="#ffffff" stroke="#d1d5db" />
+  <text
+    x="1177"
+    y="695"
+    text-anchor="middle"
+    font-family="Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="760"
+    fill="#374151"
+  >
+    ZIP
+  </text>
+</svg>

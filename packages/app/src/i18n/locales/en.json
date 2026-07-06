@@ -77,7 +77,6 @@
   },
   "settings": {
     "title": "Presets",
-    "preUploadFormat": "Output format",
     "quality": "Quality",
     "resize": "Resize",
     "resizeOptions": "Options",

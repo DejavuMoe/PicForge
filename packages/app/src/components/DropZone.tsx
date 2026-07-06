@@ -132,8 +132,7 @@ export function DropZone() {
       </div>
 
       <div className="pf-drop-footer">
-        <span className="pf-drop-format-label">{t('settings.preUploadFormat')}</span>
-        <div className="pf-drop-format-group" role="group" aria-label={t('settings.preUploadFormat')}>
+        <div className="pf-drop-format-group" role="group" aria-label={t('tooltips.formatHint')}>
           {FORMAT_OPTIONS.map((option) => {
             const active = outputFormat === option.value;
             return (

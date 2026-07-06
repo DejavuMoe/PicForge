@@ -77,7 +77,6 @@
   },
   "settings": {
     "title": "預設",
-    "preUploadFormat": "輸出格式",
     "quality": "品質",
     "resize": "尺寸調整",
     "resizeOptions": "選項",

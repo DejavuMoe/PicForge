@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'picforge-v0.14.0';
+const CACHE_VERSION = 'picforge-v0.14.1';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-app-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 

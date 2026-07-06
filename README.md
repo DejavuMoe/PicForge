@@ -41,7 +41,7 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://localhost:5173`.
+Open `http://127.0.0.1:5173`.
 
 Production build:
 
@@ -67,7 +67,7 @@ The UI is a native React app shell with dense workspace controls: header, toolba
 
 | Command          | Action                                       |
 | ---------------- | -------------------------------------------- |
-| `pnpm dev`       | Start the app dev server.                    |
+| `pnpm dev`       | Start the app dev server on `127.0.0.1`.     |
 | `pnpm build`     | Build the production app.                    |
 | `pnpm preview`   | Preview the production build.                |
 | `pnpm lint`      | Run ESLint.                                  |
@@ -79,8 +79,7 @@ The UI is a native React app shell with dense workspace controls: header, toolba
 | Document                             | Purpose                                    |
 | ------------------------------------ | ------------------------------------------ |
 | [Architecture](docs/ARCHITECTURE.md) | Runtime architecture and data flow.        |
-| [Roadmap](docs/ROADMAP.md)           | Planned product and engineering work.      |
-| [QA checklist](docs/QA_CHECKLIST.md) | Manual release checks.                     |
+| [QA checklist](docs/QA_CHECKLIST.md) | Manual regression and release checks.      |
 | [i18n guide](docs/I18N.md)           | Translation and language support notes.    |
 | [Changelog](docs/CHANGELOG.md)       | Version history.                           |
 | [Contributing](CONTRIBUTING.md)      | Development and pull request guidance.     |

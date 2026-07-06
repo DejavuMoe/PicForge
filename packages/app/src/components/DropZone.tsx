@@ -2,13 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiCommand, FiUploadCloud } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useFileStore } from '../stores/fileStore';
+import { useSettingsStore } from '../stores/settingsStore';
+import { FORMAT_OPTIONS } from '../types';
 import { extractFiles } from '../utils/fileUtils';
-
-const FORMAT_CHIPS = ['JPEG', 'PNG', 'WebP', 'AVIF'];
 
 export function DropZone() {
   const { t } = useTranslation();
   const addFiles = useFileStore((state) => state.addFiles);
+  const outputFormat = useSettingsStore((state) => state.settings.outputFormat);
+  const setOutputFormat = useSettingsStore((state) => state.setOutputFormat);
   const [isDragging, setIsDragging] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -96,43 +98,56 @@ export function DropZone() {
   );
 
   return (
-    <div
+    <section
       className={`pf-drop-zone${isDragging ? ' is-dragging' : ''}`}
-      role="button"
-      tabIndex={0}
-      aria-label={t('dropzone.dragDefault')}
       data-testid="drop-zone"
-      onClick={handleClick}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      onKeyDown={handleKeyDown}
     >
-      <div className="pf-drop-content">
-        <div className="pf-drop-icon-badge">
-          <FiUploadCloud size={24} aria-hidden="true" />
-        </div>
+      <div
+        className="pf-drop-surface"
+        role="button"
+        tabIndex={0}
+        aria-label={t('dropzone.dragDefault')}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+      >
+        <div className="pf-drop-content">
+          <div className="pf-drop-icon-badge">
+            <FiUploadCloud size={24} aria-hidden="true" />
+          </div>
 
-        <div>
-          <p className="pf-drop-main-text">
-            {isDragging ? t('dropzone.dragActive') : t('dropzone.dragDefault')}
-          </p>
-          <p className="pf-drop-secondary-text">{t('dropzone.clickHint')}</p>
-          <div className="pf-drop-paste">
-            <FiCommand size={12} aria-hidden="true" />
-            <span>{t('dropzone.pasteHint')}</span>
+          <div>
+            <p className="pf-drop-main-text">
+              {isDragging ? t('dropzone.dragActive') : t('dropzone.dragDefault')}
+            </p>
+            <p className="pf-drop-secondary-text">{t('dropzone.clickHint')}</p>
+            <div className="pf-drop-paste">
+              <FiCommand size={12} aria-hidden="true" />
+              <span>{t('dropzone.pasteHint')}</span>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="pf-format-list" aria-hidden="true">
-          {FORMAT_CHIPS.map((format, index) => (
-            <span key={format}>
-              {format}
-              {index < FORMAT_CHIPS.length - 1 && (
-                <span className="pf-format-separator">.</span>
-              )}
-            </span>
-          ))}
+      <div className="pf-drop-footer">
+        <span className="pf-drop-format-label">{t('settings.preUploadFormat')}</span>
+        <div className="pf-drop-format-group" role="group" aria-label={t('settings.preUploadFormat')}>
+          {FORMAT_OPTIONS.map((option) => {
+            const active = outputFormat === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={`pf-drop-format-button${active ? ' is-active' : ''}`}
+                aria-pressed={active}
+                onClick={() => setOutputFormat(option.value)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -152,6 +167,6 @@ export function DropZone() {
         data-testid="file-input"
         onChange={handleFileChange}
       />
-    </div>
+    </section>
   );
 }

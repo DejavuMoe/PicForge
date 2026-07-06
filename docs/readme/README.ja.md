@@ -41,7 +41,7 @@ pnpm install
 pnpm dev
 ```
 
-`http://localhost:5173` を開きます。
+`http://127.0.0.1:5173` を開きます。
 
 本番ビルド:
 
@@ -67,7 +67,7 @@ UI はネイティブ React App Shell で、ヘッダー、ツールバー、フ
 
 | コマンド         | 内容                                               |
 | ---------------- | -------------------------------------------------- |
-| `pnpm dev`       | 開発サーバーを起動します。                         |
+| `pnpm dev`       | `127.0.0.1` で開発サーバーを起動します。           |
 | `pnpm build`     | 本番アプリをビルドします。                         |
 | `pnpm preview`   | 本番ビルドをプレビューします。                     |
 | `pnpm lint`      | ESLint を実行します。                              |
@@ -79,8 +79,7 @@ UI はネイティブ React App Shell で、ヘッダー、ツールバー、フ
 | ドキュメント                          | 用途                                     |
 | ------------------------------------- | ---------------------------------------- |
 | [Architecture](../ARCHITECTURE.md)    | ランタイムアーキテクチャとデータフロー。 |
-| [Roadmap](../ROADMAP.md)              | プロダクトとエンジニアリング計画。       |
-| [QA checklist](../QA_CHECKLIST.md)    | 手動リリースチェック。                   |
+| [QA checklist](../QA_CHECKLIST.md)    | 手動の回帰・リリース確認。               |
 | [i18n guide](../I18N.md)              | 翻訳と言語サポートの説明。               |
 | [Changelog](../CHANGELOG.md)          | バージョン履歴。                         |
 | [Contributing](../../CONTRIBUTING.md) | 開発と PR ガイド。                       |

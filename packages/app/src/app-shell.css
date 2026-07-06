@@ -208,7 +208,7 @@ button:disabled {
 .pf-header-button:focus-visible,
 .pf-icon-button:focus-visible,
 .pf-brand-link:focus-visible,
-.pf-drop-zone:focus-visible,
+.pf-drop-surface:focus-visible,
 .pf-error-button:focus-visible,
 .pf-update-button:focus-visible,
 .pf-toolbar-button:focus-visible,
@@ -284,17 +284,24 @@ button:disabled {
   min-height: 320px;
   height: 100%;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
   border: 2px dashed var(--pf-border-default, #eaeaea);
   border-radius: 8px;
   background: transparent;
   color: var(--pf-text-primary, #171717);
   text-align: center;
+  overflow: hidden;
   transition:
     background-color 200ms cubic-bezier(0.175, 0.885, 0.32, 1.1),
     border-color 200ms cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+.pf-drop-surface {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 24px 16px;
 }
 
 .pf-drop-zone:hover {
@@ -371,20 +378,59 @@ button:disabled {
   opacity: 1;
 }
 
-.pf-format-list {
+.pf-drop-footer {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding-top: 4px;
-  color: var(--pf-text-tertiary, #7d7d7d);
-  font-size: 10px;
-  font-weight: 550;
+  gap: 8px 10px;
+  padding: 0 24px 20px;
 }
 
-.pf-format-separator {
-  margin-left: 2px;
-  opacity: 0.4;
+.pf-drop-format-label {
+  color: var(--pf-text-secondary, #4d4d4d);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pf-drop-format-group {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid var(--pf-border-default, #eaeaea);
+  border-radius: 999px;
+  background: var(--pf-surface-bg, #fafafa);
+  box-shadow: var(--pf-shadow-raised);
+}
+
+.pf-drop-format-button {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pf-text-tertiary, #7d7d7d);
+  font-size: 11px;
+  font-weight: 650;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.pf-drop-format-button:hover {
+  background: var(--pf-hover-bg, #f2f2f2);
+  color: var(--pf-text-secondary, #4d4d4d);
+}
+
+.pf-drop-format-button.is-active {
+  background: var(--pf-hover-bg, #f2f2f2);
+  color: var(--pf-text-primary, #171717);
+  box-shadow:
+    inset 0 0 0 1px var(--pf-border-hover, #c9c9c9),
+    var(--pf-shadow-raised);
 }
 
 .pf-file-input {
@@ -1666,6 +1712,7 @@ button:disabled {
 .pf-slider-compare,
 .pf-preview-single,
 .pf-slider-image-layer,
+.pf-slider-clip,
 .pf-slider-overlay-layer,
 .pf-preview-pane-image-layer,
 .pf-preview-pane-overlay-layer {
@@ -1699,6 +1746,7 @@ button:disabled {
 }
 
 .pf-slider-image-layer,
+.pf-slider-clip,
 .pf-preview-pane-image-layer {
   pointer-events: none;
   contain: layout paint;
@@ -2185,8 +2233,12 @@ button:disabled {
     display: none;
   }
 
-  .pf-drop-zone {
-    padding: 40px;
+  .pf-drop-surface {
+    padding: 40px 40px 20px;
+  }
+
+  .pf-drop-footer {
+    padding: 0 32px 24px;
   }
 
   .pf-toolbar-row {

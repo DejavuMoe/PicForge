@@ -2,6 +2,22 @@
 
 All notable changes to PicForge are documented here.
 
+## [Unreleased]
+
+## [0.14.1] - 2026-07-06
+
+### Changed
+
+- `pnpm dev` and `pnpm preview` now bind to `127.0.0.1` by default to avoid localhost IPv4/IPv6 mismatches on Windows.
+- The slider compare view now keeps the visible divider aligned with the actual masked split while zooming and panning.
+- The empty-state upload surface now lets users choose the output format before importing images, avoiding an unnecessary first compression pass for large batches.
+
+### Fixed
+
+- Slider compare remains draggable near the divider even when the preview is zoomed in.
+- The empty-state output format selector now follows the active light/dark theme tokens instead of using a washed-out fixed light background in dark mode.
+- Removed process-only planning and release-note documents from the repo-facing docs set to keep the documentation surface focused on long-lived references.
+
 ## [0.14.0] - 2026-06-30
 
 ### Added

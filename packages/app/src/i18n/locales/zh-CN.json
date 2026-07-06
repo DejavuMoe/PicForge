@@ -77,6 +77,7 @@
   },
   "settings": {
     "title": "预设",
+    "preUploadFormat": "输出格式",
     "quality": "质量",
     "resize": "尺寸调整",
     "resizeOptions": "选项",

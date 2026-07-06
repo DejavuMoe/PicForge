@@ -1,6 +1,6 @@
 {
   "name": "@pic-forge/app",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "private": true,
   "description": "PicForge browser app for local batch image compression",
   "license": "MIT",

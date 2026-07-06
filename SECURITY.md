@@ -2,11 +2,11 @@
 
 ## Supported Versions
 
-PicForge is pre-1.0. Security fixes target the current `main` branch and the latest GitHub release.
+PicForge is pre-1.0. Security fixes land on the active development branch.
 
 ## Reporting A Vulnerability
 
-Please do not open a public issue for a security report. Use GitHub private vulnerability reporting if it is enabled for the repository, or contact the maintainer through the GitHub profile linked in the repository.
+Please do not open a public issue for a security report. Contact the maintainer privately through the repository contact channel.
 
 Include:
 

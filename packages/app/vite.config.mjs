@@ -19,6 +19,12 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(appPackage.version),
   },
+  server: {
+    host: '127.0.0.1',
+  },
+  preview: {
+    host: '127.0.0.1',
+  },
   worker: {
     format: 'es',
     plugins: () => [wasm()],

@@ -35,6 +35,7 @@ import {
   isCompareModeAvailable,
   type CompareMode,
 } from '../utils/previewUtils';
+import { getSliderClipPath, getSliderPointerMode } from '../utils/sliderCompare';
 import { PREVIEW_TEST_IDS } from '../utils/previewLayers';
 import { FileSettingsPanel } from './FileSettingsPanel';
 
@@ -396,6 +397,27 @@ export function Preview({
     [beginPointerInteraction, updateSliderFromClientX],
   );
 
+  const handleSliderComparePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLElement>) => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const mode = getSliderPointerMode({
+        zoom: viewportRef.current.zoom,
+        sliderPos,
+        clientX: event.clientX,
+        containerLeft: rect.left,
+        containerWidth: rect.width,
+      });
+
+      if (mode === 'slider') {
+        handleSliderPointerDown(event);
+        return;
+      }
+
+      handlePanPointerDown(event);
+    },
+    [handlePanPointerDown, handleSliderPointerDown, sliderPos],
+  );
+
   const handleInspectPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
       if (!beginPointerInteraction(event)) return;
@@ -523,7 +545,7 @@ export function Preview({
             sliderPos={sliderPos}
             isPanning={isInteracting}
             ratio={ratio}
-            onPointerDown={viewport.zoom > 1 ? handlePanPointerDown : handleSliderPointerDown}
+            onPointerDown={handleSliderComparePointerDown}
           />
         ) : (
           <SingleImageView
@@ -789,13 +811,14 @@ function SliderCompareView({
           imageTransform={imageTransform}
           isPanning={isPanning}
         />
-        <PreviewImage
-          src={output.src}
-          alt={output.label}
-          imageTransform={imageTransform}
-          isPanning={isPanning}
-          style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
-        />
+        <div className="pf-slider-clip" style={{ clipPath: getSliderClipPath(sliderPos) }}>
+          <PreviewImage
+            src={output.src}
+            alt={output.label}
+            imageTransform={imageTransform}
+            isPanning={isPanning}
+          />
+        </div>
       </div>
       <div data-testid={PREVIEW_TEST_IDS.sliderOverlayLayer} className="pf-slider-overlay-layer">
         <span className="pf-slider-line" style={{ left: `${sliderPos}%` }} aria-hidden="true" />

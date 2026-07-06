@@ -1,6 +1,6 @@
 # PicForge Architecture
 
-> Last updated: 2026-06-30 | Version: 0.14.0
+> Last updated: 2026-07-06 | Version: 0.14.1
 
 PicForge is a browser app for local batch image compression. The app shell, state model, image processing pipeline, preview workspace, and export flow all run on the client.
 
@@ -55,7 +55,7 @@ Preview supports three modes:
 - Side-by-side compare for resized output or detail inspection.
 - Single-image preview for inspecting output alone.
 
-Zoom and pan are applied through CSS variables on the image layer. Labels, metadata badges, dividers, and toolbars live in separate overlay layers so they do not scale with the image.
+Zoom and pan are applied through CSS variables on the image layer. In slider mode, the compressed image is masked at the viewport layer so the split boundary stays aligned with the visible divider during zoom and pan. Labels, metadata badges, dividers, and toolbars live in separate overlay layers so they do not scale with the image.
 
 ## Export
 

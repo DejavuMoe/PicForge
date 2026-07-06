@@ -13,6 +13,8 @@ This checklist captures the main manual and browser-based checks for each releas
 ## Preview
 
 - Slider, side-by-side, and single-image modes render non-empty images.
+- In slider mode, the divider stays aligned with the real split boundary at fit zoom and after pan/zoom.
+- In slider mode, dragging near the divider still adjusts the split when the image is zoomed in.
 - Side-by-side labels, toolbar, metadata badges, and divider do not scale with image zoom.
 - Press-and-hold zoom focuses the clicked image point, dragging pans while pressed, and release returns to fit.
 - Resized images show original and output dimensions clearly without floating mini-image overlays.

@@ -53,3 +53,15 @@ This checklist captures the main manual and browser-based checks for each releas
 ## Motion Preferences
 
 - With reduced motion enabled, skeletons, spinners, progress stripes, and transitions do not animate continuously.
+
+## Toolbox (0.15)
+
+- Run `pnpm test:browser` against unchanged originals in `sample/`.
+- Android exports reconstruct source bytes; no HEIC/FFmpeg engine loads for extraction.
+- Apple pairing handles lone files and duplicate basenames explicitly.
+- Check clean aperture, orientation, primary track, audio and per-frame PTS in the actual WASM output.
+- Cancel/retry retains completed results; ZIP members equal individual downloads.
+- Unsupported native video playback shows a static fallback and download message.
+- Offline reload after successful engine caching can process the sample again.
+- Recheck original image compression and both narrow/wide viewport layouts.
+- See `SAMPLE_VALIDATION.md` for measured results and unverified platforms.

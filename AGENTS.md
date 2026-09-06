@@ -1,55 +1,34 @@
 # PicForge — Agent Guide
 
-PicForge is a browser-based batch image compression and resizing tool. All image processing is local: browser Canvas APIs decode/resize, and Web Workers run WASM encoders from `@jsquash/*`.
+## Current state
 
-## Commands
+Working version **0.15.0**, browser-only image toolbox. The initial integration is implemented; no release/deployment is implied by the package version.
 
-| Command                                 | Action                                                                          |
-| --------------------------------------- | ------------------------------------------------------------------------------- |
-| `pnpm dev`                              | Dev server at `localhost:5173` for `@pic-forge/app`.                            |
-| `pnpm build`                            | Production build to `packages/app/dist/`.                                       |
-| `pnpm preview`                          | Preview the production build.                                                   |
-| `pnpm lint`                             | ESLint for `packages/*/src/**/*.{ts,tsx}`.                                      |
-| `pnpm format`                           | Prettier with semicolons, single quotes, trailing commas, and 100-column width. |
-| `pnpm test`                             | Vitest test suite.                                                              |
-| `pnpm test:watch`                       | Vitest watch mode.                                                              |
-| `pnpm typecheck`                        | Type-check app, worker, and codecs packages.                                    |
-| `pnpm --filter @pic-forge/app <script>` | Run an app package script directly.                                             |
+- **Image compression:** existing `@jsquash/*` pipeline, batch resize, global/per-image settings, compare/zoom previews and ZIP manifest.
+- **Android Motion Photos:** binary JPG + MP4 extraction; no re-encoding or Apple engine loading. MotionFlow's separate app has been removed; its license remains.
+- **iOS Live Photos:** basename pairing, HEIC → MozJPEG, MOV → H.264/AAC, clean-aperture crop/rotation, source timestamps or explicit 30 fps. Serial jobs, cancellation/retry, individual downloads and ZIP.
+- **Verified baseline (2026-09-06):** Chromium conversion/playback/offline reload and Firefox conversion/static-preview fallback. Safari/WebKit is unverified (local WebKit lacks `libicudata.so.74`). Timing/size measurements and limits: [sample validation](docs/SAMPLE_VALIDATION.md).
 
-## Project Structure
+## Code map
 
-```text
-packages/
-  app/      React 18 + Vite 5 native app shell, i18n, stores, export UI, PWA files
-  codecs/   WASM codec loader and shared compression setting types
-  worker/   WorkerPool, image decode/resize helpers, and encode orchestration
-```
+- `packages/app/src/App.tsx`: shared header, tool navigation, update prompt. `CompressionWorkspace.tsx`: original compressor, active-tool clipboard import.
+- `packages/app/src/motion/`: grouping/extraction/encoder arguments (`media.ts`), worker lifecycle (`processor.ts`), HEIC worker and QuickTime clean-aperture adapter.
+- Compression: Zustand `fileStore`/`settingsStore` → `useAutoCompress` → `packages/worker` → `packages/codecs`. Per-image settings are complete snapshots.
+- UI: React 18 + Vite 5, native `app-shell.css`, shared theme, i18next with five locales. Keep translation keys/interpolation aligned across all locales.
+- All packages are ESM; internal dependencies use `workspace:*` and export TypeScript source. Tooling/TypeScript is shared from the root.
 
-- All packages use `"type": "module"`.
-- Internal dependencies use `workspace:*`.
-- Package exports point to `.ts` source files and are resolved by Vite/TypeScript.
-- Vite excludes `@pic-forge/codecs` and `@pic-forge/worker` from `optimizeDeps`.
+## Commands and checks
 
-## Architecture
+- `pnpm install`; `pnpm dev` (127.0.0.1:5173); `pnpm build`; `pnpm preview`.
+- Required before release: `pnpm lint`, `pnpm test`, `pnpm typecheck`, `pnpm build`. No CI workflow currently exists. Vitest uses Node; mock browser APIs when needed.
+- Media/PWA changes: `pnpm test:browser` (Playwright Chromium + native `ffprobe`). This builds, previews and checks actual samples; artifacts default to a temporary directory. Override with `PICFORGE_BROWSER`, `PICFORGE_BROWSER_EXECUTABLE`, `PICFORGE_QA_OUTPUT`.
+- UI changes: verify actual desktop/mobile behavior; use [QA checklist](docs/QA_CHECKLIST.md). `pnpm format` applies Prettier.
 
-- **Entrypoint**: `packages/app/src/main.tsx` -> `ThemeProvider` -> `App`.
-- **Layout**: `Header` / `Toolbar` / `Workspace` (`FileList` + `Preview`) / `StatusBar`.
-- **UI shell**: native React components plus `packages/app/src/app-shell.css`.
-- **State**: Zustand stores (`fileStore.ts`, `settingsStore.ts`); presets in `presets.ts`.
-- **Settings model**: global settings plus complete per-image custom snapshots.
-- **Auto-compress**: `useAutoCompress` watches files/settings, debounces, validates dimensions, decodes/resizes with bounded concurrency, and queues encoding to `WorkerPool`.
-- **Preview**: slider, side-by-side, and single-image modes with click-to-inspect zoom, 2x pan, and overlay layers that do not scale with the image.
-- **Export**: single download or ZIP with `picforge-manifest.json`.
-- **i18n**: `react-i18next`, 5 locales (`en`, `zh-CN`, `zh-TW`, `ja`, `ko`).
-- **PWA**: manifest, install icons, service worker cache, offline refresh after first successful load, and foreground update prompt.
+## Minimum constraints
 
-## Key Quirks & Gotchas
-
-1. **WASM files must be in `packages/app/public/wasm/`** — codec loading resolves them from `/wasm/`.
-2. **No CI workflow is currently included** — run `pnpm lint`, `pnpm test`, `pnpm typecheck`, and `pnpm build` locally before release.
-3. **Tests run in `node` environment** — mock browser APIs with `vi.stubGlobal` when needed.
-4. **Version sync** — root and app package versions should match.
-5. **Service worker cache version** — update `CACHE_VERSION` in `packages/app/public/sw.js` when shipping a new app version.
-6. **Do not commit build output** — `node_modules/`, `packages/app/dist/`, and `*.tsbuildinfo` are ignored.
-7. **Local-only privacy model** — do not add upload flows, telemetry, or remote image processing without explicit product approval.
-8. **Resize semantics** — `contain` fits within bounds without upscaling, `cover` fills target dimensions with centered crop, and `stretch` uses exact dimensions.
+1. **Preserve `sample/` unchanged.** It contains original acceptance fixtures. Write exports/screenshots elsewhere. Preserve unrelated working changes; do not commit, push or deploy without authorization.
+2. **Everything stays local.** No uploads, telemetry or remote processing without product approval. Keep engines self-hosted and lazy; use bounded concurrency, worker cleanup and existing size/pixel guards.
+3. **Preserve media semantics.** Android exports must reconstruct original bytes. For iOS check main track, crop, rotation and per-frame PTS—not just nominal fps. The pinned FFmpeg needs the clean-aperture adapter; remove it only with a verified core upgrade. HEIC output is a web derivative, not an HDR/metadata-preserving archive. Basename matching is not Apple identifier verification.
+4. **Preserve resize/settings behavior.** `contain` fits without upscaling; `cover` uses centered crop; `stretch` uses exact dimensions. Global edits must not overwrite per-image snapshots.
+5. **Reproducible assets and offline behavior.** Dev/build run `packages/app/scripts/prepare-codecs.mjs`; codecs load from `/wasm/`. Keep `precache.json` generation and service-worker caching intact. Heavy engines work offline only after successful loading/caching. Do not commit generated engine copies, `dist/`, `node_modules/` or `*.tsbuildinfo`.
+6. **Version and licenses.** Root/app versions must match; bump `CACHE_VERSION` in `packages/app/public/sw.js` when shipping a new version. Preserve notices under `packages/app/public/licenses/`: MIT app code does not relicense GPL FFmpeg/LGPL libheif. Satisfy codec source-distribution obligations before public binary distribution.

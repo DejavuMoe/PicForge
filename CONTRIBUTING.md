@@ -1,6 +1,6 @@
 # Contributing to PicForge
 
-Thanks for helping improve PicForge. This project is a browser-only image compression tool, so privacy, predictable UI, and local processing are the core product constraints.
+Thanks for helping improve PicForge. This project is a browser-only image toolbox, so privacy, predictable UI, and local processing are the core product constraints.
 
 ## Development
 
@@ -30,3 +30,9 @@ pnpm build
 - TypeScript, React 18, Vite, Zustand, and native app-shell CSS.
 - Prettier uses semicolons, single quotes, trailing commas, and 100-column width.
 - Image processing is local: decode and resize through browser APIs, encode through the worker/WASM pipeline.
+
+## Locales and media changes
+
+- Update all five locale files under `packages/app/src/i18n/locales/` together; keep keys and interpolation placeholders aligned. English is the fallback.
+- Language detection: `?lng=` → localStorage → browser language; the header persists manual selection.
+- Run `pnpm test:browser` for media, worker, or PWA changes; see `AGENTS.md` for sample constraints and compatibility limits.

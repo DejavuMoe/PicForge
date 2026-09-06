@@ -1,94 +1,57 @@
 # PicForge
 
-[![MIT License](https://img.shields.io/badge/license-MIT-111111?labelColor=ffffff)](LICENSE)
-![React](https://img.shields.io/badge/React-18-111111?labelColor=ffffff)
-![Vite](https://img.shields.io/badge/Vite-5-111111?labelColor=ffffff)
-![Local first](https://img.shields.io/badge/local--first-no_uploads-111111?labelColor=ffffff)
+A local browser image toolbox. No uploads, accounts, telemetry, or remote processing.
 
-**Language:** English | [简体中文](docs/readme/README.zh-CN.md) | [繁體中文](docs/readme/README.zh-TW.md) | [日本語](docs/readme/README.ja.md) | [한국어](docs/readme/README.ko.md)
+| Tool | Input | Output |
+| --- | --- | --- |
+| Image compression | JPEG, PNG, WebP, AVIF and browser-decodable images | MozJPEG, WebP, PNG, AVIF, resize and comparison |
+| Android Motion Photos | JPEG with appended MP4 | Original JPG + MP4, without re-encoding |
+| iOS Live Photos | Unmodified HEIC + MOV originals | Matching JPG + H.264/AAC MP4 |
 
-**Demo:** [picforge.de](https://picforge.de)
+React, TypeScript and Vite power one shared shell. The existing Squoosh-derived `@jsquash/*` compression pipeline remains in place. MotionFlow's extraction design is integrated directly; there is no second Next.js application.
 
-PicForge is a local-first browser app for batch image compression and resizing. It uses Canvas, Web Workers, and WebAssembly codecs to process images on your device. There are no accounts, uploads, or server-side image processing.
+## Run
 
-![PicForge workspace preview](docs/assets/picforge-preview.svg)
+Use a current Node.js LTS and the pnpm version in `package.json`.
 
-## Highlights
-
-| Feature             | Details                                                                 |
-| ------------------- | ----------------------------------------------------------------------- |
-| Local processing    | Decode, resize, encode, preview, and export run in the browser.         |
-| Batch workflow      | Add images by click, drag-and-drop, folder drop, or paste.              |
-| Compression formats | MozJPEG, WebP, OxiPNG, and AVIF via `@jsquash/*`.                       |
-| Worker pipeline     | Browser-side decode/resize with WASM encoding in a managed WorkerPool.  |
-| Per-image overrides | Global settings can be overridden by a complete snapshot on any image.  |
-| Preview modes       | Slider, side-by-side, and single-image comparison with zoom and pan.    |
-| Export tracking     | Single download or ZIP export with `picforge-manifest.json`.            |
-| PWA ready           | Installable app shell with offline cache and foreground update prompt.  |
-| Internationalized   | English, Simplified Chinese, Traditional Chinese, Japanese, and Korean. |
-
-## Quick Start
-
-Requirements:
-
-- Node.js 18 or newer
-- pnpm 8 or newer
-
-```bash
-git clone https://github.com/DejavuMoe/PicForge.git
-cd PicForge
+```sh
 pnpm install
 pnpm dev
-```
-
-Open `http://127.0.0.1:5173`.
-
-Production build:
-
-```bash
+# Production
 pnpm build
 pnpm preview
 ```
 
-## Architecture
+Build and dev commands copy pinned media engines into `public/wasm/`; generated engine files and build output are ignored. Deploy `packages/app/dist/` to a static HTTPS host. All runtime dependencies are served from that same host, including fonts and WASM. No CDN is needed. Single-thread FFmpeg does not require cross-origin isolation headers.
 
-```text
-User files
-  -> fileStore queue
-  -> effective settings: global or per-image snapshot
-  -> decode and optional resize with browser Canvas APIs
-  -> WorkerPool encodes pixels with @jsquash WASM codecs
-  -> preview URLs, size stats, manifest metadata, and export actions
+## Workflow
+
+Choose image compression, Android Motion Photos, or iOS Live Photos in the top navigation. Tool queues stay available while switching. Image compression retains its global/per-image settings, slider comparison, pan/zoom and ZIP manifest.
+
+For iOS, select matching photo/video originals together. Pairing uses case-insensitive directory + basename, not Apple content identifiers. Lone images and videos are supported; duplicate names are flagged. Select a preset, then start the batch. Cancel releases active workers; completed items remain downloadable and unfinished items can be retried. ZIP uses a separate numbered directory per item to prevent filename collisions.
+
+Balanced video defaults: x264 CRF 23, veryfast, long edge at most 1920 without upscaling, yuv420p, optional AAC 96k, faststart. JPEG defaults to MozJPEG quality 85 at original resolution. Source frame timestamps are preserved by default; choosing 30 fps explicitly resamples. Apple clean-aperture cropping and rotation are applied before export. Quality and compact presets offer CRF 20 / 1920 and CRF 26 / 1280 respectively.
+
+These are web derivatives, not recreated Apple Live Photos. HEIC metadata, HDR/gain maps, auxiliary images and original color-profile fidelity are not guaranteed. Android extraction preserves source bytes and its original video codec. When a browser cannot play the output codec, a static preview and explanatory message are shown while downloads remain available. Motion batches accept at most 100 files / 256 MB total; individual sources are limited to 100 MB and HEIC images to 50 MP. Large exports still require available browser memory.
+
+Codec engines load only on first use. Offline conversion requires a previous successful engine load/cache. Keep originals elsewhere: queues are in memory and are cleared when the page closes.
+
+## Checks
+
+```sh
+pnpm lint
+pnpm test
+pnpm typecheck
+pnpm build
+# Requires FFprobe and Playwright's Chromium browser:
+pnpm exec playwright install chromium
+pnpm test:browser
 ```
 
-The UI is a native React app shell with dense workspace controls: header, toolbar, file list, preview, single-image settings, and status bar. Preview overlays are separated from the image transform layer so labels and metadata do not scale during zoom.
+The browser check uses `sample/` without modifying it, exercises cancellation/retry, extraction, actual WASM conversion, source timestamps, downloads, mobile layout and offline conversion, and writes artifacts to a temporary directory. Use `PICFORGE_BROWSER=firefox` or `webkit` for another installed Playwright engine; `PICFORGE_BROWSER_EXECUTABLE` can select an existing executable. `PICFORGE_QA_OUTPUT` controls the artifact directory.
 
-## Commands
+See [the agent guide](AGENTS.md) for current implementation and constraints, [sample validation](docs/SAMPLE_VALIDATION.md) for measured results, and [the QA checklist](docs/QA_CHECKLIST.md) for release checks.
 
-| Command          | Action                                       |
-| ---------------- | -------------------------------------------- |
-| `pnpm dev`       | Start the app dev server on `127.0.0.1`.     |
-| `pnpm build`     | Build the production app.                    |
-| `pnpm preview`   | Preview the production build.                |
-| `pnpm lint`      | Run ESLint.                                  |
-| `pnpm test`      | Run Vitest.                                  |
-| `pnpm typecheck` | Type-check app, worker, and codecs packages. |
+## Licenses
 
-## Documentation
-
-| Document                             | Purpose                                    |
-| ------------------------------------ | ------------------------------------------ |
-| [Architecture](docs/ARCHITECTURE.md) | Runtime architecture and data flow.        |
-| [QA checklist](docs/QA_CHECKLIST.md) | Manual regression and release checks.      |
-| [i18n guide](docs/I18N.md)           | Translation and language support notes.    |
-| [Changelog](docs/CHANGELOG.md)       | Version history.                           |
-| [Contributing](CONTRIBUTING.md)      | Development and pull request guidance.     |
-| [Security](SECURITY.md)              | Vulnerability reporting and privacy model. |
-
-## Privacy
-
-PicForge reads selected files locally and uses generated object URLs for preview and export. Object URLs are revoked when files or results are removed. If you deploy the app yourself, keep analytics, upload flows, and remote processing out of the default path unless users explicitly opt in.
-
-## License
-
-[MIT](LICENSE) © [DejavuMoe](https://github.com/DejavuMoe)
+Application code is MIT. FFmpeg's WASM core is GPL-2.0-or-later; libheif is LGPL. They are not covered by the app's MIT license. [Third-party notices](packages/app/public/licenses/NOTICE.txt) and license texts are included in the build. A public binary release must also provide the required corresponding-source distribution for those codecs; no release or deployment is performed by the local build.

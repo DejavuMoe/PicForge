@@ -4,6 +4,12 @@ All notable changes to PicForge are documented here.
 
 ## [Unreleased]
 
+- Evolve the local app into a three-tool workspace: image compression, Android Motion Photo extraction, and iOS Live Photo conversion (working version 0.15.0).
+- Add lazy HEIC/FFmpeg workers, pairing, cancellation/retry, clean-aperture handling, source-timestamp export, ZIP and native-preview fallback.
+- Fix first-visit offline app caching and add sample-driven browser checks.
+- Consolidate project guidance; remove obsolete compressor documentation, unused helper exports/loading styles, duplicate TypeScript declaration and stale sharp build permission.
+
+
 ## [0.14.1] - 2026-07-06
 
 ### Changed

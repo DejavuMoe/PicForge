@@ -12,4 +12,4 @@
 
 ## Notes
 
-PicForge is local-first. Do not add uploads, telemetry, or remote image processing without explicit user-facing opt-in.
+PicForge is local-first. Do not add uploads, telemetry, or remote image processing without explicit product approval.

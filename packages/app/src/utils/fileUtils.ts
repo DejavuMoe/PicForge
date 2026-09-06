@@ -30,14 +30,6 @@ export function compressionRatio(original: number, compressed: number): number {
 }
 
 /**
- * Get file extension from a filename.
- */
-export function getExtension(filename: string): string {
-  const lastDot = filename.lastIndexOf('.');
-  return lastDot === -1 ? '' : filename.slice(lastDot);
-}
-
-/**
  * Replace file extension.
  */
 export function replaceExtension(filename: string, newExt: string): string {

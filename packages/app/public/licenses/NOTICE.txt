@@ -1,0 +1,26 @@
+PicForge third-party media components
+
+PicForge application source: MIT. The separately distributed codec binaries are NOT MIT.
+
+MotionFlow binary extraction design: Copyright (c) 2025 Dejavu Moe <admin@dejavu.moe>, MIT (MotionFlow-MIT.txt).
+
+@ffmpeg/ffmpeg 0.12.15: MIT wrapper.
+@ffmpeg/core 0.12.10: GPL-2.0-or-later, FFmpeg with GPL codec components including x264.
+License: FFmpeg-GPL-2.0.txt. Build scripts and pinned external component source revisions:
+https://github.com/ffmpegwasm/ffmpeg.wasm/tree/v0.12.10
+https://github.com/ffmpegwasm/ffmpeg.wasm/tree/v0.12.10/build
+https://github.com/FFmpeg/FFmpeg
+https://code.videolan.org/videolan/x264
+Binary is copied without modification from the pinned npm package by scripts/prepare-codecs.mjs.
+Redistributors must satisfy corresponding-source distribution obligations for the codec binary;
+these links identify upstream sources and are not a substitute for a corresponding-source release archive.
+
+libheif-js 1.19.8: LGPL-3.0, includes libheif/libde265.
+License: libheif-LGPL-3.0.txt, plus /wasm/heif-1.19.8/LICENSE (bundled component notices).
+Source and build scripts: https://github.com/catdad-experiments/libheif-js/tree/v1.19.8
+https://github.com/strukturag/libheif
+https://github.com/strukturag/libde265
+The browser module is copied unmodified and can be replaced independently.
+
+Existing image encoders: @jsquash/jpeg, @jsquash/webp, @jsquash/avif, @jsquash/oxipng.
+Source, licenses and build instructions: https://github.com/jamsinclair/jSquash

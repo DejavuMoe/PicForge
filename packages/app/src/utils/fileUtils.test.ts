@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatFileSize, compressionRatio, getExtension, replaceExtension, isSupportedImage } from './fileUtils';
+import { formatFileSize, compressionRatio, replaceExtension, isSupportedImage } from './fileUtils';
 
 describe('formatFileSize', () => {
   it('formats 0 bytes', () => {
@@ -38,21 +38,6 @@ describe('compressionRatio', () => {
 
   it('handles larger compressed than original', () => {
     expect(compressionRatio(1000, 1200)).toBe(-20);
-  });
-});
-
-describe('getExtension', () => {
-  it('returns extension with dot', () => {
-    expect(getExtension('photo.jpg')).toBe('.jpg');
-    expect(getExtension('image.png')).toBe('.png');
-  });
-
-  it('returns empty string for no extension', () => {
-    expect(getExtension('README')).toBe('');
-  });
-
-  it('handles multiple dots', () => {
-    expect(getExtension('archive.tar.gz')).toBe('.gz');
   });
 });
 

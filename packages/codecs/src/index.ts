@@ -5,7 +5,7 @@
  * Provides codec loading and encoding functions.
  */
 
-export { encodeImage, clearCodecCache } from './codecLoader';
+export { encodeImage } from './codecLoader';
 
 export type {
   OutputFormat,

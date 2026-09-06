@@ -35,3 +35,7 @@ Thumbs.db
 tmp/
 temp/
 *.local.*
+
+# Reproducibly copied from pinned npm codec packages
+packages/app/public/wasm/ffmpeg-*/
+packages/app/public/wasm/heif-*/

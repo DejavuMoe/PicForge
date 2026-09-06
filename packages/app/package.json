@@ -1,8 +1,8 @@
 {
   "name": "@pic-forge/app",
-  "version": "0.14.1",
+  "version": "0.15.0",
   "private": true,
-  "description": "PicForge browser app for local batch image compression",
+  "description": "Local browser image toolbox: compression, Motion Photo extraction and Live Photo conversion",
   "license": "MIT",
   "author": "DejavuMoe",
   "homepage": "https://picforge.de",
@@ -16,17 +16,20 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "node scripts/prepare-codecs.mjs && vite",
+    "build": "node scripts/prepare-codecs.mjs && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ffmpeg/core": "0.12.10",
+    "@ffmpeg/ffmpeg": "0.12.15",
     "@pic-forge/codecs": "workspace:*",
     "@pic-forge/worker": "workspace:*",
     "file-saver": "^2.0.5",
     "i18next": "^26.3.1",
     "i18next-browser-languagedetector": "^8.2.1",
     "jszip": "^3.10.1",
+    "libheif-js": "1.19.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^17.0.8",
@@ -38,7 +41,6 @@
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.2.1",
-    "typescript": "^5.3.3",
     "vite": "^5.0.12",
     "vite-plugin-wasm": "^3.6.0"
   }

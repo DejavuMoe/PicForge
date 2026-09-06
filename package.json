@@ -1,8 +1,8 @@
 {
   "name": "pic-forge",
-  "version": "0.14.1",
+  "version": "0.15.0",
   "private": true,
-  "description": "Browser-based batch image compression tool powered by WebAssembly codecs",
+  "description": "Local browser image toolbox: compression, Motion Photo extraction and Live Photo conversion",
   "license": "MIT",
   "author": "DejavuMoe",
   "homepage": "https://picforge.de",
@@ -25,7 +25,8 @@
     "typecheck": "pnpm typecheck:app && pnpm typecheck:worker && pnpm typecheck:codecs",
     "typecheck:app": "tsc --noEmit -p packages/app/tsconfig.json",
     "typecheck:worker": "tsc --noEmit -p packages/worker/tsconfig.json",
-    "typecheck:codecs": "tsc --noEmit -p packages/codecs/tsconfig.json"
+    "typecheck:codecs": "tsc --noEmit -p packages/codecs/tsconfig.json",
+    "test:browser": "pnpm build && node scripts/browser-check.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -34,6 +35,7 @@
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "playwright": "1.58.2",
     "prettier": "^3.2.4",
     "typescript": "^5.3.3",
     "vitest": "^2.1.9"

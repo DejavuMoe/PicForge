@@ -211,10 +211,3 @@ async function encodeWithCanvas(
     );
   });
 }
-
-export function clearCodecCache(): void {
-  jpegEncode = null; jpegLock = null;
-  webpEncode = null; webpLock = null;
-  oxipngOptimise = null; oxipngLock = null;
-  avifEncode = null; avifLock = null;
-}

@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "PicForge",
-    "subtitle": "ローカルで一括画像圧縮とリサイズ"
+    "subtitle": "ローカル画像ツール"
   },
   "dropzone": {
     "dragActive": "ここにドロップ",
@@ -150,5 +150,62 @@
     "zoom": {
       "fit": "フィット"
     }
+  },
+  "motion": {
+    "tools": "画像ツール",
+    "compression": "画像圧縮",
+    "android": "Android モーションフォト",
+    "ios": "iOS Live Photos",
+    "local": "ローカルで処理。ウェブで活用。",
+    "androidBody": "モーションフォトを元の JPG と MP4 に一括分離。すべてブラウザー内で処理します。",
+    "iosBody": "未編集の Live Photo 原本から、同名の JPG + H.264 MP4 をウェブ用に作成します。",
+    "output": "出力設定",
+    "lossless": "元の JPG + MP4 · 再エンコードなし",
+    "preset": "動画プリセット",
+    "balanced": "バランス · 1920px",
+    "quality": "高画質 · 1920px",
+    "compact": "小さいサイズ · 1280px",
+    "fps": "動画フレームレート",
+    "sourceFps": "元のタイムスタンプを保持",
+    "jpegQuality": "JPEG 品質",
+    "audio": "音声を保持",
+    "androidNote": "元の画像と動画のバイトを保持します。プレビュー再生は元のコーデックに依存します。",
+    "iosNote": "ウェブ用の派生ファイルです。HEIC のメタデータ、HDR、補助画像は保持しません。1 ファイル 100 MB、HEIC は 5000 万画素まで。",
+    "offline": "ファイルは端末に留まります。変換エンジンは初回使用時に読み込み、キャッシュ後にオフラインで利用できます。",
+    "queue": "処理キュー",
+    "drop": "原本をここにドロップ",
+    "select": "ファイルを選択",
+    "pairing": "同名ファイルをペアにします。写真と動画を一緒に追加してください。単独ファイルも変換できます。同名の重複は先に解消してください。",
+    "count": "{{done}} / {{total}} 件完了",
+    "clear": "バッチをクリア",
+    "cancel": "キャンセル",
+    "start": "未完了分を処理",
+    "exporting": "ZIP 作成中…",
+    "zip": "ZIP をダウンロード",
+    "download": "ダウンロード",
+    "motionPhoto": "モーションフォト",
+    "pair": "Live Photo ペア",
+    "still": "静止画",
+    "video": "動画のみ",
+    "queued": "準備完了",
+    "processing": "処理中…",
+    "done": "完了",
+    "error": "失敗",
+    "loading": "ツールを読み込み中…",
+    "errors": {
+      "unsupported": "未対応のファイル形式です。",
+      "ambiguous": "同名ファイルが重複しています。バッチをクリアして一意のペアを選択してください。",
+      "invalidMotion": "JPEG に有効な MP4 が見つかりません。",
+      "invalidHeic": "HEIC 画像をデコードできません。",
+      "tooManyPixels": "HEIC が 5000 万画素の上限を超えています。",
+      "tooLarge": "ファイルが 100 MB の上限を超えています。",
+      "timeout": "変換がタイムアウトしました。小さいファイルで再試行してください。",
+      "engineFailed": "変換エンジンが失敗しました。空きメモリーと初回読み込み時の接続を確認して再試行してください。",
+      "videoFailed": "動画変換に失敗しました。小さいファイルで再試行してください。",
+      "cancelled": "キャンセルしました。再試行できます。",
+      "exportFailed": "ZIP 出力に失敗しました。個別にダウンロードするかバッチを小さくしてください。",
+      "batchLimit": "1 バッチは 100 ファイル、合計 256 MB までです。"
+    },
+    "previewUnavailable": "このブラウザーでは動画をプレビューできません。出力ファイルはダウンロードできます。"
   }
 }

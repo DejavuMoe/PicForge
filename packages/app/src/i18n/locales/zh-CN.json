@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "PicForge",
-    "subtitle": "本地批量图片压缩与尺寸调整"
+    "subtitle": "本地图片工具箱"
   },
   "dropzone": {
     "dragActive": "松开以导入图片",
@@ -150,5 +150,62 @@
     "zoom": {
       "fit": "适应"
     }
+  },
+  "motion": {
+    "tools": "图片工具箱",
+    "compression": "图片压缩",
+    "android": "Android 动态照片",
+    "ios": "iOS 实况照片",
+    "local": "本地处理，为网页准备。",
+    "androidBody": "批量将 Motion Photos 拆分为原始 JPG 和 MP4，所有处理都在浏览器内完成。",
+    "iosBody": "将导出的未修改实况原片转换为同名 JPG + H.264 MP4，方便用于网页。",
+    "output": "导出设置",
+    "lossless": "原始 JPG + MP4 · 不重新编码",
+    "preset": "视频预设",
+    "balanced": "均衡 · 1920px",
+    "quality": "画质优先 · 1920px",
+    "compact": "体积优先 · 1280px",
+    "fps": "视频帧率",
+    "sourceFps": "保留原始时间戳",
+    "jpegQuality": "JPEG 质量",
+    "audio": "保留声音",
+    "androidNote": "保留原始图片和视频字节。预览播放能力取决于原视频编码。",
+    "iosNote": "导出的是网页用衍生文件。不会保留 HEIC 元数据、HDR 和辅助图像。每个文件最多 100 MB，HEIC 最多 5000 万像素。",
+    "offline": "文件始终留在本机。转换引擎首次使用时加载，缓存后才可离线使用。",
+    "queue": "处理队列",
+    "drop": "将原片拖放到这里",
+    "select": "选择文件",
+    "pairing": "按同名文件配对，请一起导入照片和视频。单独的图片或视频也可转换；重名冲突需要先解决。",
+    "count": "已完成 {{done}} / {{total}} 项",
+    "clear": "清空批次",
+    "cancel": "取消",
+    "start": "处理待完成项",
+    "exporting": "正在打包…",
+    "zip": "下载 ZIP",
+    "download": "下载",
+    "motionPhoto": "动态照片",
+    "pair": "实况照片配对",
+    "still": "静态图片",
+    "video": "独立视频",
+    "queued": "准备就绪",
+    "processing": "正在处理…",
+    "done": "已完成",
+    "error": "失败",
+    "loading": "正在加载工具…",
+    "errors": {
+      "unsupported": "不支持此文件类型。",
+      "ambiguous": "存在多个同名文件，请清空批次并选择唯一配对。",
+      "invalidMotion": "此 JPEG 中未找到有效的附加 MP4。",
+      "invalidHeic": "无法解码此 HEIC 图片。",
+      "tooManyPixels": "HEIC 超过 5000 万像素的安全上限。",
+      "tooLarge": "源文件超过 100 MB 上限。",
+      "timeout": "转换超时，请尝试较小的源文件。",
+      "engineFailed": "本地转换引擎失败。请检查可用内存以及首次加载引擎的网络连接，然后重试。",
+      "videoFailed": "视频转换失败，请尝试较小的源文件。",
+      "cancelled": "已取消，可重新处理此项。",
+      "exportFailed": "ZIP 导出失败，请逐项下载或缩小批次。",
+      "batchLimit": "每批最多 100 个文件，源文件总计不超过 256 MB。"
+    },
+    "previewUnavailable": "当前浏览器无法预览此视频编码，仍可下载导出的文件。"
   }
 }

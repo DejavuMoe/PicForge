@@ -73,34 +73,6 @@ button:disabled {
   max-width: 560px;
 }
 
-.pf-workspace-loading {
-  display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
-  flex-direction: column;
-  background: var(--pf-page-bg, #ffffff);
-}
-
-.pf-workspace-loading-toolbar {
-  height: 48px;
-  flex: 0 0 auto;
-  border-bottom: 1px solid var(--pf-border-default, #eaeaea);
-  background: var(--pf-page-bg, #ffffff);
-}
-
-.pf-workspace-loading-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  background: var(--pf-surface-bg, #fafafa);
-}
-
-.pf-workspace-loading-status {
-  height: 44px;
-  flex: 0 0 auto;
-  border-top: 1px solid var(--pf-border-default, #eaeaea);
-  background: var(--pf-page-bg, #ffffff);
-}
-
 .pf-header {
   display: flex;
   flex: 0 0 auto;
@@ -2351,4 +2323,251 @@ button:disabled {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Shared toolbox navigation and local motion-photo workspaces. */
+.pf-toolbox {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+.pf-tool-nav {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--pf-border-default);
+  overflow-x: auto;
+}
+.pf-tool-nav button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  white-space: nowrap;
+  background: transparent;
+  color: var(--pf-text-secondary);
+}
+.pf-tool-nav button[aria-current] {
+  color: var(--pf-accent);
+  background: var(--pf-selected-bg);
+}
+.pf-tool-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.pf-tool-panel[hidden] {
+  display: none;
+}
+.pf-tool-panel > .pf-app {
+  height: 100%;
+}
+.pf-motion-workspace {
+  height: 100%;
+  overflow: auto;
+  padding: 36px max(24px, calc((100% - 1200px) / 2));
+  background: var(--pf-surface-bg);
+}
+.pf-motion-heading {
+  margin-bottom: 28px;
+}
+.pf-motion-heading h1 {
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -1px;
+  margin: 8px 0;
+}
+.pf-motion-heading p {
+  color: var(--pf-text-secondary);
+  line-height: 1.7;
+  max-width: 740px;
+}
+.pf-motion-eyebrow {
+  color: var(--pf-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.pf-motion-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.pf-motion-settings,
+.pf-motion-item {
+  background: var(--pf-card-bg);
+  border: 1px solid var(--pf-border-default);
+  border-radius: 12px;
+  padding: 20px;
+}
+.pf-motion-settings h2,
+.pf-motion-drop h2 {
+  font-size: 16px;
+  margin: 0 0 16px;
+}
+.pf-motion-settings fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 20px;
+}
+.pf-motion-settings label {
+  display: grid;
+  gap: 10px;
+  font-size: 13px;
+}
+.pf-motion-settings select {
+  max-width: 100%;
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--pf-border-default);
+  color: var(--pf-text-primary);
+  background: var(--pf-page-bg);
+}
+.pf-motion-settings .pf-motion-check {
+  display: flex;
+  align-items: center;
+}
+.pf-motion-note {
+  color: var(--pf-text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.pf-motion-settings .pf-motion-note {
+  margin-top: 22px;
+}
+.pf-motion-drop {
+  text-align: center;
+  border: 1px dashed var(--pf-border-hover);
+  border-radius: 12px;
+  padding: 28px;
+  background: var(--pf-card-bg);
+}
+.pf-motion-drop > svg {
+  color: var(--pf-accent);
+  margin-bottom: 14px;
+}
+.pf-motion-drop.is-dragging {
+  background: var(--pf-selected-bg);
+  border-color: var(--pf-accent);
+}
+.pf-motion-drop p {
+  color: var(--pf-text-secondary);
+  font-size: 12px;
+}
+.pf-motion-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--pf-border-default);
+  padding: 9px 12px;
+  border-radius: 7px;
+  color: var(--pf-text-primary);
+  background: var(--pf-card-bg);
+  font-size: 12px;
+}
+.pf-motion-button.is-primary {
+  background: var(--pf-accent);
+  border-color: var(--pf-accent);
+  color: white;
+}
+.pf-motion-button:disabled {
+  opacity: 0.45;
+}
+.pf-motion-button:focus-visible,
+.pf-tool-nav button:focus-visible {
+  outline: 2px solid var(--pf-accent);
+  outline-offset: 3px;
+}
+.pf-motion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0;
+}
+.pf-motion-actions > span {
+  flex: 1;
+  font-size: 12px;
+  min-width: 120px;
+}
+.pf-motion-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  gap: 16px;
+}
+.pf-motion-item {
+  min-width: 0;
+}
+.pf-motion-item-heading {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pf-motion-item-heading strong {
+  overflow-wrap: anywhere;
+}
+.pf-motion-badge {
+  font-size: 10px;
+  border: 1px solid var(--pf-border-default);
+  border-radius: 4px;
+  padding: 3px 6px;
+  color: var(--pf-text-secondary);
+}
+.pf-motion-output video,
+.pf-motion-output img {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  background: #111;
+  border-radius: 8px;
+}
+.pf-motion-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pf-motion-error {
+  color: var(--pf-error);
+  font-size: 13px;
+}
+.pf-motion-item progress {
+  width: 100%;
+  accent-color: var(--pf-accent);
+}
+@media (max-width: 700px) {
+  .pf-motion-workspace {
+    padding: 24px 16px;
+  }
+  .pf-motion-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .pf-motion-settings fieldset {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pf-tool-nav {
+    padding: 8px;
+    gap: 0;
+  }
+  .pf-tool-nav button {
+    font-size: 12px;
+    padding: 10px;
+  }
+}
+.pf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

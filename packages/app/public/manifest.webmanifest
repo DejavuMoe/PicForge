@@ -1,7 +1,7 @@
 {
-  "name": "PicForge - Local Image Compression",
+  "name": "PicForge - Local Image Toolbox",
   "short_name": "PicForge",
-  "description": "Compress, resize, compare, and export batches of images locally in your browser. No uploads, no server processing.",
+  "description": "Local batch image compression, Android Motion Photo extraction, and iOS Live Photo conversion.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -9,7 +9,11 @@
   "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#111111",
-  "categories": ["photo", "productivity", "utilities"],
+  "categories": [
+    "photo",
+    "productivity",
+    "utilities"
+  ],
   "lang": "en",
   "icons": [
     {

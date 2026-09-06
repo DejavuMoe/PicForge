@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "PicForge",
-    "subtitle": "本機批次圖片壓縮與尺寸調整"
+    "subtitle": "本機圖片工具箱"
   },
   "dropzone": {
     "dragActive": "放開以匯入圖片",
@@ -150,5 +150,62 @@
     "zoom": {
       "fit": "適應"
     }
+  },
+  "motion": {
+    "tools": "圖片工具箱",
+    "compression": "圖片壓縮",
+    "android": "Android 動態照片",
+    "ios": "iOS 實況照片",
+    "local": "本機處理，為網頁準備。",
+    "androidBody": "批次將 Motion Photos 拆分為原始 JPG 和 MP4，所有處理都在瀏覽器內完成。",
+    "iosBody": "將匯出的未修改實況原片轉換為同名 JPG + H.264 MP4，方便用於網頁。",
+    "output": "匯出設定",
+    "lossless": "原始 JPG + MP4 · 不重新編碼",
+    "preset": "影片預設",
+    "balanced": "均衡 · 1920px",
+    "quality": "畫質優先 · 1920px",
+    "compact": "體積優先 · 1280px",
+    "fps": "影片幀率",
+    "sourceFps": "保留原始時間戳記",
+    "jpegQuality": "JPEG 品質",
+    "audio": "保留聲音",
+    "androidNote": "保留原始圖片和影片位元組。預覽能力取決於原始影片編碼。",
+    "iosNote": "匯出網頁用衍生檔案，不保留 HEIC 中繼資料、HDR 和輔助影像。每個檔案最多 100 MB，HEIC 最多 5000 萬像素。",
+    "offline": "檔案始終留在本機。轉換引擎首次使用時載入，快取後才可離線使用。",
+    "queue": "處理佇列",
+    "drop": "將原片拖放到這裡",
+    "select": "選擇檔案",
+    "pairing": "依同名檔案配對，請一起匯入照片和影片。獨立的圖片或影片也可轉換；重名衝突需要先解決。",
+    "count": "已完成 {{done}} / {{total}} 項",
+    "clear": "清空批次",
+    "cancel": "取消",
+    "start": "處理待完成項目",
+    "exporting": "正在打包…",
+    "zip": "下載 ZIP",
+    "download": "下載",
+    "motionPhoto": "動態照片",
+    "pair": "實況照片配對",
+    "still": "靜態圖片",
+    "video": "獨立影片",
+    "queued": "準備就緒",
+    "processing": "正在處理…",
+    "done": "已完成",
+    "error": "失敗",
+    "loading": "正在載入工具…",
+    "errors": {
+      "unsupported": "不支援此檔案類型。",
+      "ambiguous": "存在多個同名檔案，請清空批次並選擇唯一配對。",
+      "invalidMotion": "此 JPEG 中未找到有效的附加 MP4。",
+      "invalidHeic": "無法解碼此 HEIC 圖片。",
+      "tooManyPixels": "HEIC 超過 5000 萬像素上限。",
+      "tooLarge": "來源檔案超過 100 MB 上限。",
+      "timeout": "轉換逾時，請嘗試較小的來源檔案。",
+      "engineFailed": "本機轉換引擎失敗，請檢查記憶體與首次載入時的網路連線後重試。",
+      "videoFailed": "影片轉換失敗，請嘗試較小的來源檔案。",
+      "cancelled": "已取消，可重新處理此項。",
+      "exportFailed": "ZIP 匯出失敗，請逐項下載或縮小批次。",
+      "batchLimit": "每批最多 100 個檔案，來源檔案總計不超過 256 MB。"
+    },
+    "previewUnavailable": "目前瀏覽器無法預覽此影片編碼，仍可下載匯出的檔案。"
   }
 }

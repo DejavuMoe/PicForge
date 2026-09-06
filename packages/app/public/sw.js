@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'picforge-v0.14.1';
+const CACHE_VERSION = 'picforge-v0.15.0';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-app-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -25,7 +25,14 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(APP_SHELL_CACHE)
-      .then((cache) => cache.addAll(APP_SHELL.map((url) => new Request(url, { cache: 'reload' }))))
+      .then(async (cache) => {
+        const response = await fetch('/precache.json', { cache: 'reload' });
+        if (!response.ok) throw new Error('Missing application precache manifest');
+        const modules = await response.json();
+        await cache.addAll(
+          [...APP_SHELL, ...modules].map((url) => new Request(url, { cache: 'reload' })),
+        );
+      })
       .then(() => self.skipWaiting()),
   );
 });
@@ -70,7 +77,7 @@ function isStaticAsset(url) {
     url.pathname.startsWith('/assets/') ||
     url.pathname.startsWith('/fonts/') ||
     url.pathname.startsWith('/wasm/') ||
-    /\.(?:css|js|svg|png|webp|avif|ico|woff2?)$/i.test(url.pathname)
+    /\.(?:css|m?js|svg|png|webp|avif|ico|woff2?)$/i.test(url.pathname)
   );
 }
 
@@ -86,7 +93,8 @@ async function networkFirstPage(request) {
 }
 
 async function cacheFirst(request) {
-  const cached = await caches.match(request);
+  // Same-origin static files have identical content across Origin request modes.
+  const cached = await caches.match(request, { ignoreVary: true });
   if (cached) return cached;
 
   const response = await fetch(request);

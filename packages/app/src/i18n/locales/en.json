@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "PicForge",
-    "subtitle": "Local batch image compression and resizing"
+    "subtitle": "Local image toolbox"
   },
   "dropzone": {
     "dragActive": "Drop images here",
@@ -150,5 +150,62 @@
     "zoom": {
       "fit": "Fit"
     }
+  },
+  "motion": {
+    "tools": "Image tools",
+    "compression": "Image compression",
+    "android": "Android Motion Photos",
+    "ios": "iOS Live Photos",
+    "local": "LOCAL FILES. READY FOR THE WEB.",
+    "androidBody": "Unpack Motion Photos into the original JPG and MP4. Batch processing, entirely in your browser.",
+    "iosBody": "Turn unmodified Live Photo originals into matching JPG + H.264 MP4 assets for the web.",
+    "output": "Output settings",
+    "lossless": "Original JPG + MP4 · no re-encoding",
+    "preset": "Video preset",
+    "balanced": "Balanced · 1920px",
+    "quality": "Higher quality · 1920px",
+    "compact": "Smaller files · 1280px",
+    "fps": "Video frame rate",
+    "sourceFps": "Preserve source timing",
+    "jpegQuality": "JPEG quality",
+    "audio": "Keep audio",
+    "androidNote": "The original image and video bytes are preserved. Playback depends on the embedded codec.",
+    "iosNote": "Web derivatives, not Apple Live Photo archives. HEIC metadata, HDR and auxiliary images are not preserved. Max 100 MB per file / 50 MP per HEIC.",
+    "offline": "Files stay on this device. Conversion engines load on first use; offline use requires that they have been cached.",
+    "queue": "Processing queue",
+    "drop": "Drop your originals here",
+    "select": "Choose files",
+    "pairing": "Pairing uses matching filenames. Import both files together. Unmatched images or videos can be converted separately; duplicate names need to be resolved before processing.",
+    "count": "{{done}} / {{total}} completed",
+    "clear": "Clear batch",
+    "cancel": "Cancel",
+    "start": "Process pending",
+    "exporting": "Packing…",
+    "zip": "Download ZIP",
+    "download": "Download",
+    "motionPhoto": "Motion Photo",
+    "pair": "Live Photo pair",
+    "still": "Still image",
+    "video": "Video only",
+    "queued": "Ready",
+    "processing": "Processing…",
+    "done": "Completed",
+    "error": "Failed",
+    "loading": "Loading tool…",
+    "errors": {
+      "unsupported": "Unsupported file type.",
+      "ambiguous": "Multiple files share this name. Clear the batch and choose one matching pair.",
+      "invalidMotion": "No valid appended MP4 was found in this JPEG.",
+      "invalidHeic": "Unable to decode this HEIC image.",
+      "tooManyPixels": "HEIC exceeds the 50 megapixel safety limit.",
+      "tooLarge": "A source file exceeds the 100 MB limit.",
+      "timeout": "Conversion timed out. Retry with a smaller source.",
+      "engineFailed": "The local conversion engine failed. Check available memory and connection for the first engine load, then retry.",
+      "videoFailed": "Video conversion failed. Retry with a smaller source.",
+      "cancelled": "Cancelled. You can retry this item.",
+      "exportFailed": "ZIP export failed. Try individual downloads or a smaller batch.",
+      "batchLimit": "Use at most 100 files and 256 MB of sources per batch."
+    },
+    "previewUnavailable": "This browser cannot preview this video codec. The exported file is available to download."
   }
 }

@@ -10,12 +10,31 @@ const appPackage = JSON.parse(
 );
 
 function isReactVendor(id) {
-  return /node_modules\/\.pnpm\/(react|react-dom|scheduler)@/.test(id)
-    || /node_modules\/(react|react-dom|scheduler)\//.test(id);
+  return (
+    /node_modules\/\.pnpm\/(react|react-dom|scheduler)@/.test(id) ||
+    /node_modules\/(react|react-dom|scheduler)\//.test(id)
+  );
 }
 
 export default defineConfig({
-  plugins: [react(), wasm()],
+  plugins: [
+    react(),
+    wasm(),
+    {
+      name: 'picforge-precache',
+      generateBundle(_options, bundle) {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'precache.json',
+          source: JSON.stringify(
+            Object.keys(bundle)
+              .filter((name) => /\.(js|css)$/.test(name))
+              .map((name) => `/${name}`),
+          ),
+        });
+      },
+    },
+  ],
   define: {
     __APP_VERSION__: JSON.stringify(appPackage.version),
   },
@@ -30,7 +49,7 @@ export default defineConfig({
     plugins: () => [wasm()],
   },
   optimizeDeps: {
-    exclude: ['@pic-forge/codecs', '@pic-forge/worker'],
+    exclude: ['@pic-forge/codecs', '@pic-forge/worker', '@ffmpeg/ffmpeg'],
   },
   esbuild: {
     target: 'es2020',

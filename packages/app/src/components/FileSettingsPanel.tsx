@@ -104,7 +104,6 @@ export function FileSettingsPanel({ file }: FileSettingsPanelProps) {
             value={draftQuality}
             style={getRangeProgressStyle(draftQuality, 0, 100)}
             onChange={(event) => commitQuality(Number(event.target.value))}
-            onInput={(event) => commitQuality(Number(event.currentTarget.value))}
           />
           <span className="pf-toolbar-value">{draftQuality}</span>
         </label>
@@ -181,7 +180,6 @@ export function FileSettingsPanel({ file }: FileSettingsPanelProps) {
                   aria-label={t('settings.percentageMode')}
                   style={getRangeProgressStyle(draftPercentage, 1, 100)}
                   onChange={(event) => commitPercentage(Number(event.target.value))}
-                  onInput={(event) => commitPercentage(Number(event.currentTarget.value))}
                 />
                 <span className="pf-toolbar-value pf-toolbar-value-wide">{draftPercentage}%</span>
               </div>

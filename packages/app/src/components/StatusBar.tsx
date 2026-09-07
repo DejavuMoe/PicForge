@@ -17,7 +17,7 @@ import { useFileStore } from '../stores/fileStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { formatFileSize, compressionRatio } from '../utils/fileUtils';
 import type { ImageFile } from '../types';
-import { createExportManifest, createZipName, getOutputName } from '../utils/exportManifest';
+import { createExportManifest, createZipName, getOutputName, isResultExportable } from '../utils/exportManifest';
 
 interface StatusBarProps {
   selectedFile: ImageFile | null;
@@ -38,8 +38,8 @@ export function StatusBar({ selectedFile }: StatusBarProps) {
     return () => window.removeEventListener('wasm-loading', handler);
   }, []);
 
-  const doneFiles = files.filter((f) => f.status === 'done' && f.result);
-  const selectedDone = selectedFile?.status === 'done' && selectedFile.result ? selectedFile : null;
+  const doneFiles = files.filter((f) => isResultExportable(f, settings));
+  const selectedDone = selectedFile && isResultExportable(selectedFile, settings) ? selectedFile : null;
   const canDownloadCurrent = !!selectedDone;
   const canDownloadZip = doneFiles.length >= 2;
 
@@ -50,9 +50,10 @@ export function StatusBar({ selectedFile }: StatusBarProps) {
     let processing = 0;
     let done = 0;
     let error = 0;
+    let cancelled = 0;
     for (const f of files) {
       totalOriginal += f.originalSize;
-      if (f.result) totalCompressed += f.result.size;
+      if (isResultExportable(f, settings)) totalCompressed += f.result!.size;
       switch (f.status) {
         case 'processing':
           processing++;
@@ -63,13 +64,17 @@ export function StatusBar({ selectedFile }: StatusBarProps) {
         case 'error':
           error++;
           break;
+        case 'cancelled':
+          cancelled++;
+          break;
       }
     }
-    return { total: files.length, processing, done, error, totalOriginal, totalCompressed };
+    return { total: files.length, processing, done, error, cancelled, totalOriginal, totalCompressed };
   })();
 
-  const percent = stats.total > 0 ? Math.round(((stats.done + stats.error) / stats.total) * 100) : 0;
-  const isComplete = stats.done + stats.error === stats.total && stats.total > 0;
+  const finished = stats.done + stats.error + stats.cancelled;
+  const percent = stats.total > 0 ? Math.round((finished / stats.total) * 100) : 0;
+  const isComplete = finished === stats.total && stats.total > 0;
   const isProcessing = stats.processing > 0;
 
   const ratio = stats.done > 0 && stats.totalOriginal > 0
@@ -79,13 +84,17 @@ export function StatusBar({ selectedFile }: StatusBarProps) {
   const progressClass = stats.error > 0 ? 'has-error' : isComplete ? 'is-complete' : 'is-active';
 
   const handleDownloadCurrent = useCallback(async () => {
-    if (!selectedDone?.result) return;
+    if (!selectedDone?.result || !isResultExportable(selectedDone, settings)) return;
     const { saveAs } = await import('file-saver');
     saveAs(selectedDone.result.blob, getOutputName(selectedDone, settings));
   }, [selectedDone, settings]);
 
   const handleDownloadZip = useCallback(async () => {
-    if (doneFiles.length === 0) return;
+    const currentSettings = useSettingsStore.getState().settings;
+    const exportable = useFileStore.getState().files.filter((file) =>
+      isResultExportable(file, currentSettings),
+    );
+    if (exportable.length === 0) return;
     setIsZipping(true);
     try {
       const [{ default: JSZip }, { saveAs }] = await Promise.all([
@@ -94,12 +103,11 @@ export function StatusBar({ selectedFile }: StatusBarProps) {
       ]);
       const zip = new JSZip();
       const date = new Date();
-      const manifest = createExportManifest(doneFiles, settings, __APP_VERSION__, date);
+      const manifest = createExportManifest(exportable, currentSettings, __APP_VERSION__, date);
       for (const fileEntry of manifest.files) {
-        const file = doneFiles.find((item) => item.id === fileEntry.sourceId);
-        if (!file?.result) continue;
-        const outputName = fileEntry.outputName;
-        zip.file(outputName, file.result.blob);
+        const file = exportable.find((item) => item.id === fileEntry.sourceId);
+        if (!file?.result || !isResultExportable(file, currentSettings)) continue;
+        zip.file(fileEntry.outputName, file.result.blob);
       }
       zip.file('picforge-manifest.json', JSON.stringify(manifest, null, 2));
       const blob = await zip.generateAsync({ type: 'blob' });
@@ -109,7 +117,7 @@ export function StatusBar({ selectedFile }: StatusBarProps) {
     } finally {
       setIsZipping(false);
     }
-  }, [doneFiles, settings]);
+  }, []);
 
   if (stats.total === 0) return null;
 
@@ -123,7 +131,7 @@ export function StatusBar({ selectedFile }: StatusBarProps) {
       <div className="pf-status-progress-group">
         <div
           className={`pf-status-progress ${progressClass}${isProcessing ? ' is-processing' : ''}`}
-          aria-label={`${stats.done + stats.error} / ${stats.total}`}
+          aria-label={`${finished} / ${stats.total}`}
           aria-valuemax={100}
           aria-valuemin={0}
           aria-valuenow={percent}
@@ -132,7 +140,7 @@ export function StatusBar({ selectedFile }: StatusBarProps) {
           <span className="pf-status-progress-fill" style={{ width: `${percent}%` }} />
         </div>
         <span className="pf-status-count">
-          {stats.done + stats.error} / {stats.total}
+          {finished} / {stats.total}
         </span>
       </div>
 

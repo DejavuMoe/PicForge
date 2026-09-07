@@ -12,11 +12,16 @@ const SHORT_LANG: Record<string, string> = {
   ko: 'KR',
 };
 
-export function Header() {
+interface HeaderProps {
+  onHome: () => void;
+}
+
+export function Header({ onHome }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const c = useThemeColors();
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
+  const languageButtonRef = useRef<HTMLButtonElement>(null);
 
   const currentLang =
     SUPPORTED_LANGUAGES.find((language) => language.code === i18n.language) ??
@@ -25,41 +30,77 @@ export function Header() {
   useEffect(() => {
     if (!isLanguageOpen) return undefined;
 
+    // Move focus into the menu so keyboard users land on the current language.
+    const menu = languageMenuRef.current;
+    const initial =
+      menu?.querySelector<HTMLButtonElement>('.pf-language-item.is-active') ??
+      menu?.querySelector<HTMLButtonElement>('.pf-language-item');
+    initial?.focus();
+
     const handlePointerDown = (event: PointerEvent) => {
       if (languageMenuRef.current && !languageMenuRef.current.contains(event.target as Node)) {
         setIsLanguageOpen(false);
       }
     };
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsLanguageOpen(false);
-    };
-
     window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isLanguageOpen]);
 
+  const handleMenuKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsLanguageOpen(false);
+      languageButtonRef.current?.focus();
+      return;
+    }
+    const items = Array.from(
+      languageMenuRef.current?.querySelectorAll<HTMLButtonElement>('.pf-language-item') ?? [],
+    );
+    if (items.length === 0) return;
+    const index = items.indexOf(event.target as HTMLButtonElement);
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      items[(index + 1) % items.length]?.focus();
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      items[(index - 1 + items.length) % items.length]?.focus();
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      items[0]?.focus();
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      items[items.length - 1]?.focus();
+    } else if (event.key === 'Tab') {
+      setIsLanguageOpen(false);
+    }
+  };
+
   return (
     <header className="pf-header">
-      <a href="/" className="pf-brand-link">
+      <button
+        type="button"
+        className="pf-brand-link pf-brand-button"
+        onClick={onHome}
+        aria-label={t('app.title')}
+      >
         <span className="pf-brand">
           <span className="pf-logo">P</span>
           <span className="pf-brand-title">{t('app.title')}</span>
-          <span className="pf-brand-subtitle">{t('app.subtitle')}</span>
         </span>
-      </a>
+      </button>
 
       <div className="pf-header-spacer" />
 
       <div className="pf-header-actions">
-        <div className="pf-header-menu-wrap" ref={languageMenuRef}>
+        <div className="pf-header-menu-wrap" ref={languageMenuRef} onKeyDown={handleMenuKeyDown}>
           <button
             type="button"
             className="pf-header-button"
+            ref={languageButtonRef}
             aria-haspopup="menu"
             aria-expanded={isLanguageOpen}
             onClick={() => setIsLanguageOpen((open) => !open)}
@@ -80,6 +121,7 @@ export function Header() {
                   onClick={() => {
                     i18n.changeLanguage(language.code);
                     setIsLanguageOpen(false);
+                    languageButtonRef.current?.focus();
                   }}
                 >
                   {language.label}

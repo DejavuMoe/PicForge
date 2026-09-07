@@ -16,11 +16,10 @@ import { FiDownload, FiRefreshCw, FiSliders, FiStopCircle, FiX } from 'react-ico
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useFileStore } from '../stores/fileStore';
-import { getPool } from '../hooks/useAutoCompress';
 import type { ImageFile } from '../types';
 import { formatFileSize, compressionRatio } from '../utils/fileUtils';
 import { cloneSettings } from '../utils/settingsUtils';
-import { getOutputName } from '../utils/exportManifest';
+import { getOutputName, isResultExportable } from '../utils/exportManifest';
 
 interface FileRowProps {
   file: ImageFile;
@@ -70,9 +69,9 @@ export const FileRow = memo(function FileRow({
 
   const handleDownload = useCallback(async (event?: ReactMouseEvent) => {
     event?.stopPropagation();
-    if (!file.result) return;
+    if (!isResultExportable(file, settings)) return;
     const { saveAs } = await import('file-saver');
-    saveAs(file.result.blob, getOutputName(file, settings));
+    saveAs(file.result!.blob, getOutputName(file, settings));
     closeContextMenu();
   }, [closeContextMenu, file, settings]);
 
@@ -90,8 +89,7 @@ export const FileRow = memo(function FileRow({
 
   const handleCancel = useCallback((event?: ReactMouseEvent) => {
     event?.stopPropagation();
-    getPool().abortTask(file.id);
-    useFileStore.getState().updateFile(file.id, { status: 'pending', progress: 0 });
+    useFileStore.getState().cancelFile(file.id);
   }, [file.id]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
@@ -147,13 +145,17 @@ export const FileRow = memo(function FileRow({
   }, [closeContextMenu, contextMenu]);
 
   const ratio = file.result ? compressionRatio(file.originalSize, file.result.size) : 0;
+  const canExport = isResultExportable(file, settings);
+  const canRetry = file.status === 'error' || file.status === 'cancelled';
   const statusClass = file.status === 'processing'
     ? 'is-processing'
     : file.status === 'done'
       ? 'is-done'
       : file.status === 'error'
         ? 'is-error'
-        : '';
+        : file.status === 'cancelled'
+          ? 'is-cancelled'
+          : '';
 
   return (
     <div
@@ -209,6 +211,9 @@ export const FileRow = memo(function FileRow({
           {file.status === 'error' && (
             <span className="pf-file-error-text">{t('status.error')}</span>
           )}
+          {file.status === 'cancelled' && (
+            <span className="pf-file-cancelled-text">{t('status.cancelled')}</span>
+          )}
         </div>
       </div>
 
@@ -227,7 +232,7 @@ export const FileRow = memo(function FileRow({
             icon={<FiStopCircle aria-hidden="true" />}
           />
         )}
-        {file.status === 'error' && (
+        {canRetry && (
           <RowAction
             label={t('tooltips.retryImage')}
             tone="accent"
@@ -235,7 +240,7 @@ export const FileRow = memo(function FileRow({
             icon={<FiRefreshCw aria-hidden="true" />}
           />
         )}
-        {file.status === 'done' && file.result && (
+        {canExport && (
           <RowAction
             label={t('actions.download')}
             tone="accent"
@@ -259,14 +264,14 @@ export const FileRow = memo(function FileRow({
           role="menu"
           onClick={(event) => event.stopPropagation()}
         >
-          {file.status === 'done' && file.result && (
+          {canExport && (
             <ContextMenuItem
               label={t('actions.download')}
               onClick={handleDownload}
               icon={<FiDownload aria-hidden="true" />}
             />
           )}
-          {file.status === 'error' && (
+          {canRetry && (
             <ContextMenuItem
               label={t('tooltips.retryImage')}
               onClick={handleRetry}
@@ -286,7 +291,7 @@ export const FileRow = memo(function FileRow({
               icon={<FiSliders aria-hidden="true" />}
             />
           )}
-          {(file.status === 'done' || file.status === 'error') && (
+          {(canExport || canRetry) && (
             <span className="pf-file-context-divider" aria-hidden="true" />
           )}
           <ContextMenuItem

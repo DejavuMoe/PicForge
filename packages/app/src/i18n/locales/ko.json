@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "PicForge",
-    "subtitle": "로컬 이미지 도구"
+    "title": "PicForge"
   },
   "dropzone": {
     "dragActive": "여기에 놓으세요",
@@ -67,7 +66,8 @@
     "pending": "대기 중",
     "processing": "{{progress}}%",
     "done": "완료",
-    "error": "오류"
+    "error": "오류",
+    "cancelled": "취소됨"
   },
   "progress": {
     "processing": "{{count}}개 처리 중",
@@ -151,8 +151,56 @@
       "fit": "맞춤"
     }
   },
+  "landing": {
+    "eyebrow": "로컬 우선 이미지 도구 상자",
+    "heroTitleA": "이미지를 단조하다.",
+    "heroTitleB": "모든 픽셀은 기기에.",
+    "heroBody": "일괄 압축, Motion Photo 추출, Live Photo 변환 — WebAssembly 기반으로 기기에서만 실행됩니다. 업로드도, 계정도, 흔적도 없습니다.",
+    "ctaPrimary": "도구 살펴보기",
+    "ctaSecondary": "GitHub에서 보기",
+    "toolsEyebrow": "도구 상자",
+    "toolsTitle": "3가지 도구, 하나의 forge",
+    "toolsBody": "각 도구는 전용 작업 공간을 가지며 전환해도 상주합니다. 대기열은 떠난 상태 그대로 유지됩니다.",
+    "cards": {
+      "compression": {
+        "title": "이미지 압축",
+        "body": "이미지별 설정, 슬라이더 비교, ZIP 내보내기로 일괄 변환 및 리사이즈.",
+        "meta": "MozJPEG · WebP · PNG · AVIF"
+      },
+      "android": {
+        "title": "Android 모션 포토",
+        "body": "Motion Photo를 원본 JPG와 MP4로 분리 — 바이트 단위 보존, 재인코딩 없음.",
+        "meta": "무손실 추출"
+      },
+      "ios": {
+        "title": "iOS Live Photos",
+        "body": "HEIC + MOV 원본을 웹용 JPG와 H.264 MP4 쌍으로 변환합니다.",
+        "meta": "클린 애퍼처 인식"
+      }
+    },
+    "featuresEyebrow": "PicForge를 선택하는 이유",
+    "featuresTitle": "프라이버시 우선 설계, 기본으로 빠르게",
+    "features": {
+      "local": {
+        "title": "100% 로컬",
+        "body": "파일은 기기를 떠나지 않습니다. 모든 처리는 브라우저의 샌드박스 워커에서 실행됩니다."
+      },
+      "wasm": {
+        "title": "네이티브급 엔진",
+        "body": "MozJPEG, libheif, FFmpeg을 WebAssembly로 컴파일하고 첫 사용 시 지연 로드합니다."
+      },
+      "offline": {
+        "title": "오프라인 지원",
+        "body": "완전한 PWA — 캐시된 후에는 도구와 엔진이 네트워크 없이 계속 작동합니다."
+      },
+      "open": {
+        "title": "오픈 소스",
+        "body": "MIT 라이선스 앱 코드, 감사 가능한 자체 호스팅 의존성. 텔레메트리는 절대 없습니다."
+      }
+    },
+    "sponsor": "<sponsor>Riven Cloud</sponsor> 의 후원을 받습니다"
+  },
   "motion": {
-    "tools": "이미지 도구",
     "compression": "이미지 압축",
     "android": "Android 모션 포토",
     "ios": "iOS Live Photos",
@@ -161,6 +209,9 @@
     "iosBody": "수정하지 않은 Live Photo 원본을 같은 이름의 JPG + H.264 MP4로 변환합니다.",
     "output": "출력 설정",
     "lossless": "원본 JPG + MP4 · 재인코딩 없음",
+    "specImageValue": "원본 이미지 바이트",
+    "specVideoValue": "원본 동영상 바이트",
+    "specCodecValue": "재인코딩 없음",
     "preset": "동영상 프리셋",
     "balanced": "균형 · 1920px",
     "quality": "고화질 · 1920px",
@@ -177,9 +228,11 @@
     "select": "파일 선택",
     "pairing": "같은 이름의 파일을 연결합니다. 사진과 동영상을 함께 가져오세요. 개별 파일도 변환할 수 있으며 중복 이름은 먼저 해결해야 합니다.",
     "count": "{{done}} / {{total}}개 완료",
-    "clear": "배치 비우기",
+    "clear": "대기열 비우기",
+    "newBatch": "새 배치 시작",
+    "lockedHint": "완료된 결과는 아래에 유지됩니다. 더 많은 파일을 처리하려면 먼저 새 배치를 시작하세요(현재 대기열과 결과가 지워집니다).",
     "cancel": "취소",
-    "start": "미완료 항목 처리",
+    "start": "일괄 처리 시작",
     "exporting": "압축 파일 생성 중…",
     "zip": "ZIP 다운로드",
     "download": "다운로드",
@@ -195,7 +248,7 @@
     "errors": {
       "unsupported": "지원하지 않는 파일 형식입니다.",
       "ambiguous": "같은 이름의 파일이 여러 개입니다. 배치를 비우고 하나의 쌍을 선택하세요.",
-      "invalidMotion": "JPEG에서 유효한 MP4를 찾지 못했습니다.",
+      "invalidMotion": "이 JPEG에서 유효한 첨부 MP4를 찾을 수 없습니다. 메신저·SNS 앱을 통해 저장하거나 전달받은 사진은 모션 데이터가 제거되는 경우가 많습니다. 카메라 앱의 원본 파일을 사용하세요.",
       "invalidHeic": "HEIC 이미지를 디코딩할 수 없습니다.",
       "tooManyPixels": "HEIC가 5천만 화소 제한을 초과합니다.",
       "tooLarge": "파일이 100 MB 제한을 초과합니다.",
@@ -204,7 +257,7 @@
       "videoFailed": "동영상 변환에 실패했습니다. 더 작은 파일로 다시 시도하세요.",
       "cancelled": "취소되었습니다. 다시 시도할 수 있습니다.",
       "exportFailed": "ZIP 내보내기에 실패했습니다. 개별 다운로드나 작은 배치를 이용하세요.",
-      "batchLimit": "배치당 최대 100개 파일, 총 256 MB까지 가능합니다。"
+      "batchLimit": "배치당 최대 100개 파일, 총 {{maxMB}} MB까지 가능합니다。"
     },
     "previewUnavailable": "이 브라우저에서는 동영상을 미리 볼 수 없습니다. 내보낸 파일은 다운로드할 수 있습니다."
   }

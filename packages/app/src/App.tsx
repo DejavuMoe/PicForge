@@ -1,41 +1,44 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from './components/Header';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Landing } from './landing/Landing';
 import { SERVICE_WORKER_UPDATE_EVENT } from './registerServiceWorker';
+import type { ToolId } from './types';
 import CompressionWorkspace from './CompressionWorkspace';
+
 const MotionWorkspace = lazy(() => import('./motion/MotionWorkspace'));
-type Tool = 'compression' | 'android' | 'ios';
+
 export default function App() {
   const { t } = useTranslation();
   const [updateReady, setUpdateReady] = useState(false);
+
   useEffect(() => {
     const ready = () => setUpdateReady(true);
     window.addEventListener(SERVICE_WORKER_UPDATE_EVENT, ready);
     return () => window.removeEventListener(SERVICE_WORKER_UPDATE_EVENT, ready);
   }, []);
-  const [tool, setTool] = useState<Tool>('compression');
-  const [visited, setVisited] = useState<Tool[]>(['compression']);
+
+  const [tool, setTool] = useState<ToolId>('home');
+  // Tool workspaces stay mounted once visited so queues survive navigation.
+  const [visited, setVisited] = useState<ToolId[]>([]);
+
+  const openTool = useCallback((value: ToolId) => {
+    setTool(value);
+    if (value !== 'home') {
+      setVisited((previous) => (previous.includes(value) ? previous : [...previous, value]));
+    }
+  }, []);
+
+  const goHome = useCallback(() => setTool('home'), []);
+
   return (
     <ErrorBoundary>
-      <div className="pf-toolbox">
-        <Header />
-        <nav className="pf-tool-nav" aria-label={t('motion.tools')}>
-          {(['compression', 'android', 'ios'] as const).map((value) => (
-            <button
-              key={value}
-              aria-current={tool === value ? 'page' : undefined}
-              onClick={() => {
-                setTool(value);
-                setVisited((previous) =>
-                  previous.includes(value) ? previous : [...previous, value],
-                );
-              }}
-            >
-              {t(`motion.${value}`)}
-            </button>
-          ))}
-        </nav>
+      <div className="pf-toolbox" data-active-tool={tool}>
+        <Header onHome={goHome} />
+
+        {tool === 'home' && <Landing onSelect={openTool} />}
+
         {visited.map((value) => (
           <div className="pf-tool-panel" key={value} hidden={tool !== value}>
             <Suspense fallback={<p role="status">{t('motion.loading')}</p>}>
@@ -47,6 +50,7 @@ export default function App() {
             </Suspense>
           </div>
         ))}
+
         {updateReady && (
           <div className="pf-update-toast" role="status">
             <span>{t('pwa.updateReady')}</span>

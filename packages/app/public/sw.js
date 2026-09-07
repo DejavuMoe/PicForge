@@ -59,6 +59,17 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Never intercept Vite dev-server URLs. A stale registration left on a dev
+  // origin must pass modules/HMR through to the network instead of serving
+  // cached production assets.
+  if (
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/node_modules/') ||
+    url.pathname.startsWith('/src/')
+  ) {
+    return;
+  }
+
   if (request.mode === 'navigate') {
     event.respondWith(networkFirstPage(request));
     return;

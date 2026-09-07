@@ -9,6 +9,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { FiChevronDown } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import type { CompressSettings, OutputFormat, ResizeMethod } from '@pic-forge/codecs';
+import { AVIF_CHROMA_SUBSAMPLE } from '@pic-forge/codecs';
 import { useSettingsStore } from '../stores/settingsStore';
 import { PRESETS, type Preset } from '../stores/presets';
 import { FORMAT_OPTIONS } from '../types';
@@ -216,7 +217,6 @@ export function Toolbar() {
             aria-label={t('settings.quality')}
             style={getRangeProgressStyle(draftQuality, 0, 100)}
             onChange={(event) => commitQuality(Number(event.target.value))}
-            onInput={(event) => commitQuality(Number(event.currentTarget.value))}
           />
           <span className="pf-toolbar-value">{draftQuality}</span>
         </div>
@@ -417,7 +417,6 @@ function ResizeControls() {
             aria-label={t('settings.percentageMode')}
             style={getRangeProgressStyle(draftPercentage, 1, 100)}
             onChange={(event) => commitPercentage(Number(event.target.value))}
-            onInput={(event) => commitPercentage(Number(event.currentTarget.value))}
           />
           <span className="pf-toolbar-value pf-toolbar-value-wide">{draftPercentage}%</span>
         </div>
@@ -455,6 +454,9 @@ function AdvancedControls() {
 
   const numberValue = (key: string, fallback: number) =>
     typeof advanced[key] === 'number' ? (advanced[key] as number) : fallback;
+
+  const avifSubsampleValue = (value: number) =>
+    value === 0 ? AVIF_CHROMA_SUBSAMPLE.YUV444 : value;
 
   const Chip = ({
     label,
@@ -568,11 +570,11 @@ function AdvancedControls() {
           <Chip label={t('settings.adv.subsample')} tooltip={t('tooltips.adv.subsample')}>
             <select
               className="pf-toolbar-select pf-toolbar-select-compact"
-              value={numberValue('subsample', 1)}
+              value={avifSubsampleValue(numberValue('subsample', AVIF_CHROMA_SUBSAMPLE.YUV420))}
               onChange={(event) => updateAdvanced('subsample', Number(event.target.value))}
             >
-              <option value={0}>4:4:4</option>
-              <option value={1}>4:2:0</option>
+              <option value={AVIF_CHROMA_SUBSAMPLE.YUV444}>4:4:4</option>
+              <option value={AVIF_CHROMA_SUBSAMPLE.YUV420}>4:2:0</option>
             </select>
           </Chip>
         </>

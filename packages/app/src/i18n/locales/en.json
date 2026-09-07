@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "PicForge",
-    "subtitle": "Local image toolbox"
+    "title": "PicForge"
   },
   "dropzone": {
     "dragActive": "Drop images here",
@@ -67,7 +66,8 @@
     "pending": "Pending",
     "processing": "{{progress}}%",
     "done": "Done",
-    "error": "Error"
+    "error": "Error",
+    "cancelled": "Cancelled"
   },
   "progress": {
     "processing": "{{count}} processing",
@@ -151,8 +151,56 @@
       "fit": "Fit"
     }
   },
+  "landing": {
+    "eyebrow": "Local-first image toolbox",
+    "heroTitleA": "Forge your images.",
+    "heroTitleB": "Keep every pixel.",
+    "heroBody": "Batch compression, Motion Photo extraction and Live Photo conversion — powered by WebAssembly, running entirely on your device. No uploads, no accounts, no trace.",
+    "ctaPrimary": "Explore the tools",
+    "ctaSecondary": "View on GitHub",
+    "toolsEyebrow": "Toolbox",
+    "toolsTitle": "Three tools, one forge",
+    "toolsBody": "Each tool is purpose-built and stays resident while you switch — your queue is exactly where you left it.",
+    "cards": {
+      "compression": {
+        "title": "Image compression",
+        "body": "Batch-convert and resize with per-image control, slider compare and ZIP export.",
+        "meta": "MozJPEG · WebP · PNG · AVIF"
+      },
+      "android": {
+        "title": "Android Motion Photos",
+        "body": "Split Motion Photos into the original JPG and MP4 — byte-for-byte, without re-encoding.",
+        "meta": "Lossless extraction"
+      },
+      "ios": {
+        "title": "iOS Live Photos",
+        "body": "Turn HEIC + MOV originals into web-ready JPG and H.264 MP4 pairs.",
+        "meta": "Clean-aperture aware"
+      }
+    },
+    "featuresEyebrow": "Why PicForge",
+    "featuresTitle": "Private by design, fast by default",
+    "features": {
+      "local": {
+        "title": "100% local",
+        "body": "Files never leave your device. All processing runs in sandboxed workers inside your browser."
+      },
+      "wasm": {
+        "title": "Native-speed engines",
+        "body": "MozJPEG, libheif and FFmpeg compiled to WebAssembly, loaded lazily on first use."
+      },
+      "offline": {
+        "title": "Works offline",
+        "body": "A full PWA — once cached, the toolbox and its engines keep working without a network."
+      },
+      "open": {
+        "title": "Open source",
+        "body": "MIT-licensed app code with auditable, self-hosted dependencies. No telemetry, ever."
+      }
+    },
+    "sponsor": "Sponsored by <sponsor>Riven Cloud</sponsor>"
+  },
   "motion": {
-    "tools": "Image tools",
     "compression": "Image compression",
     "android": "Android Motion Photos",
     "ios": "iOS Live Photos",
@@ -161,6 +209,9 @@
     "iosBody": "Turn unmodified Live Photo originals into matching JPG + H.264 MP4 assets for the web.",
     "output": "Output settings",
     "lossless": "Original JPG + MP4 · no re-encoding",
+    "specImageValue": "Original image bytes",
+    "specVideoValue": "Original video bytes",
+    "specCodecValue": "Untouched · no re-encode",
     "preset": "Video preset",
     "balanced": "Balanced · 1920px",
     "quality": "Higher quality · 1920px",
@@ -177,9 +228,11 @@
     "select": "Choose files",
     "pairing": "Pairing uses matching filenames. Import both files together. Unmatched images or videos can be converted separately; duplicate names need to be resolved before processing.",
     "count": "{{done}} / {{total}} completed",
-    "clear": "Clear batch",
+    "clear": "Clear queue",
+    "newBatch": "New batch",
+    "lockedHint": "Completed results are kept below. To process more files, start a new batch first — this clears the current queue and results.",
     "cancel": "Cancel",
-    "start": "Process pending",
+    "start": "Process batch",
     "exporting": "Packing…",
     "zip": "Download ZIP",
     "download": "Download",
@@ -195,7 +248,7 @@
     "errors": {
       "unsupported": "Unsupported file type.",
       "ambiguous": "Multiple files share this name. Clear the batch and choose one matching pair.",
-      "invalidMotion": "No valid appended MP4 was found in this JPEG.",
+      "invalidMotion": "No valid appended MP4 was found in this JPEG. Photos saved or forwarded through chat or social apps usually have their motion data stripped — use the original file from the camera app.",
       "invalidHeic": "Unable to decode this HEIC image.",
       "tooManyPixels": "HEIC exceeds the 50 megapixel safety limit.",
       "tooLarge": "A source file exceeds the 100 MB limit.",
@@ -204,7 +257,7 @@
       "videoFailed": "Video conversion failed. Retry with a smaller source.",
       "cancelled": "Cancelled. You can retry this item.",
       "exportFailed": "ZIP export failed. Try individual downloads or a smaller batch.",
-      "batchLimit": "Use at most 100 files and 256 MB of sources per batch."
+      "batchLimit": "Use at most 100 files and {{maxMB}} MB of sources per batch."
     },
     "previewUnavailable": "This browser cannot preview this video codec. The exported file is available to download."
   }

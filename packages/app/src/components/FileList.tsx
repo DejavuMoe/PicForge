@@ -40,7 +40,7 @@ export function FileList({ selectedId, onSelect }: FileListProps) {
   }, [clearAll]);
 
   const handleRetry = useCallback((id: string) => {
-    useFileStore.getState().updateFile(id, { status: 'pending', progress: 0, error: undefined });
+    useFileStore.getState().retryFile(id);
   }, []);
 
   if (files.length === 0) return null;

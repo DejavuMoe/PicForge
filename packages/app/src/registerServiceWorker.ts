@@ -19,8 +19,34 @@ function watchInstallingWorker(registration: ServiceWorkerRegistration): void {
   });
 }
 
+/**
+ * Dev servers must never be controlled by a service worker: a registration left
+ * behind by a production/preview build previously served on this origin would
+ * keep answering with stale modules, fonts and CSS. Remove it and its caches.
+ */
+async function clearServiceWorkersForDev(): Promise<void> {
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys.filter((key) => key.startsWith('picforge-')).map((key) => caches.delete(key)),
+      );
+    }
+  } catch (error) {
+    console.warn('PicForge dev service worker cleanup failed:', error);
+  }
+}
+
 export function registerServiceWorker(): void {
-  if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator)) return;
+
+  if (!import.meta.env.PROD) {
+    void clearServiceWorkersForDev();
+    return;
+  }
 
   window.addEventListener('load', () => {
     navigator.serviceWorker

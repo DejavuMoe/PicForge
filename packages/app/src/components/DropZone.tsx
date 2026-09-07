@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiCommand, FiUploadCloud } from 'react-icons/fi';
+import { FiCommand } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useFileStore } from '../stores/fileStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -114,10 +114,6 @@ export function DropZone() {
         onKeyDown={handleKeyDown}
       >
         <div className="pf-drop-content">
-          <div className="pf-drop-icon-badge">
-            <FiUploadCloud size={24} aria-hidden="true" />
-          </div>
-
           <div>
             <p className="pf-drop-main-text">
               {isDragging ? t('dropzone.dragActive') : t('dropzone.dragDefault')}

@@ -176,6 +176,9 @@ export function Preview({
     }
     setViewport(DEFAULT_VIEWPORT);
     setSliderPos(50);
+  }, [file?.id, file?.outputMeta?.outputWidth, file?.outputMeta?.outputHeight]);
+
+  useEffect(() => {
     setCompareMode(defaultCompareMode);
   }, [file?.id, defaultCompareMode]);
 

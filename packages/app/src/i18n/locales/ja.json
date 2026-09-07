@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "PicForge",
-    "subtitle": "ローカル画像ツール"
+    "title": "PicForge"
   },
   "dropzone": {
     "dragActive": "ここにドロップ",
@@ -67,7 +66,8 @@
     "pending": "待機中",
     "processing": "{{progress}}%",
     "done": "完了",
-    "error": "エラー"
+    "error": "エラー",
+    "cancelled": "キャンセル"
   },
   "progress": {
     "processing": "{{count}} 件処理中",
@@ -151,8 +151,56 @@
       "fit": "フィット"
     }
   },
+  "landing": {
+    "eyebrow": "ローカルファースト画像ツールボックス",
+    "heroTitleA": "画像を鍛える。",
+    "heroTitleB": "ピクセルは手元に残る。",
+    "heroBody": "バッチ圧縮、Motion Photo の抽出、Live Photos の変換——WebAssembly 駆動で、すべてお使いのデバイス上で完結。アップロードもアカウントも痕跡もありません。",
+    "ctaPrimary": "ツールを見る",
+    "ctaSecondary": "GitHub で見る",
+    "toolsEyebrow": "ツールボックス",
+    "toolsTitle": "3 つのツール、1 つの forge",
+    "toolsBody": "各ツールは専用ワークスペースを持ち、切り替えても常駐します。キューは離れたときのまま保持されます。",
+    "cards": {
+      "compression": {
+        "title": "画像圧縮",
+        "body": "画像ごとの設定、スライダー比較、ZIP エクスポートで一括変換とリサイズ。",
+        "meta": "MozJPEG · WebP · PNG · AVIF"
+      },
+      "android": {
+        "title": "Android モーションフォト",
+        "body": "Motion Photo を元の JPG と MP4 に分離——バイト単位で保持、再エンコードなし。",
+        "meta": "ロスレス抽出"
+      },
+      "ios": {
+        "title": "iOS Live Photos",
+        "body": "HEIC + MOV の原本をウェブ向けの JPG と H.264 MP4 のペアに変換。",
+        "meta": "クリーンアパーチャ対応"
+      }
+    },
+    "featuresEyebrow": "PicForge を選ぶ理由",
+    "featuresTitle": "プライバシー第一、速度は標準装備",
+    "features": {
+      "local": {
+        "title": "100% ローカル",
+        "body": "ファイルはデバイスから出ません。処理はすべてブラウザー内のサンドボックス化されたワーカーで実行されます。"
+      },
+      "wasm": {
+        "title": "ネイティブ級エンジン",
+        "body": "MozJPEG、libheif、FFmpeg を WebAssembly にコンパイルし、初回利用時に遅延読み込み。"
+      },
+      "offline": {
+        "title": "オフライン対応",
+        "body": "完全な PWA——キャッシュ済みなら、ツールとエンジンはネットワークなしで動作します。"
+      },
+      "open": {
+        "title": "オープンソース",
+        "body": "アプリコードは MIT ライセンス。依存関係は監査可能で自己ホスト。テレメトリーは一切なし。"
+      }
+    },
+    "sponsor": "<sponsor>Riven Cloud</sponsor> のスポンサー提供です"
+  },
   "motion": {
-    "tools": "画像ツール",
     "compression": "画像圧縮",
     "android": "Android モーションフォト",
     "ios": "iOS Live Photos",
@@ -161,6 +209,9 @@
     "iosBody": "未編集の Live Photo 原本から、同名の JPG + H.264 MP4 をウェブ用に作成します。",
     "output": "出力設定",
     "lossless": "元の JPG + MP4 · 再エンコードなし",
+    "specImageValue": "元の画像バイト",
+    "specVideoValue": "元の動画バイト",
+    "specCodecValue": "再エンコードなし",
     "preset": "動画プリセット",
     "balanced": "バランス · 1920px",
     "quality": "高画質 · 1920px",
@@ -177,9 +228,11 @@
     "select": "ファイルを選択",
     "pairing": "同名ファイルをペアにします。写真と動画を一緒に追加してください。単独ファイルも変換できます。同名の重複は先に解消してください。",
     "count": "{{done}} / {{total}} 件完了",
-    "clear": "バッチをクリア",
+    "clear": "キューをクリア",
+    "newBatch": "新しいバッチ",
+    "lockedHint": "完了した結果は下に保持されています。さらにファイルを処理するには、まず新しいバッチを開始してください（現在のキューと結果はクリアされます）。",
     "cancel": "キャンセル",
-    "start": "未完了分を処理",
+    "start": "バッチ処理を開始",
     "exporting": "ZIP 作成中…",
     "zip": "ZIP をダウンロード",
     "download": "ダウンロード",
@@ -195,7 +248,7 @@
     "errors": {
       "unsupported": "未対応のファイル形式です。",
       "ambiguous": "同名ファイルが重複しています。バッチをクリアして一意のペアを選択してください。",
-      "invalidMotion": "JPEG に有効な MP4 が見つかりません。",
+      "invalidMotion": "この JPEG には有効な付加 MP4 が見つかりません。チャットや SNS アプリ経由で保存・転送された写真はモーションデータが削除されていることがあります。カメラアプリの原本をご利用ください。",
       "invalidHeic": "HEIC 画像をデコードできません。",
       "tooManyPixels": "HEIC が 5000 万画素の上限を超えています。",
       "tooLarge": "ファイルが 100 MB の上限を超えています。",
@@ -204,7 +257,7 @@
       "videoFailed": "動画変換に失敗しました。小さいファイルで再試行してください。",
       "cancelled": "キャンセルしました。再試行できます。",
       "exportFailed": "ZIP 出力に失敗しました。個別にダウンロードするかバッチを小さくしてください。",
-      "batchLimit": "1 バッチは 100 ファイル、合計 256 MB までです。"
+      "batchLimit": "1 バッチは 100 ファイル、合計 {{maxMB}} MB までです。"
     },
     "previewUnavailable": "このブラウザーでは動画をプレビューできません。出力ファイルはダウンロードできます。"
   }

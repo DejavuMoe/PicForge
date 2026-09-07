@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "PicForge",
-    "subtitle": "本機圖片工具箱"
+    "title": "PicForge"
   },
   "dropzone": {
     "dragActive": "放開以匯入圖片",
@@ -67,7 +66,8 @@
     "pending": "等待中",
     "processing": "{{progress}}%",
     "done": "完成",
-    "error": "失敗"
+    "error": "失敗",
+    "cancelled": "已取消"
   },
   "progress": {
     "processing": "{{count}} 個處理中",
@@ -151,8 +151,56 @@
       "fit": "適應"
     }
   },
+  "landing": {
+    "eyebrow": "本機優先的圖片工具箱",
+    "heroTitleA": "鍛造你的圖片。",
+    "heroTitleB": "每個像素都留在本機。",
+    "heroBody": "批次壓縮、Motion Photo 提取與實況照片轉換——由 WebAssembly 驅動，完全在你的裝置上執行。無上傳、無帳號、無痕跡。",
+    "ctaPrimary": "瀏覽全部工具",
+    "ctaSecondary": "GitHub 原始碼",
+    "toolsEyebrow": "工具箱",
+    "toolsTitle": "三件工具，一座鍛造台",
+    "toolsBody": "每件工具都有獨立工作區，切換時保持駐留——佇列始終在你離開時的樣子。",
+    "cards": {
+      "compression": {
+        "title": "圖片壓縮",
+        "body": "批次轉換與縮放，支援單圖設定、滑桿對比與 ZIP 匯出。",
+        "meta": "MozJPEG · WebP · PNG · AVIF"
+      },
+      "android": {
+        "title": "Android 動態照片",
+        "body": "將 Motion Photos 拆分為原始 JPG 和 MP4——逐位元組保留，不重新編碼。",
+        "meta": "無損提取"
+      },
+      "ios": {
+        "title": "iOS 實況照片",
+        "body": "將 HEIC + MOV 原片轉換為網頁可用的 JPG 與 H.264 MP4 配對檔案。",
+        "meta": "淨光圈感知"
+      }
+    },
+    "featuresEyebrow": "為什麼選擇 PicForge",
+    "featuresTitle": "隱私設計，極速體驗",
+    "features": {
+      "local": {
+        "title": "100% 本機",
+        "body": "檔案永不離開你的裝置，所有處理都在瀏覽器的沙箱 Worker 中執行。"
+      },
+      "wasm": {
+        "title": "原生級引擎",
+        "body": "MozJPEG、libheif 與 FFmpeg 編譯為 WebAssembly，首次使用時按需載入。"
+      },
+      "offline": {
+        "title": "離線可用",
+        "body": "完整的 PWA——快取之後，工具箱與引擎無需網路也能繼續運作。"
+      },
+      "open": {
+        "title": "開源透明",
+        "body": "應用程式碼採用 MIT 授權，依賴可稽核且全部自託管，永無遙測。"
+      }
+    },
+    "sponsor": "由 <sponsor>Riven Cloud</sponsor> 贊助"
+  },
   "motion": {
-    "tools": "圖片工具箱",
     "compression": "圖片壓縮",
     "android": "Android 動態照片",
     "ios": "iOS 實況照片",
@@ -161,6 +209,9 @@
     "iosBody": "將匯出的未修改實況原片轉換為同名 JPG + H.264 MP4，方便用於網頁。",
     "output": "匯出設定",
     "lossless": "原始 JPG + MP4 · 不重新編碼",
+    "specImageValue": "原始圖片位元組",
+    "specVideoValue": "原始影片位元組",
+    "specCodecValue": "不重新編碼",
     "preset": "影片預設",
     "balanced": "均衡 · 1920px",
     "quality": "畫質優先 · 1920px",
@@ -177,9 +228,11 @@
     "select": "選擇檔案",
     "pairing": "依同名檔案配對，請一起匯入照片和影片。獨立的圖片或影片也可轉換；重名衝突需要先解決。",
     "count": "已完成 {{done}} / {{total}} 項",
-    "clear": "清空批次",
+    "clear": "清空佇列",
+    "newBatch": "開始新一批",
+    "lockedHint": "已完成的結果保留在下方。要處理更多檔案，請先開始新一批（將清除目前佇列和結果）。",
     "cancel": "取消",
-    "start": "處理待完成項目",
+    "start": "開始批次處理",
     "exporting": "正在打包…",
     "zip": "下載 ZIP",
     "download": "下載",
@@ -195,7 +248,7 @@
     "errors": {
       "unsupported": "不支援此檔案類型。",
       "ambiguous": "存在多個同名檔案，請清空批次並選擇唯一配對。",
-      "invalidMotion": "此 JPEG 中未找到有效的附加 MP4。",
+      "invalidMotion": "此 JPEG 中找不到有效的附加 MP4。經通訊或社群應用儲存、轉發的照片通常會遺失動態資料，請使用相機應用中的原始檔案。",
       "invalidHeic": "無法解碼此 HEIC 圖片。",
       "tooManyPixels": "HEIC 超過 5000 萬像素上限。",
       "tooLarge": "來源檔案超過 100 MB 上限。",
@@ -204,7 +257,7 @@
       "videoFailed": "影片轉換失敗，請嘗試較小的來源檔案。",
       "cancelled": "已取消，可重新處理此項。",
       "exportFailed": "ZIP 匯出失敗，請逐項下載或縮小批次。",
-      "batchLimit": "每批最多 100 個檔案，來源檔案總計不超過 256 MB。"
+      "batchLimit": "每批最多 100 個檔案，來源檔案總計不超過 {{maxMB}} MB。"
     },
     "previewUnavailable": "目前瀏覽器無法預覽此影片編碼，仍可下載匯出的檔案。"
   }

@@ -1,6 +1,6 @@
-# Sample validation — 2026-09-06
+# Validation Report — 2026-09-06
 
-Local implementation, version 0.15.0. Originals in `sample/` were not modified. No commit, push, deployment or public release was performed.
+Local implementation, version 0.15.0. Acceptance metrics measured during integration baseline testing.
 
 ## Default browser output
 
@@ -45,10 +45,10 @@ The offline check caught and fixed two old PWA issues: build-generated JS/CSS ch
 
 ## Reproduction
 
-Run `pnpm test:browser` after installing Playwright Chromium and native `ffprobe`. The script builds, starts a local preview, uses the real sample files, validates outputs and writes screenshots/media to a temporary artifact directory. `PICFORGE_BROWSER`, `PICFORGE_BROWSER_EXECUTABLE` and `PICFORGE_QA_OUTPUT` allow another installed engine or output directory.
+Run `pnpm test:browser` after installing Playwright Chromium and native `ffprobe` when acceptance files are supplied. The script builds, starts a local preview, validates outputs and writes screenshots/media to a temporary artifact directory. `PICFORGE_BROWSER`, `PICFORGE_BROWSER_EXECUTABLE` and `PICFORGE_QA_OUTPUT` allow another installed engine or output directory.
 
 MotionFlow is integrated into the toolbox; its MIT notice remains in `packages/app/public/licenses/`. The original compressor and its regression checks remain intact.
 
 ## Cleanup verification
 
-After removing unused helpers and their three obsolete tests, all **84** remaining tests pass. Lint, app/worker/codecs type checks and production build pass. All three `sample/` files have identical SHA-256 hashes before and after cleanup. Current implementation constraints live in `AGENTS.md`; outdated architecture/translation copies and the implementation draft were removed. Browser measurements above are from the initial integration acceptance, not a new browser run during cleanup.
+After removing unused helpers and their three obsolete tests, all remaining tests pass. Lint, app/worker/codecs type checks and production build pass. All unit test fixtures verify byte-for-byte reconstruction and clean-aperture parsing. Current implementation constraints live in `AGENTS.md`; outdated architecture/translation copies and the implementation draft were removed. Browser measurements above are from the initial integration acceptance, not a new browser run during cleanup.

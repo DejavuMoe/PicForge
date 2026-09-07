@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
@@ -72,11 +73,20 @@ try {
     await panel.getByRole('button', { name }).click();
     await (await waiting).saveAs(resolve(output, filename));
   };
+  const sampleAndroid = process.env.PICFORGE_SAMPLE_ANDROID;
+  const sampleIosHeic = process.env.PICFORGE_SAMPLE_IOS_HEIC;
+  const sampleIosMov = process.env.PICFORGE_SAMPLE_IOS_MOV;
+  if (!sampleAndroid || !sampleIosHeic || !sampleIosMov || !existsSync(sampleAndroid) || !existsSync(sampleIosHeic) || !existsSync(sampleIosMov)) {
+    console.log('Sample fixtures omitted; skipping browser sample regression checks.');
+    await browser.close();
+    server.kill();
+    process.exit(0);
+  }
   await page
     .locator('.pf-tool-nav')
     .getByRole('button', { name: 'Android Motion Photos', exact: true })
     .click();
-  await panel.locator('input[type=file]').setInputFiles('sample/Android/IMG20260711013006.jpg');
+  await panel.locator('input[type=file]').setInputFiles(sampleAndroid);
   await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
   await waitDone();
   await download(/^JPG ·/, 'android.jpg');
@@ -86,7 +96,7 @@ try {
       await readFile(resolve(output, 'android.jpg')),
       await readFile(resolve(output, 'android.mp4')),
     ]),
-    await readFile('sample/Android/IMG20260711013006.jpg'),
+    await readFile(sampleAndroid),
   );
   assert(!requests.some((url) => /ffmpeg|heif-/.test(url)), 'Android must not load Apple engines');
   await page.getByRole('button', { name: 'PicForge', exact: true }).click();
@@ -94,7 +104,7 @@ try {
     .locator('.pf-tool-nav')
     .getByRole('button', { name: 'iOS Live Photos', exact: true })
     .click();
-  const originals = ['sample/iOS/IMG_4238.HEIC', 'sample/iOS/IMG_4238.MOV'];
+  const originals = [sampleIosHeic, sampleIosMov];
   await panel.locator('input[type=file]').setInputFiles(originals);
   await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
   await panel.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -109,8 +119,9 @@ try {
   const require = createRequire(new URL('../packages/app/package.json', import.meta.url));
   const zip = await require('jszip').loadAsync(await readFile(resolve(output, 'ios.zip')));
   assert(zip.file('picforge-manifest.json'));
+  const iosBase = sampleIosHeic.replace(/^.*[\\/]/, '').replace(/\.[^.]+$/, '');
   for (const extension of ['jpg', 'mp4']) {
-    const member = zip.file(`001-IMG_4238/IMG_4238.${extension}`);
+    const member = zip.file(`001-${iosBase}/${iosBase}.${extension}`);
     assert(member);
     assert.deepEqual(
       await member.async('nodebuffer'),

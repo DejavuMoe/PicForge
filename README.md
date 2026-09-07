@@ -127,7 +127,6 @@ PicForge/
 │   │       └── stores/         # Zustand fileStore and settingsStore
 │   ├── codecs/                 # Codec definitions, settings schema, and WASM loaders
 │   └── worker/                 # Web Worker execution pool, decode/resize, and AVIF/WebP encoders
-├── sample/                     # Acceptance test fixtures for Android and iOS formats
 └── scripts/                    # Codec vendor preparation, browser integration tests, and deployers
 ```
 
@@ -179,7 +178,7 @@ pnpm typecheck
 # Unit & WASM integration tests (128 passing tests)
 pnpm test
 
-# End-to-end browser check with real sample files (Requires Chromium & native ffprobe)
+# End-to-end browser check (Requires Chromium & native ffprobe)
 pnpm exec playwright install chromium
 pnpm test:browser
 ```

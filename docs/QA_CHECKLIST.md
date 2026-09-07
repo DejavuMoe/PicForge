@@ -56,12 +56,12 @@ This checklist captures the main manual and browser-based checks for each releas
 
 ## Toolbox (0.15)
 
-- Run `pnpm test:browser` against unchanged originals in `sample/`.
+- Run `pnpm test` and `pnpm test:browser` (when test media is supplied).
 - Android exports reconstruct source bytes; no HEIC/FFmpeg engine loads for extraction.
 - Apple pairing handles lone files and duplicate basenames explicitly.
 - Check clean aperture, orientation, primary track, audio and per-frame PTS in the actual WASM output.
 - Cancel/retry retains completed results; ZIP members equal individual downloads.
 - Unsupported native video playback shows a static fallback and download message.
-- Offline reload after successful engine caching can process the sample again.
+- Offline reload after successful engine caching can process media again.
 - Recheck original image compression and both narrow/wide viewport layouts.
 - See `SAMPLE_VALIDATION.md` for measured results and unverified platforms.

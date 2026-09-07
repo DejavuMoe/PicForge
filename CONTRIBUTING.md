@@ -35,4 +35,4 @@ pnpm build
 
 - Update all five locale files under `packages/app/src/i18n/locales/` together; keep keys and interpolation placeholders aligned. English is the fallback.
 - Language detection: `?lng=` → localStorage → browser language; the header persists manual selection.
-- Run `pnpm test:browser` for media, worker, or PWA changes; see `AGENTS.md` for sample constraints and compatibility limits.
+- Run `pnpm test` and `pnpm test:browser` for media, worker, or PWA changes; see `AGENTS.md` for workspace guidelines and compatibility limits.

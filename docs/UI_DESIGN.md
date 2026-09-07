@@ -55,7 +55,7 @@ WebGL failure still leaves readable content and the static gradient background.
 ## Verification
 
 - `pnpm lint`, `pnpm typecheck`, `pnpm test` (128 tests), `pnpm build`.
-- `pnpm test:browser`: Chromium samples, original Android bytes, iOS timestamps,
+- `pnpm test:browser`: Chromium acceptance checks, original Android bytes, iOS timestamps,
   cancellation/retry, downloads and offline reload/conversion.
 - With `pnpm dev` running, `node scripts/ui-check.mjs` checks light/dark themes,
   five viewports (375, 735, 768, 1280 and 1576px), queue retention and mobile preview.
@@ -64,7 +64,7 @@ WebGL failure still leaves readable content and the static gradient background.
   settings, custom listbox keyboard/pointer selection, and loaded compression preview.
 - Firefox and Safari/WebKit were not rerun for this design pass.
 
-No release/deployment; source acceptance fixtures remain unchanged.
+No release/deployment.
 
 ## Design references
 

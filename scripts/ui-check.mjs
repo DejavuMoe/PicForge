@@ -1,11 +1,29 @@
 // Run with the dev server available: pnpm dev, then node scripts/ui-check.mjs.
 import assert from 'node:assert/strict';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 
 const output = await mkdtemp(resolve(tmpdir(), 'picforge-ui-'));
+const testSample = resolve(output, 'test-motion.jpg');
+await writeFile(
+  testSample,
+  Buffer.concat([
+    Buffer.from([
+      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00,
+      0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
+    ]),
+    Buffer.from([0, 0, 0, 0x14]),
+    Buffer.from('ftypmp42'),
+    Buffer.alloc(8),
+    Buffer.from([0, 0, 0, 8]),
+    Buffer.from('moov'),
+    Buffer.from([0, 0, 4, 8]),
+    Buffer.from('mdat'),
+    Buffer.alloc(1024),
+  ]),
+);
 const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader'] });
 try {
   const page = await browser.newPage({ reducedMotion: 'reduce' });
@@ -59,7 +77,7 @@ try {
   await page.locator('.pf-tool-nav button').nth(0).click();
   await page
     .locator('input[data-testid="file-input"]')
-    .setInputFiles('sample/Android/IMG20260711013006.jpg');
+    .setInputFiles(testSample);
   await page.locator('.pf-file-row').first().waitFor();
   await page.locator('.pf-tool-nav button').nth(1).click();
   await page.locator('.pf-tool-nav button').nth(0).click();
@@ -75,7 +93,7 @@ try {
   await page.screenshot({ path: resolve(output, 'compression-mobile-loaded.png') });
   await page.locator('.pf-tool-nav button').nth(1).click();
   const motion = page.locator('.pf-tool-panel:not([hidden])');
-  await motion.locator('input[type=file]').setInputFiles('sample/Android/IMG20260711013006.jpg');
+  await motion.locator('input[type=file]').setInputFiles(testSample);
   await motion.getByRole('button', { name: 'Process batch', exact: true }).click();
   await motion.locator('.pf-motion-output').waitFor();
   assert.equal(await motion.locator('details').count(), 0);

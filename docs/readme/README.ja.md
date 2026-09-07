@@ -127,7 +127,6 @@ PicForge/
 │   │       └── stores/         # Zustand状態管理（fileStore、settingsStore）
 │   ├── codecs/                 # 各種コーデック定義、設定スキーマ、WASMローダー
 │   └── worker/                 # Web Workerプール、デコード/リサイズ、AVIF/WebPエンコーダー
-├── sample/                     # AndroidおよびiOSの公式検証用サンプル（改変不可）
 └── scripts/                    # コーデック準備スクリプト、Playwrightブラウザテスト、デプロイツール
 ```
 
@@ -179,7 +178,7 @@ pnpm typecheck
 # 単体テストおよびWASM統合テスト（128件すべて通過）
 pnpm test
 
-# 実サンプルによるブラウザ統合テスト（Chromiumおよびffprobeが必要）
+# ブラウザ統合テスト（Chromiumおよびffprobeが必要）
 pnpm exec playwright install chromium
 pnpm test:browser
 ```

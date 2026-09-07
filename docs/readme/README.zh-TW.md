@@ -127,7 +127,6 @@ PicForge/
 │   │       └── stores/         # Zustand 狀態儲存（fileStore、settingsStore）
 │   ├── codecs/                 # 編解碼器介面定義、參數結構與 WASM 載入入口
 │   └── worker/                 # Web Worker 執行池、解碼縮放與 AVIF/WebP 編碼核心
-├── sample/                     # 官方 Android 與 iOS 驗收樣本（嚴格保持原始狀態）
 └── scripts/                    # 編解碼器準備指令碼、Playwright 瀏覽器測試及自動部署工具
 ```
 
@@ -179,7 +178,7 @@ pnpm typecheck
 # 單元測試與 WASM 整合測試（128 項測試全數通過）
 pnpm test
 
-# 真實樣片端對端瀏覽器測試（需安裝 Chromium 與原生 ffprobe）
+# 端到端瀏覽器測試（需安裝 Chromium 與本地 ffprobe）
 pnpm exec playwright install chromium
 pnpm test:browser
 ```

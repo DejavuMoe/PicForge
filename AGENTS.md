@@ -7,7 +7,7 @@ Working version **0.15.0**, browser-only image toolbox. The initial integration 
 - **Image compression:** existing `@jsquash/*` pipeline, batch resize, global/per-image settings, compare/zoom previews and ZIP manifest.
 - **Android Motion Photos:** binary JPG + MP4 extraction; no re-encoding or Apple engine loading. MotionFlow's separate app has been removed; its license remains.
 - **iOS Live Photos:** basename pairing, HEIC → MozJPEG, MOV → H.264/AAC, clean-aperture crop/rotation, source timestamps or explicit 30 fps. Serial jobs, cancellation/retry, individual downloads and ZIP.
-- **Verified baseline (2026-09-06):** Chromium conversion/playback/offline reload and Firefox conversion/static-preview fallback. Safari/WebKit is unverified (local WebKit lacks `libicudata.so.74`). Timing/size measurements and limits: [sample validation](docs/SAMPLE_VALIDATION.md).
+- **Verified baseline (2026-09-06):** Chromium conversion/playback/offline reload and Firefox conversion/static-preview fallback. Safari/WebKit is unverified (local WebKit lacks `libicudata.so.74`). Timing/size measurements and limits: [validation report](docs/SAMPLE_VALIDATION.md).
 
 ## Code map
 
@@ -21,12 +21,12 @@ Working version **0.15.0**, browser-only image toolbox. The initial integration 
 
 - `pnpm install`; `pnpm dev` (127.0.0.1:5173); `pnpm build`; `pnpm preview`.
 - Required before release: `pnpm lint`, `pnpm test`, `pnpm typecheck`, `pnpm build`. No CI workflow currently exists. Vitest uses Node; mock browser APIs when needed.
-- Media/PWA changes: `pnpm test:browser` (Playwright Chromium + native `ffprobe`). This builds, previews and checks actual samples; artifacts default to a temporary directory. Override with `PICFORGE_BROWSER`, `PICFORGE_BROWSER_EXECUTABLE`, `PICFORGE_QA_OUTPUT`.
+- Media/PWA changes: `pnpm test:browser` (Playwright Chromium + native `ffprobe`). This builds, previews and checks acceptance when fixtures are provided; artifacts default to a temporary directory. Override with `PICFORGE_BROWSER`, `PICFORGE_BROWSER_EXECUTABLE`, `PICFORGE_QA_OUTPUT`.
 - UI changes: verify actual desktop/mobile behavior; use [QA checklist](docs/QA_CHECKLIST.md). `pnpm format` applies Prettier.
 
 ## Minimum constraints
 
-1. **Preserve `sample/` unchanged.** It contains original acceptance fixtures. Write exports/screenshots elsewhere. Preserve unrelated working changes; do not commit, push or deploy without authorization.
+1. **Privacy and workspace hygiene.** Sample media fixtures containing personal data must never be committed. Write exports/screenshots to temporary directories. Preserve unrelated working changes; do not commit, push or deploy without authorization.
 2. **Everything stays local.** No uploads, telemetry or remote processing without product approval. Keep engines self-hosted and lazy; use bounded concurrency, worker cleanup and existing size/pixel guards.
 3. **Preserve media semantics.** Android exports must reconstruct original bytes. For iOS check main track, crop, rotation and per-frame PTS—not just nominal fps. The pinned FFmpeg needs the clean-aperture adapter; remove it only with a verified core upgrade. HEIC output is a web derivative, not an HDR/metadata-preserving archive. Basename matching is not Apple identifier verification.
 4. **Preserve resize/settings behavior.** `contain` fits without upscaling; `cover` uses centered crop; `stretch` uses exact dimensions. Global edits must not overwrite per-image snapshots.

@@ -3095,6 +3095,10 @@ button:disabled {
     padding: 24px 18px;
     text-align: center;
   }
+  /* align-items: stretch left-aligns the fixed-width icon; keep it centered. */
+  .pf-motion-drop .pf-upload-icon {
+    align-self: center;
+  }
   .pf-motion-drop .pf-motion-button {
     width: 100%;
   }

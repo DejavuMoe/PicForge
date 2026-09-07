@@ -1,6 +1,8 @@
+import { SelectControl } from '../components/SelectControl';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiDownload } from 'react-icons/fi';
+import { ToolHeading } from '../components/ToolHeading';
+import { FiUploadCloud, FiDownload } from 'react-icons/fi';
 import { saveAs } from 'file-saver';
 import { formatFileSize } from '../utils/fileUtils';
 import { getRangeProgressStyle } from '../utils/rangeProgress';
@@ -115,7 +117,8 @@ export default function MotionWorkspace({ android }: { android: boolean }) {
     if (controller.current || exporting || done > 0) return;
     if (
       files.length + incoming.length > 100 ||
-      [...files, ...incoming].reduce((sum, file) => sum + file.size, 0) > batchMegabytes * 1024 * 1024
+      [...files, ...incoming].reduce((sum, file) => sum + file.size, 0) >
+        batchMegabytes * 1024 * 1024
     ) {
       setNotice('batchLimit');
       return;
@@ -207,6 +210,7 @@ export default function MotionWorkspace({ android }: { android: boolean }) {
   };
   const locked = busy || exporting || done > 0;
   const hasResults = done > 0;
+  const started = busy || Object.keys(jobs).length > 0;
   const pending = items.filter((item) => !item.issue && jobs[item.id]?.status !== 'done').length;
   const resetQueue = () => {
     setFiles([]);
@@ -214,171 +218,182 @@ export default function MotionWorkspace({ android }: { android: boolean }) {
     setNotice('');
   };
   return (
-    <main className="pf-motion-workspace">
-      <header className="pf-motion-topbar">
-        <div className="pf-motion-title">
-          <h1>{t(android ? 'motion.android' : 'motion.ios')}</h1>
-        </div>
-        <div className="pf-motion-actions">
-          <span role="status" aria-live="polite">
-            {t('motion.count', { total: items.length, done })}
-          </span>
-          {busy ? (
-            <button className="pf-motion-button" onClick={() => controller.current?.abort()}>
-              {t('motion.cancel')}
-            </button>
-          ) : (
-            <>
-              {items.length > 0 &&
-                (allDone ? (
-                  <button className="pf-motion-button" onClick={resetQueue}>
-                    {t('motion.newBatch')}
-                  </button>
-                ) : (
-                  <button className="pf-motion-button" disabled={exporting} onClick={resetQueue}>
-                    {t('motion.clear')}
-                  </button>
-                ))}
-              {pending > 0 && (
-                <button className="pf-motion-button is-primary" disabled={exporting} onClick={run}>
-                  {t('motion.start')}
-                </button>
-              )}
-              {hasResults && (
-                <button
-                  className={`pf-motion-button${allDone ? ' is-primary' : ''}`}
-                  disabled={exporting}
-                  onClick={exportZip}
-                >
-                  <FiDownload aria-hidden />
-                  {t(exporting ? 'motion.exporting' : 'motion.zip')}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </header>
-      <div className="pf-motion-body" data-has-items={items.length > 0}>
-        <p className="pf-motion-desc">{t(android ? 'motion.androidBody' : 'motion.iosBody')}</p>
-        <aside className="pf-motion-settings">
-          <h2>{t('motion.output')}</h2>
-          {android ? (
-            <dl className="pf-motion-specs">
-              <div>
-                <dt>JPG</dt>
-                <dd>{t('motion.specImageValue')}</dd>
-              </div>
-              <div>
-                <dt>MP4</dt>
-                <dd>{t('motion.specVideoValue')}</dd>
-              </div>
-              <div>
-                <dt>Codec</dt>
-                <dd>{t('motion.specCodecValue')}</dd>
-              </div>
-            </dl>
-          ) : (
-            <fieldset disabled={locked}>
-              <label>
-                {t('motion.preset')}
-                <select
-                  value={settings.preset}
-                  onChange={(e) =>
-                    setSettings({ ...settings, preset: e.target.value as MotionSettings['preset'] })
-                  }
-                >
-                  {['balanced', 'quality', 'compact'].map((value) => (
-                    <option key={value} value={value}>
-                      {t(`motion.${value}`)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                {t('motion.fps')}
-                <select
-                  value={settings.fps}
-                  onChange={(e) =>
-                    setSettings({ ...settings, fps: e.target.value as MotionSettings['fps'] })
-                  }
-                >
-                  <option value="source">{t('motion.sourceFps')}</option>
-                  <option value="30">30 fps</option>
-                </select>
-              </label>
-              <label>
-                {t('motion.jpegQuality')} · {settings.quality}
-                <input
-                  type="range"
-                  min="60"
-                  max="95"
-                  value={settings.quality}
-                  style={getRangeProgressStyle(settings.quality, 60, 95)}
-                  onChange={(e) => setSettings({ ...settings, quality: Number(e.target.value) })}
-                />
-              </label>
-              <label className="pf-motion-check">
-                <input
-                  type="checkbox"
-                  checked={settings.audio}
-                  onChange={(e) => setSettings({ ...settings, audio: e.target.checked })}
-                />
-                {t('motion.audio')}
-              </label>
-            </fieldset>
-          )}
-          <div className="pf-motion-note">
-            {t(android ? 'motion.androidNote' : 'motion.iosNote')}
-          </div>
-          <div className="pf-motion-note">{t('motion.offline')}</div>
-        </aside>
-        <section className="pf-motion-queue" aria-label={t('motion.queue')}>
-          {hasResults ? (
-            <p className="pf-motion-locked-note">{t('motion.lockedHint')}</p>
-          ) : (
-            <div
-              className={`pf-motion-drop${dragging ? ' is-dragging' : ''}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragging(false);
-                add(Array.from(e.dataTransfer.files));
-              }}
-            >
-              <div className="pf-motion-drop-text">
-                <h2>{t('motion.drop')}</h2>
-                <p>{android ? 'JPG · JPEG' : 'HEIC + MOV · HEIF · JPG · MP4'}</p>
-              </div>
-              <button
-                className="pf-motion-button is-primary"
-                disabled={busy || exporting}
-                onClick={() => input.current?.click()}
-              >
-                {t('motion.select')}
+    <main className="pf-motion-workspace" data-tool={android ? 'android' : 'ios'}>
+      <ToolHeading tool={android ? 'android' : 'ios'}>
+        {items.length > 0 && (
+          <div className="pf-motion-actions">
+            <span role="status" aria-live="polite">
+              {t('motion.count', { total: items.length, done })}
+            </span>
+            {busy ? (
+              <button className="pf-motion-button" onClick={() => controller.current?.abort()}>
+                {t('motion.cancel')}
               </button>
-              <input
-                ref={input}
-                type="file"
-                multiple
-                hidden
-                accept={android ? '.jpg,.jpeg' : '.heic,.heif,.mov,.jpg,.jpeg,.mp4'}
-                onChange={(e) => {
-                  add(Array.from(e.target.files ?? []));
-                  e.target.value = '';
-                }}
-              />
-            </div>
-          )}
-          {!android && <p className="pf-motion-note">{t('motion.pairing')}</p>}
+            ) : (
+              <>
+                {items.length > 0 &&
+                  (allDone ? (
+                    <button className="pf-motion-button" onClick={resetQueue}>
+                      {t('motion.newBatch')}
+                    </button>
+                  ) : (
+                    <button className="pf-motion-button" disabled={exporting} onClick={resetQueue}>
+                      {t('motion.clear')}
+                    </button>
+                  ))}
+                {pending > 0 && (
+                  <button
+                    className="pf-motion-button is-primary"
+                    disabled={exporting}
+                    onClick={run}
+                  >
+                    {t('motion.start')}
+                  </button>
+                )}
+                {hasResults && (
+                  <button
+                    className={`pf-motion-button${allDone ? ' is-primary' : ''}`}
+                    disabled={exporting}
+                    onClick={exportZip}
+                  >
+                    <FiDownload aria-hidden />
+                    {t(exporting ? 'motion.exporting' : 'motion.zip')}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </ToolHeading>
+      <div className="pf-motion-body" data-has-items={items.length > 0} data-started={started}>
+        <section className="pf-motion-queue" aria-label={t('motion.queue')}>
           {notice && (
             <p role="alert" className="pf-motion-error">
               {t(`motion.errors.${notice}`, { maxMB: batchMegabytes })}
             </p>
           )}
+
+          <div className="pf-motion-setup">
+            {!hasResults && !busy && (
+              <div
+                className={`pf-motion-drop${dragging ? ' is-dragging' : ''}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  add(Array.from(e.dataTransfer.files));
+                }}
+              >
+                <span className="pf-upload-icon" aria-hidden="true">
+                  <FiUploadCloud />
+                </span>
+                <div className="pf-motion-drop-text">
+                  <h2>{t('motion.drop')}</h2>
+                  <p>{android ? 'JPG · JPEG' : 'HEIC + MOV · HEIF · JPG · MP4'}</p>
+                </div>
+                <button
+                  className="pf-motion-button is-primary"
+                  disabled={busy || exporting}
+                  onClick={() => input.current?.click()}
+                >
+                  {t('motion.select')}
+                </button>
+                <input
+                  ref={input}
+                  type="file"
+                  multiple
+                  hidden
+                  accept={android ? '.jpg,.jpeg' : '.heic,.heif,.mov,.jpg,.jpeg,.mp4'}
+                  onChange={(e) => {
+                    add(Array.from(e.target.files ?? []));
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+            )}
+            {!android && !started && <p className="pf-motion-note">{t('motion.pairing')}</p>}
+            <section className="pf-motion-settings">
+              <h2>{t('motion.output')}</h2>
+              {android ? (
+                <dl className="pf-motion-specs">
+                  <div>
+                    <dt>JPG</dt>
+                    <dd>{t('motion.specImageValue')}</dd>
+                  </div>
+                  <div>
+                    <dt>MP4</dt>
+                    <dd>{t('motion.specVideoValue')}</dd>
+                  </div>
+                  <div>
+                    <dt>Codec</dt>
+                    <dd>{t('motion.specCodecValue')}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <fieldset disabled={locked}>
+                  <label>
+                    {t('motion.preset')}
+                    <SelectControl
+                      value={settings.preset}
+                      onValueChange={(value) =>
+                        setSettings({
+                          ...settings,
+                          preset: value as MotionSettings['preset'],
+                        })
+                      }
+                    >
+                      {['balanced', 'quality', 'compact'].map((value) => (
+                        <option key={value} value={value}>
+                          {t(`motion.${value}`)}
+                        </option>
+                      ))}
+                    </SelectControl>
+                  </label>
+                  <label>
+                    {t('motion.fps')}
+                    <SelectControl
+                      value={settings.fps}
+                      onValueChange={(value) =>
+                        setSettings({ ...settings, fps: value as MotionSettings['fps'] })
+                      }
+                    >
+                      <option value="source">{t('motion.sourceFps')}</option>
+                      <option value="30">30 fps</option>
+                    </SelectControl>
+                  </label>
+                  <label>
+                    {t('motion.jpegQuality')} · {settings.quality}
+                    <input
+                      type="range"
+                      min="60"
+                      max="95"
+                      value={settings.quality}
+                      style={getRangeProgressStyle(settings.quality, 60, 95)}
+                      onChange={(e) =>
+                        setSettings({ ...settings, quality: Number(e.target.value) })
+                      }
+                    />
+                  </label>
+                  <label className="pf-motion-check">
+                    <input
+                      type="checkbox"
+                      checked={settings.audio}
+                      onChange={(e) => setSettings({ ...settings, audio: e.target.checked })}
+                    />
+                    {t('motion.audio')}
+                  </label>
+                </fieldset>
+              )}
+              <div className="pf-motion-note">
+                {t(android ? 'motion.androidNote' : 'motion.iosNote')}
+              </div>
+              {!android && <div className="pf-motion-note">{t('motion.offline')}</div>}
+            </section>
+          </div>
           <div className="pf-motion-items">
             {items.map((item, index) => {
               const job = jobs[item.id];

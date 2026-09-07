@@ -5,7 +5,7 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--pf-page-bg);
+  background: transparent;
   scroll-behavior: smooth;
 }
 
@@ -14,18 +14,19 @@
 .pf-hero {
   position: relative;
   display: flex;
-  min-height: calc(100dvh - 56px);
+  min-height: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 96px 24px 120px;
+  padding: 64px 24px 48px;
   text-align: center;
 }
 
 .pf-particle-field {
   position: absolute;
   inset: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   pointer-events: none;
@@ -63,7 +64,7 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
 
 .pf-hero-inner {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   max-width: 880px;
   flex-direction: column;
@@ -73,7 +74,9 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
 .pf-hero-eyebrow {
   margin: 0 0 24px;
   color: var(--pf-accent);
-  font-family: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, 'Noto Sans Mono CJK SC', monospace;
+  font-family:
+    'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas,
+    'Noto Sans Mono CJK SC', monospace;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.18em;
@@ -85,7 +88,7 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
   flex-direction: column;
   margin: 0;
   color: var(--pf-text-primary);
-  font-size: clamp(42px, 7.2vw, 88px);
+  font-size: clamp(34px, 4.6vw, 62px);
   font-weight: 720;
   letter-spacing: -0.045em;
   line-height: 1.04;
@@ -203,19 +206,21 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
 .pf-landing-section {
   max-width: 1140px;
   margin: 0 auto;
-  padding: 96px 32px 24px;
+  padding: 40px 32px 24px;
   scroll-margin-top: 12px;
 }
 
 .pf-section-head {
   max-width: 640px;
-  margin-bottom: 48px;
+  margin-bottom: 24px;
 }
 
 .pf-section-eyebrow {
   margin: 0 0 14px;
   color: var(--pf-accent);
-  font-family: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, 'Noto Sans Mono CJK SC', monospace;
+  font-family:
+    'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas,
+    'Noto Sans Mono CJK SC', monospace;
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -225,7 +230,7 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
 .pf-section-head h2 {
   margin: 0;
   color: var(--pf-text-primary);
-  font-size: clamp(28px, 3.6vw, 42px);
+  font-size: clamp(24px, 2.8vw, 32px);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.12;
@@ -255,7 +260,9 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
   padding: 28px;
   border: 1px solid var(--pf-border-default);
   border-radius: 20px;
-  background: var(--pf-card-bg);
+  background: var(--pf-glass-surface);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: var(--pf-glass-shadow);
   color: var(--pf-text-primary);
   text-align: left;
   cursor: pointer;
@@ -278,7 +285,7 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
 }
 
 .pf-tool-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-3px);
   border-color: var(--pf-border-hover);
   box-shadow: var(--pf-shadow-popover);
 }
@@ -332,12 +339,15 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 26px;
+  margin-top: auto;
+  padding-top: 26px;
 }
 
 .pf-tool-card-meta {
   color: var(--pf-text-tertiary);
-  font-family: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, 'Noto Sans Mono CJK SC', monospace;
+  font-family:
+    'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas,
+    'Noto Sans Mono CJK SC', monospace;
   font-size: 11px;
   letter-spacing: 0.04em;
 }
@@ -484,7 +494,7 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
 
 @media (max-width: 900px) {
   .pf-hero {
-    min-height: calc(100dvh - 48px);
+    min-height: 0;
   }
 }
 
@@ -492,7 +502,7 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
   /* Content-driven height so the tool entries peek above the fold. */
   .pf-hero {
     min-height: 0;
-    padding: 56px 20px 64px;
+    padding: 40px 20px 28px;
   }
 
   .pf-hero-title {
@@ -518,7 +528,7 @@ html[data-pf-theme='dark'] .pf-hero-aurora {
   }
 
   .pf-landing-section {
-    padding: 64px 20px 8px;
+    padding: 28px 20px 8px;
   }
 
   .pf-feature-grid {

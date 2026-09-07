@@ -51,7 +51,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className="pf-toolbox" data-active-tool={tool}>
-        <Header onHome={goHome} />
+        <Header onHome={goHome} tool={tool} onSelect={openTool} />
 
         {tool === 'home' && <Landing onSelect={openTool} />}
 

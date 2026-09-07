@@ -72,7 +72,10 @@ try {
     await panel.getByRole('button', { name }).click();
     await (await waiting).saveAs(resolve(output, filename));
   };
-  await page.getByRole('button', { name: 'Android Motion Photos', exact: true }).click();
+  await page
+    .locator('.pf-tool-nav')
+    .getByRole('button', { name: 'Android Motion Photos', exact: true })
+    .click();
   await panel.locator('input[type=file]').setInputFiles('sample/Android/IMG20260711013006.jpg');
   await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
   await waitDone();
@@ -87,7 +90,10 @@ try {
   );
   assert(!requests.some((url) => /ffmpeg|heif-/.test(url)), 'Android must not load Apple engines');
   await page.getByRole('button', { name: 'PicForge', exact: true }).click();
-  await page.getByRole('button', { name: 'iOS Live Photos', exact: true }).click();
+  await page
+    .locator('.pf-tool-nav')
+    .getByRole('button', { name: 'iOS Live Photos', exact: true })
+    .click();
   const originals = ['sample/iOS/IMG_4238.HEIC', 'sample/iOS/IMG_4238.MOV'];
   await panel.locator('input[type=file]').setInputFiles(originals);
   await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
@@ -182,7 +188,10 @@ try {
     await context.setOffline(true);
     await page.reload();
 
-    await page.getByRole('button', { name: 'iOS Live Photos', exact: true }).click();
+    await page
+      .locator('.pf-tool-nav')
+      .getByRole('button', { name: 'iOS Live Photos', exact: true })
+      .click();
     await panel.locator('input[type=file]').setInputFiles(originals);
     await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
     await waitDone();
@@ -190,7 +199,10 @@ try {
   }
   await context.setOffline(false);
   await page.getByRole('button', { name: 'PicForge', exact: true }).click();
-  await page.getByRole('button', { name: 'Image compression', exact: true }).click();
+  await page
+    .locator('.pf-tool-nav')
+    .getByRole('button', { name: 'Image compression', exact: true })
+    .click();
   await panel.locator('input[type=file]').setInputFiles(resolve(output, 'ios.jpg'));
   await page.waitForFunction(
     () => {

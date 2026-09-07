@@ -1,3 +1,4 @@
+import { SelectControl } from './SelectControl';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CompressSettings, OutputFormat, ResizeMethod } from '@pic-forge/codecs';
@@ -81,17 +82,18 @@ export function FileSettingsPanel({ file }: FileSettingsPanelProps) {
       <div className="pf-file-settings-controls">
         <span className="pf-toolbar-panel-label">{t('settings.customImageSettings')}</span>
 
-        <select
+        <SelectControl
           className="pf-toolbar-select pf-file-settings-format"
+          aria-label={t('tooltips.formatHint')}
           value={settings.outputFormat}
-          onChange={(event) => updateSettings({ outputFormat: event.target.value as OutputFormat })}
+          onValueChange={(value) => updateSettings({ outputFormat: value as OutputFormat })}
         >
           {FORMAT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
-        </select>
+        </SelectControl>
 
         <label className="pf-file-settings-quality">
           <span className="pf-toolbar-label">{t('settings.quality')}</span>
@@ -185,15 +187,16 @@ export function FileSettingsPanel({ file }: FileSettingsPanelProps) {
               </div>
             )}
 
-            <select
+            <SelectControl
               className="pf-toolbar-select pf-toolbar-fit-select"
+              aria-label={t('settings.fitMethod')}
               value={resize.method ?? 'contain'}
-              onChange={(event) => updateResize({ method: event.target.value as ResizeMethod })}
+              onValueChange={(value) => updateResize({ method: value as ResizeMethod })}
             >
               <option value="contain">{t('settings.fit.contain')}</option>
               <option value="cover">{t('settings.fit.cover')}</option>
               <option value="stretch">{t('settings.fit.stretch')}</option>
-            </select>
+            </SelectControl>
           </>
         )}
       </div>

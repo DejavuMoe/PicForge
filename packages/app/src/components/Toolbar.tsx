@@ -1,3 +1,4 @@
+import { SelectControl } from './SelectControl';
 /**
  * Toolbar — compression settings bar.
  *
@@ -181,6 +182,7 @@ export function Toolbar() {
                 type="button"
                 className={`pf-toolbar-button pf-toolbar-preset${active ? ' is-active' : ''}`}
                 title={t(preset.descriptionKey)}
+                aria-pressed={active}
                 onClick={() => applyPreset(preset)}
               >
                 {t(preset.labelKey)}
@@ -191,19 +193,19 @@ export function Toolbar() {
 
         <span className="pf-toolbar-divider" aria-hidden="true" />
 
-        <select
+        <SelectControl
           className="pf-toolbar-select pf-toolbar-format"
           value={settings.outputFormat}
           title={t('tooltips.formatHint')}
           aria-label={t('tooltips.formatHint')}
-          onChange={(event) => setOutputFormat(event.target.value as OutputFormat)}
+          onValueChange={(value) => setOutputFormat(value as OutputFormat)}
         >
           {FORMAT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
-        </select>
+        </SelectControl>
 
         <div className="pf-toolbar-quality">
           <span className="pf-toolbar-label pf-toolbar-quality-label">{t('settings.quality')}</span>
@@ -424,15 +426,15 @@ function ResizeControls() {
 
       <label className="pf-fit-control">
         <span className="pf-toolbar-label">{t('settings.fitMethod')}</span>
-        <select
+        <SelectControl
           className="pf-toolbar-select pf-toolbar-fit-select"
           value={resize.method ?? 'contain'}
-          onChange={(event) => updateResize({ method: event.target.value as ResizeMethod })}
+          onValueChange={(value) => updateResize({ method: value as ResizeMethod })}
         >
           <option value="contain">{t('settings.fit.contain')}</option>
           <option value="cover">{t('settings.fit.cover')}</option>
           <option value="stretch">{t('settings.fit.stretch')}</option>
-        </select>
+        </SelectControl>
       </label>
     </div>
   );
@@ -488,14 +490,15 @@ function AdvancedControls() {
             label={t('settings.adv.chromaSubsample')}
             tooltip={t('tooltips.adv.chromaSubsample')}
           >
-            <select
+            <SelectControl
               className="pf-toolbar-select pf-toolbar-select-compact"
+              aria-label={t('settings.adv.chromaSubsample')}
               value={numberValue('chroma_subsample', 2)}
-              onChange={(event) => updateAdvanced('chroma_subsample', Number(event.target.value))}
+              onValueChange={(value) => updateAdvanced('chroma_subsample', Number(value))}
             >
               <option value={1}>4:4:4</option>
               <option value={2}>4:2:0</option>
-            </select>
+            </SelectControl>
           </Chip>
           <Chip label={t('settings.adv.trellis')} tooltip={t('tooltips.adv.trellis')}>
             <SwitchControl
@@ -517,17 +520,18 @@ function AdvancedControls() {
             />
           </Chip>
           <Chip label={t('settings.adv.method')} tooltip={t('tooltips.adv.method')}>
-            <select
+            <SelectControl
               className="pf-toolbar-select pf-toolbar-select-compact"
+              aria-label={t('settings.adv.method')}
               value={numberValue('method', 4)}
-              onChange={(event) => updateAdvanced('method', Number(event.target.value))}
+              onValueChange={(value) => updateAdvanced('method', Number(value))}
             >
               {[0, 1, 2, 3, 4, 5, 6].map((value) => (
                 <option key={value} value={value}>
                   {value}
                 </option>
               ))}
-            </select>
+            </SelectControl>
           </Chip>
           <Chip
             label={t('settings.adv.alphaCompression')}
@@ -555,27 +559,29 @@ function AdvancedControls() {
       {format === 'avif' && (
         <>
           <Chip label={t('settings.adv.speed')} tooltip={t('tooltips.adv.speed')}>
-            <select
+            <SelectControl
               className="pf-toolbar-select pf-toolbar-select-compact"
+              aria-label={t('settings.adv.speed')}
               value={numberValue('speed', 6)}
-              onChange={(event) => updateAdvanced('speed', Number(event.target.value))}
+              onValueChange={(value) => updateAdvanced('speed', Number(value))}
             >
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
                 <option key={value} value={value}>
                   {value}
                 </option>
               ))}
-            </select>
+            </SelectControl>
           </Chip>
           <Chip label={t('settings.adv.subsample')} tooltip={t('tooltips.adv.subsample')}>
-            <select
+            <SelectControl
               className="pf-toolbar-select pf-toolbar-select-compact"
+              aria-label={t('settings.adv.subsample')}
               value={avifSubsampleValue(numberValue('subsample', AVIF_CHROMA_SUBSAMPLE.YUV420))}
-              onChange={(event) => updateAdvanced('subsample', Number(event.target.value))}
+              onValueChange={(value) => updateAdvanced('subsample', Number(value))}
             >
               <option value={AVIF_CHROMA_SUBSAMPLE.YUV444}>4:4:4</option>
               <option value={AVIF_CHROMA_SUBSAMPLE.YUV420}>4:2:0</option>
-            </select>
+            </SelectControl>
           </Chip>
         </>
       )}

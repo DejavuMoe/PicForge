@@ -6,6 +6,7 @@ import { FiAlertTriangle } from 'react-icons/fi';
 import { DropZone } from './components/DropZone';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { StatusBar } from './components/StatusBar';
+import { ToolHeading } from './components/ToolHeading';
 import { Toolbar } from './components/Toolbar';
 import { Workspace } from './components/Workspace';
 import { useAutoCompress } from './hooks/useAutoCompress';
@@ -122,6 +123,7 @@ export default function CompressionWorkspace({ active }: { active: boolean }) {
   return (
     <ErrorBoundary>
       <div className="pf-app" data-testid="app-root">
+        <ToolHeading tool="compression" />
         {hasFiles ? (
           <>
             <Toolbar />

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FiGithub, FiGlobe, FiMoon, FiSun } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../hooks/useThemeColors';
+import type { ToolId } from '../types';
 import { SUPPORTED_LANGUAGES } from '../i18n';
 
 const SHORT_LANG: Record<string, string> = {
@@ -14,9 +15,11 @@ const SHORT_LANG: Record<string, string> = {
 
 interface HeaderProps {
   onHome: () => void;
+  tool: ToolId;
+  onSelect: (tool: ToolId) => void;
 }
 
-export function Header({ onHome }: HeaderProps) {
+export function Header({ onHome, tool, onSelect }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const c = useThemeColors();
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
@@ -93,6 +96,18 @@ export function Header({ onHome }: HeaderProps) {
         </span>
       </button>
 
+      <nav className="pf-tool-nav" aria-label={t('landing.toolsTitle')}>
+        {(['compression', 'android', 'ios'] as const).map((value) => (
+          <button
+            type="button"
+            key={value}
+            aria-current={tool === value ? 'page' : undefined}
+            onClick={() => onSelect(value)}
+          >
+            {t(`motion.${value}`)}
+          </button>
+        ))}
+      </nav>
       <div className="pf-header-spacer" />
 
       <div className="pf-header-actions">

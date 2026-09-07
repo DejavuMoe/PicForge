@@ -27,7 +27,7 @@ void main() {
   vec2 clip = (p / uRes) * 2.0 - 1.0;
   gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
   float pulse = 0.75 + 0.25 * sin(t * (0.6 + aRand.x) + aRand.y * 6.2831);
-  gl_PointSize = (1.2 + aRand.z * 2.2) * pulse * uDpr;
+  gl_PointSize = (1.8 + aRand.z * 2.4) * pulse * uDpr;
   vMix = aRand.y;
   vec2 edge = min(p, uRes - p) / uRes;
   vFade = smoothstep(0.0, 0.05, min(edge.x, edge.y));
@@ -188,7 +188,8 @@ export function ParticleField({ colorMode, accent }: ParticleFieldProps) {
     seedParticles();
 
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // Keep canvas output premultiplied: alpha must not be multiplied twice.
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.clearColor(0, 0, 0, 0);
 
     const mouse = { x: -1e4, y: -1e4, tx: -1e4, ty: -1e4 };
@@ -218,14 +219,14 @@ export function ParticleField({ colorMode, accent }: ParticleFieldProps) {
       const { colorMode: mode, accent: accentHex } = themeRef.current;
       const accentRgb = hexToRgb(accentHex);
       const neutral: [number, number, number] =
-        mode === 'dark' ? [0.62, 0.68, 0.8] : [0.32, 0.39, 0.52];
+        mode === 'dark' ? [0.62, 0.68, 0.8] : [0.16, 0.28, 0.48];
       gl.uniform2f(loc.res, width, height);
       gl.uniform1f(loc.time, time);
       gl.uniform2f(loc.mouse, mouse.x, mouse.y);
       gl.uniform1f(loc.dpr, dpr);
       gl.uniform3f(loc.colorA, neutral[0], neutral[1], neutral[2]);
       gl.uniform3f(loc.colorB, accentRgb[0], accentRgb[1], accentRgb[2]);
-      gl.uniform1f(loc.alpha, mode === 'dark' ? 0.5 : 0.32);
+      gl.uniform1f(loc.alpha, mode === 'dark' ? 0.55 : 0.62);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.POINTS, 0, count);
     };

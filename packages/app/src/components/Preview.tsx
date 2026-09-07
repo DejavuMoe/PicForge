@@ -703,6 +703,7 @@ function CompareModeSwitch({
           type="button"
           className={`pf-compare-mode-button${mode === option.mode ? ' is-active' : ''}`}
           aria-label={option.label}
+          aria-pressed={mode === option.mode}
           title={option.label}
           onClick={() => onChange(option.mode)}
         >
@@ -729,6 +730,7 @@ function ZoomControls({
       <button
         type="button"
         className={`pf-preview-zoom-button${zoom === 1 ? ' is-active' : ''}`}
+        aria-pressed={zoom === 1}
         onClick={() => onSetZoom(1)}
       >
         {t('preview.zoom.fit')}
@@ -736,6 +738,7 @@ function ZoomControls({
       <button
         type="button"
         className={`pf-preview-zoom-button${zoom === 2 ? ' is-active' : ''}`}
+        aria-pressed={zoom === 2}
         onClick={() => onSetZoom(2)}
       >
         2x

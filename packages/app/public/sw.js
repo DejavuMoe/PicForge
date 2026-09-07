@@ -9,6 +9,7 @@ const APP_SHELL = [
   '/pwa-icon.svg',
   '/pwa-192.png',
   '/pwa-512.png',
+  '/og-image.jpg',
   '/manifest.webmanifest',
   '/fonts/Geist-Variable.woff2',
   '/fonts/Geist-Italic[wght].woff2',

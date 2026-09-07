@@ -3,39 +3,75 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PicForge - Local Image Toolbox</title>
+    <title>PicForge - Privacy-First Image Compressor & Live Photo Toolbox</title>
     <meta
       name="description"
-      content="Compress images, extract Android Motion Photos, and convert iOS Live Photos locally with WebAssembly. No uploads and no server processing."
+      content="High-performance, privacy-first image and motion media toolbox powered by WebAssembly. Batch compress JPEG, WebP, AVIF, extract Android Motion Photos, and convert iOS Live Photos 100% locally in your browser. Zero uploads, offline-ready."
     />
     <meta
       name="keywords"
-      content="image compression, batch image compressor, resize images, local image tool, WebAssembly image compression, JPEG, WebP, PNG, AVIF"
+      content="image compression, batch image compressor, resize images, WebAssembly image compression, MozJPEG, WebP, AVIF, OxiPNG, Android Motion Photo, motion photo extractor, iOS Live Photo, live photo converter, HEIC to JPG, MOV to MP4, clean aperture crop, local image tool, private image compressor, PWA, offline media toolbox"
     />
     <meta name="application-name" content="PicForge" />
     <meta name="robots" content="index,follow" />
-    <meta name="theme-color" content="#111111" />
+    <meta name="theme-color" content="#0a0d14" />
     <meta name="color-scheme" content="light dark" />
     <link rel="canonical" href="https://picforge.de" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="PicForge" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="PicForge" />
     <meta property="og:url" content="https://picforge.de" />
-    <meta property="og:title" content="PicForge - Local Image Toolbox" />
+    <meta property="og:title" content="PicForge - Privacy-First Image Compressor & Live Photo Toolbox" />
     <meta
       property="og:description"
-      content="Compress images and export Motion Photos and Live Photos locally in your browser. No uploads and no server processing."
+      content="High-performance, privacy-first image and motion media toolbox powered by WebAssembly. Batch compress images, extract Android Motion Photos, and convert iOS Live Photos 100% locally in your browser."
     />
-    <meta property="og:image" content="/pwa-icon.svg" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="PicForge - Local Image Toolbox" />
+    <meta property="og:image" content="https://picforge.de/og-image.jpg" />
+    <meta property="og:image:width" content="1376" />
+    <meta property="og:image:height" content="768" />
+    <meta property="og:image:alt" content="PicForge - High-performance WebAssembly image and motion media toolbox" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://picforge.de" />
+    <meta name="twitter:title" content="PicForge - Privacy-First Image Compressor & Live Photo Toolbox" />
     <meta
       name="twitter:description"
-      content="Private browser image toolbox: batch compression and dynamic photo conversion."
+      content="High-performance, privacy-first image and motion media toolbox powered by WebAssembly. 100% client-side, zero uploads, offline-ready."
     />
-    <meta name="twitter:image" content="/pwa-icon.svg" />
+    <meta name="twitter:image" content="https://picforge.de/og-image.jpg" />
+    <meta name="twitter:image:alt" content="PicForge - High-performance WebAssembly image and motion media toolbox" />
+
+    <!-- Schema.org WebApplication JSON-LD -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "PicForge",
+        "url": "https://picforge.de",
+        "description": "High-performance, privacy-first image and motion media toolbox powered by WebAssembly. Batch compress JPEG, WebP, AVIF, extract Android Motion Photos, and convert iOS Live Photos 100% locally in your browser.",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "All",
+        "browserRequirements": "Requires WebAssembly and Web Worker support",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Batch Image Compression (MozJPEG, WebP, OxiPNG, AVIF)",
+          "Android Motion Photo Lossless Extraction",
+          "iOS Live Photo (HEIC + MOV) Conversion",
+          "Client-Side WebAssembly Processing",
+          "Full Offline PWA Support"
+        ]
+      }
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/pwa-192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -43,7 +79,7 @@
   <body>
     <div id="root"></div>
     <noscript>
-      PicForge needs JavaScript to compress and resize images locally in your browser.
+      PicForge requires JavaScript and WebAssembly to compress images, extract Android Motion Photos, and convert iOS Live Photos locally in your browser.
     </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>

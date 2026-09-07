@@ -1,14 +1,14 @@
 {
-  "name": "PicForge - Local Image Toolbox",
+  "name": "PicForge - Privacy-First Image & Motion Toolbox",
   "short_name": "PicForge",
-  "description": "Local batch image compression, Android Motion Photo extraction, and iOS Live Photo conversion.",
+  "description": "High-performance local batch image compression, Android Motion Photo extraction, and iOS Live Photo conversion powered by WebAssembly.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#ffffff",
-  "theme_color": "#111111",
+  "background_color": "#0a0d14",
+  "theme_color": "#0a0d14",
   "categories": [
     "photo",
     "productivity",
@@ -41,12 +41,47 @@
       "purpose": "any maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/og-image.jpg",
+      "sizes": "1376x768",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "PicForge Toolbox Workspace"
+    }
+  ],
   "shortcuts": [
     {
-      "name": "Compress images",
+      "name": "Compress Images",
       "short_name": "Compress",
-      "description": "Open PicForge and add images for local compression.",
-      "url": "/",
+      "description": "Batch compress images with MozJPEG, WebP, and AVIF.",
+      "url": "/?tool=compression",
+      "icons": [
+        {
+          "src": "/pwa-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Android Motion Photos",
+      "short_name": "Android",
+      "description": "Extract lossless JPG and MP4 from Motion Photos.",
+      "url": "/?tool=android",
+      "icons": [
+        {
+          "src": "/pwa-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "iOS Live Photos",
+      "short_name": "iOS Live",
+      "description": "Convert HEIC and MOV pairs to web-ready JPG and MP4.",
+      "url": "/?tool=ios",
       "icons": [
         {
           "src": "/pwa-192.png",
@@ -57,3 +92,4 @@
     }
   ]
 }
+

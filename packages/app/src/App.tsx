@@ -19,9 +19,25 @@ export default function App() {
     return () => window.removeEventListener(SERVICE_WORKER_UPDATE_EVENT, ready);
   }, []);
 
-  const [tool, setTool] = useState<ToolId>('home');
+  const [tool, setTool] = useState<ToolId>(() => {
+    if (typeof window !== 'undefined') {
+      const param = new URLSearchParams(window.location.search).get('tool');
+      if (param === 'compression' || param === 'android' || param === 'ios') {
+        return param;
+      }
+    }
+    return 'home';
+  });
   // Tool workspaces stay mounted once visited so queues survive navigation.
-  const [visited, setVisited] = useState<ToolId[]>([]);
+  const [visited, setVisited] = useState<ToolId[]>(() => {
+    if (typeof window !== 'undefined') {
+      const param = new URLSearchParams(window.location.search).get('tool');
+      if (param === 'compression' || param === 'android' || param === 'ios') {
+        return [param];
+      }
+    }
+    return [];
+  });
 
   const openTool = useCallback((value: ToolId) => {
     setTool(value);

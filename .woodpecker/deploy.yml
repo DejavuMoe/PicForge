@@ -1,0 +1,34 @@
+labels:
+  platform: linux/amd64
+  backend: docker
+  role: netcup-nano
+  server: netcup-nano
+
+when:
+  - event: push
+    branch: master
+
+depends_on:
+  - test
+
+steps:
+  - name: build-site
+    image: node:24.19.0-alpine3.24
+    commands:
+      - apk add --no-cache git
+      - npm install --global pnpm@11.8.0
+      - pnpm install --frozen-lockfile
+      - pnpm build
+      - node scripts/verify-site-output.mjs packages/app/dist
+
+  - name: publish-site
+    image: alpine:3.24.1
+    volumes:
+      - /var/www/picforge.de:/deploy
+    commands:
+      - apk add --no-cache coreutils util-linux
+      - sh scripts/publish-site.sh packages/app/dist "$CI_COMMIT_SHA-$CI_PIPELINE_NUMBER-$CI_PIPELINE_RERUNS"
+
+concurrency:
+  limit: 1
+  group: picforge-production

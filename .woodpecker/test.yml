@@ -1,0 +1,23 @@
+labels:
+  platform: linux/amd64
+  backend: docker
+  role: netcup-nano
+  server: netcup-nano
+
+when:
+  - event: push
+    branch: master
+
+steps:
+  - name: test
+    image: node:24.19.0-alpine3.24
+    commands:
+      - apk add --no-cache git coreutils util-linux
+      - npm install --global pnpm@11.8.0
+      - pnpm install --frozen-lockfile
+      - pnpm lint
+      - pnpm test
+      - pnpm typecheck
+      - pnpm build
+      - node scripts/verify-site-output.mjs packages/app/dist
+      - sh scripts/test-publish-site.sh packages/app/dist

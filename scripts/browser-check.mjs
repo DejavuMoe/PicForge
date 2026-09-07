@@ -76,7 +76,86 @@ try {
   const sampleAndroid = process.env.PICFORGE_SAMPLE_ANDROID;
   const sampleIosHeic = process.env.PICFORGE_SAMPLE_IOS_HEIC;
   const sampleIosMov = process.env.PICFORGE_SAMPLE_IOS_MOV;
-  if (!sampleAndroid || !sampleIosHeic || !sampleIosMov || !existsSync(sampleAndroid) || !existsSync(sampleIosHeic) || !existsSync(sampleIosMov)) {
+  // Always exercise the production compressor/PWA, even without private media fixtures.
+  const synthetic = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 240;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#336699';
+    ctx.fillRect(0, 0, 320, 240);
+    return canvas.toDataURL('image/png').split(',')[1];
+  });
+  const staticFile = {
+    name: 'baseline.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(synthetic, 'base64'),
+  };
+  const compressStatic = async () => {
+    await page
+      .locator('.pf-tool-nav')
+      .getByRole('button', { name: 'Image compression', exact: true })
+      .click();
+    await panel.locator('input[type=file]').setInputFiles(staticFile);
+    const button = page.getByRole('button', {
+      name: 'Download the currently previewed image',
+      exact: true,
+    });
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector(
+          '[aria-label="Download the currently previewed image"]',
+        );
+        return button && !button.disabled;
+      },
+      null,
+      { timeout: 60000 },
+    );
+    const waiting = page.waitForEvent('download');
+    await button.click();
+    await (await waiting).saveAs(resolve(output, 'static.jpg'));
+    const bytes = await readFile(resolve(output, 'static.jpg'));
+    assert.equal(bytes.readUInt16BE(0), 0xffd8);
+    assert.deepEqual(
+      await page.evaluate(async (base64) => {
+        const image = new Image();
+        image.src = `data:image/jpeg;base64,${base64}`;
+        await image.decode();
+        return [image.naturalWidth, image.naturalHeight];
+      }, bytes.toString('base64')),
+      [320, 240],
+    );
+  };
+  await compressStatic();
+  await page.screenshot({ path: resolve(output, 'static-desktop.png') });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.screenshot({ path: resolve(output, 'static-mobile.png') });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  if (engine === 'chromium') {
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+    });
+    await context.setOffline(true);
+    await page.reload();
+    await compressStatic();
+    await context.setOffline(false);
+    console.log(
+      'PASS: production static compression, download dimensions, mobile width, offline reload/re-encode',
+    );
+  } else {
+    console.log('PASS: production static compression, download dimensions, mobile width');
+  }
+  assert.deepEqual(errors, []);
+  await page.getByRole('button', { name: 'PicForge', exact: true }).click();
+  if (
+    !sampleAndroid ||
+    !sampleIosHeic ||
+    !sampleIosMov ||
+    !existsSync(sampleAndroid) ||
+    !existsSync(sampleIosHeic) ||
+    !existsSync(sampleIosMov)
+  ) {
     console.log('Sample fixtures omitted; skipping browser sample regression checks.');
     await browser.close();
     server.kill();

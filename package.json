@@ -26,7 +26,8 @@
     "typecheck:app": "tsc --noEmit -p packages/app/tsconfig.json",
     "typecheck:worker": "tsc --noEmit -p packages/worker/tsconfig.json",
     "typecheck:codecs": "tsc --noEmit -p packages/codecs/tsconfig.json",
-    "test:browser": "pnpm build && node scripts/browser-check.mjs"
+    "test:browser": "pnpm build && node scripts/browser-check.mjs",
+    "benchmark": "tsc -p scripts/performance/tsconfig.json && node scripts/performance/run.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

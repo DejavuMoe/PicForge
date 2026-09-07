@@ -6,7 +6,7 @@
  */
 
 import { encodeImage } from '@pic-forge/codecs';
-import { DEFAULT_OPTIONS } from '@pic-forge/codecs';
+import { buildEncoderOptions } from './encoderOptions';
 
 self.onmessage = async (event: MessageEvent) => {
   const { type, payload } = event.data;
@@ -19,16 +19,7 @@ self.onmessage = async (event: MessageEvent) => {
     // Report progress: starting encoding
     self.postMessage({ type: 'progress', payload: { id, progress: 60 } });
 
-    // Build encoder options
-    const defaults = DEFAULT_OPTIONS[settings.outputFormat as keyof typeof DEFAULT_OPTIONS];
-    let encoderOptions: Record<string, any>;
-
-    if (settings.outputFormat === 'avif') {
-      const cqLevel = Math.round((settings.quality / 100) * 63);
-      encoderOptions = { ...(defaults || {}), quality: cqLevel, ...(settings.advanced ?? {}) };
-    } else {
-      encoderOptions = { ...(defaults || {}), quality: settings.quality, ...(settings.advanced ?? {}) };
-    }
+    const encoderOptions = buildEncoderOptions(settings);
 
     // Reconstruct ImageData from transferred buffer
     const pixelData = new Uint8ClampedArray(pixelBuffer);

@@ -11,3 +11,4 @@ export {
 } from './workerPool';
 export type { TaskCallbacks, WorkerPoolOptions } from './workerPool';
 export { decodeImage, resizeImage } from './imageProcessor';
+export { buildEncoderOptions } from './encoderOptions';

@@ -74,7 +74,7 @@ try {
   };
   await page.getByRole('button', { name: 'Android Motion Photos', exact: true }).click();
   await panel.locator('input[type=file]').setInputFiles('sample/Android/IMG20260711013006.jpg');
-  await panel.getByRole('button', { name: 'Process pending', exact: true }).click();
+  await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
   await waitDone();
   await download(/^JPG ·/, 'android.jpg');
   await download(/^MP4 ·/, 'android.mp4');
@@ -86,14 +86,15 @@ try {
     await readFile('sample/Android/IMG20260711013006.jpg'),
   );
   assert(!requests.some((url) => /ffmpeg|heif-/.test(url)), 'Android must not load Apple engines');
+  await page.getByRole('button', { name: 'PicForge', exact: true }).click();
   await page.getByRole('button', { name: 'iOS Live Photos', exact: true }).click();
   const originals = ['sample/iOS/IMG_4238.HEIC', 'sample/iOS/IMG_4238.MOV'];
   await panel.locator('input[type=file]').setInputFiles(originals);
-  await panel.getByRole('button', { name: 'Process pending', exact: true }).click();
+  await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
   await panel.getByRole('button', { name: 'Cancel', exact: true }).click();
   await panel.getByText('Cancelled. You can retry this item.', { exact: true }).waitFor();
   const started = Date.now();
-  await panel.getByRole('button', { name: 'Process pending', exact: true }).click();
+  await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
   await waitDone();
   console.log(`${engine}: iOS pair ${Date.now() - started} ms`);
   await download(/^JPG ·/, 'ios.jpg');
@@ -183,11 +184,12 @@ try {
 
     await page.getByRole('button', { name: 'iOS Live Photos', exact: true }).click();
     await panel.locator('input[type=file]').setInputFiles(originals);
-    await panel.getByRole('button', { name: 'Process pending', exact: true }).click();
+    await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
     await waitDone();
     console.log('Offline reload and conversion passed');
   }
   await context.setOffline(false);
+  await page.getByRole('button', { name: 'PicForge', exact: true }).click();
   await page.getByRole('button', { name: 'Image compression', exact: true }).click();
   await panel.locator('input[type=file]').setInputFiles(resolve(output, 'ios.jpg'));
   await page.waitForFunction(

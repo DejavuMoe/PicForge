@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { CompressSettings } from '@pic-forge/codecs';
+import { getSettingsHash } from '../utils/settingsUtils';
 
 // Mock browser APIs not available in Node
 vi.stubGlobal('URL', {
@@ -23,6 +24,8 @@ const createMockFile = (name: string, type: string, size = 1024): File => {
 
 // Import after mocks are set up
 const { useFileStore } = await import('./fileStore');
+const { useSettingsStore } = await import('./settingsStore');
+const { isResultExportable } = await import('../utils/exportManifest');
 
 const baseSettings: CompressSettings = {
   outputFormat: 'mozjpeg',
@@ -42,6 +45,9 @@ describe('fileStore', () => {
   beforeEach(() => {
     // Reset store to empty state
     useFileStore.setState({ files: [] });
+    useSettingsStore.setState({
+      settings: { ...baseSettings, resize: { ...baseSettings.resize! } },
+    });
     uuidCounter = 0;
     vi.clearAllMocks();
   });
@@ -239,11 +245,12 @@ describe('fileStore', () => {
       expect(useFileStore.getState().files[0].status).toBe('pending');
     });
 
-    it('revokes completed result URLs when resetting done files', () => {
+    it('keeps the latest successful result while reprocessing', () => {
       useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
       const id = useFileStore.getState().files[0].id;
       useFileStore.getState().updateFile(id, {
         status: 'done',
+        lastProcessedSettingsHash: 's-old',
         result: {
           blob: new Blob([new ArrayBuffer(4)]),
           size: 4,
@@ -251,10 +258,14 @@ describe('fileStore', () => {
         },
       });
 
+      vi.clearAllMocks();
       useFileStore.getState().resetAllToPending();
 
-      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:reset-result');
-      expect(useFileStore.getState().files[0].result).toBeUndefined();
+      const file = useFileStore.getState().files[0];
+      expect(file.status).toBe('pending');
+      expect(file.result?.previewUrl).toBe('blob:reset-result');
+      expect(file.lastProcessedSettingsHash).toBe('s-old');
+      expect(URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:reset-result');
     });
 
     it('does not reset error files', () => {
@@ -326,6 +337,240 @@ describe('fileStore', () => {
       expect(file.settingsMode).toBe('global');
       expect(file.customSettings).toBeUndefined();
       expect(file.status).toBe('pending');
+    });
+
+    it('does not let global settings overwrite a custom snapshot while keeping stale preview', () => {
+      useFileStore.getState().addFiles([
+        createMockFile('custom.jpg', 'image/jpeg'),
+        createMockFile('global.jpg', 'image/jpeg'),
+      ]);
+      const [customId, globalId] = useFileStore.getState().files.map((f) => f.id);
+      const customSettings = { ...baseSettings, quality: 40 };
+      useFileStore.getState().setFileCustomSettings(customId, customSettings);
+      useFileStore.getState().updateFile(customId, {
+        status: 'done',
+        lastProcessedSettingsHash: getSettingsHash(customSettings),
+        result: {
+          blob: new Blob([new ArrayBuffer(4)]),
+          size: 4,
+          previewUrl: 'blob:custom-result',
+        },
+      });
+      useFileStore.getState().updateFile(globalId, {
+        status: 'done',
+        lastProcessedSettingsHash: getSettingsHash(baseSettings),
+        result: {
+          blob: new Blob([new ArrayBuffer(4)]),
+          size: 4,
+          previewUrl: 'blob:global-result',
+        },
+      });
+
+      useFileStore.getState().resetGlobalToPending();
+
+      const [customFile, globalFile] = useFileStore.getState().files;
+      expect(customFile.status).toBe('done');
+      expect(customFile.customSettings?.quality).toBe(40);
+      expect(customFile.result?.previewUrl).toBe('blob:custom-result');
+      expect(globalFile.status).toBe('pending');
+      expect(globalFile.result?.previewUrl).toBe('blob:global-result');
+    });
+  });
+
+  describe('cancel and retry', () => {
+    it('marks processing files cancelled and keeps them cancelled after settings changes', () => {
+      useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
+      const id = useFileStore.getState().files[0].id;
+      useFileStore.getState().updateFile(id, {
+        status: 'processing',
+        lastProcessedSettingsHash: getSettingsHash(baseSettings),
+        result: {
+          blob: new Blob([new ArrayBuffer(4)]),
+          size: 4,
+          previewUrl: 'blob:cancel-keep',
+        },
+      });
+
+      useFileStore.getState().cancelFile(id);
+      expect(useFileStore.getState().files[0].status).toBe('cancelled');
+      expect(useFileStore.getState().files[0].result?.previewUrl).toBe('blob:cancel-keep');
+
+      useFileStore.getState().resetGlobalToPending();
+      expect(useFileStore.getState().files[0].status).toBe('cancelled');
+    });
+
+    it('requeues only after explicit retry', () => {
+      useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
+      const id = useFileStore.getState().files[0].id;
+      useFileStore.getState().updateFile(id, { status: 'processing' });
+      useFileStore.getState().cancelFile(id);
+      useFileStore.getState().retryFile(id);
+      expect(useFileStore.getState().files[0].status).toBe('pending');
+    });
+
+    it('restores a matching previous result when settings return to A after A→B→A', () => {
+      useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
+      const id = useFileStore.getState().files[0].id;
+      const hashA = getSettingsHash(baseSettings);
+      useFileStore.getState().updateFile(id, {
+        status: 'done',
+        lastProcessedSettingsHash: hashA,
+        result: {
+          blob: new Blob([new ArrayBuffer(4)]),
+          size: 4,
+          previewUrl: 'blob:result-a',
+        },
+      });
+
+      useFileStore.getState().setFileCustomSettings(id, { ...baseSettings, quality: 40 });
+      expect(useFileStore.getState().files[0].status).toBe('pending');
+      expect(useFileStore.getState().files[0].result?.previewUrl).toBe('blob:result-a');
+
+      useFileStore.getState().resetFileToGlobal(id, baseSettings);
+      const restored = useFileStore.getState().files[0];
+      expect(restored.status).toBe('done');
+      expect(restored.result?.previewUrl).toBe('blob:result-a');
+      expect(restored.settingsMode).toBe('global');
+    });
+
+    it('cancels pending files that have not started', () => {
+      useFileStore.getState().addFiles([
+        createMockFile('a.jpg', 'image/jpeg'),
+        createMockFile('b.jpg', 'image/jpeg'),
+      ]);
+      useFileStore.getState().cancelIncompleteFiles();
+      expect(useFileStore.getState().files.every((file) => file.status === 'cancelled')).toBe(true);
+    });
+
+    it('cancels retryable error files along with pending and processing work', () => {
+      useFileStore.getState().addFiles([
+        createMockFile('pending.jpg', 'image/jpeg'),
+        createMockFile('processing.jpg', 'image/jpeg'),
+        createMockFile('error.jpg', 'image/jpeg'),
+        createMockFile('done.jpg', 'image/jpeg'),
+      ]);
+      const [pendingId, processingId, errorId, doneId] = useFileStore.getState().files.map((f) => f.id);
+      useFileStore.getState().updateFile(processingId, { status: 'processing' });
+      useFileStore.getState().updateFile(errorId, { status: 'error', error: 'transient failure' });
+      useFileStore.getState().updateFile(doneId, {
+        status: 'done',
+        lastProcessedSettingsHash: getSettingsHash(baseSettings),
+        result: {
+          blob: new Blob([new ArrayBuffer(4)]),
+          size: 4,
+          previewUrl: 'blob:done-keep',
+        },
+      });
+
+      useFileStore.getState().cancelIncompleteFiles();
+
+      const files = useFileStore.getState().files;
+      expect(files.find((file) => file.id === pendingId)?.status).toBe('cancelled');
+      expect(files.find((file) => file.id === processingId)?.status).toBe('cancelled');
+      expect(files.find((file) => file.id === errorId)?.status).toBe('cancelled');
+      expect(files.find((file) => file.id === doneId)?.status).toBe('done');
+      expect(files.find((file) => file.id === doneId)?.result?.previewUrl).toBe('blob:done-keep');
+    });
+  });
+
+  describe('global settings A→B→A', () => {
+    it('invalidates pending in-flight work when global quality changes', () => {
+      useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
+      const id = useFileStore.getState().files[0].id;
+      const epochBefore = useFileStore.getState().files[0].taskEpoch ?? 0;
+
+      useSettingsStore.getState().setQuality(40);
+
+      const file = useFileStore.getState().getFile(id)!;
+      expect(file.status).toBe('pending');
+      expect(file.taskEpoch).toBe(epochBefore + 1);
+    });
+
+    it('restores a matching previous result through the real global setter', () => {
+      useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
+      const id = useFileStore.getState().files[0].id;
+      const hashA = getSettingsHash(useSettingsStore.getState().settings);
+      useFileStore.getState().updateFile(id, {
+        status: 'done',
+        lastProcessedSettingsHash: hashA,
+        result: {
+          blob: new Blob([new ArrayBuffer(4)]),
+          size: 4,
+          previewUrl: 'blob:result-a',
+        },
+      });
+
+      useSettingsStore.getState().setQuality(40);
+      expect(useFileStore.getState().files[0].status).toBe('pending');
+      expect(useFileStore.getState().files[0].result?.previewUrl).toBe('blob:result-a');
+      expect(isResultExportable(useFileStore.getState().files[0], useSettingsStore.getState().settings)).toBe(false);
+
+      useSettingsStore.getState().setQuality(75);
+      const restored = useFileStore.getState().files[0];
+      expect(restored.status).toBe('done');
+      expect(restored.result?.previewUrl).toBe('blob:result-a');
+      expect(restored.taskEpoch).toBeGreaterThan(0);
+      expect(isResultExportable(restored, useSettingsStore.getState().settings)).toBe(true);
+      expect(URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:result-a');
+    });
+
+    it('keeps cancelled files cancelled when global settings return to A', () => {
+      useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
+      const id = useFileStore.getState().files[0].id;
+      useFileStore.getState().updateFile(id, {
+        status: 'done',
+        lastProcessedSettingsHash: getSettingsHash(useSettingsStore.getState().settings),
+        result: {
+          blob: new Blob([new ArrayBuffer(4)]),
+          size: 4,
+          previewUrl: 'blob:cancelled-a',
+        },
+      });
+      useFileStore.getState().updateFile(id, { status: 'cancelled' });
+
+      useSettingsStore.getState().setQuality(40);
+      useSettingsStore.getState().setQuality(75);
+
+      expect(useFileStore.getState().files[0].status).toBe('cancelled');
+      expect(isResultExportable(useFileStore.getState().files[0], useSettingsStore.getState().settings)).toBe(false);
+    });
+
+    it('does not restore or reprocess custom snapshots when global quality returns to A', () => {
+      useFileStore.getState().addFiles([
+        createMockFile('custom.jpg', 'image/jpeg'),
+        createMockFile('global.jpg', 'image/jpeg'),
+      ]);
+      const [customId, globalId] = useFileStore.getState().files.map((f) => f.id);
+      const customSettings = { ...baseSettings, quality: 40 };
+      useFileStore.getState().setFileCustomSettings(customId, customSettings);
+      useFileStore.getState().updateFile(customId, {
+        status: 'done',
+        lastProcessedSettingsHash: getSettingsHash(customSettings),
+        result: {
+          blob: new Blob([new ArrayBuffer(4)]),
+          size: 4,
+          previewUrl: 'blob:custom-a',
+        },
+      });
+      useFileStore.getState().updateFile(globalId, {
+        status: 'done',
+        lastProcessedSettingsHash: getSettingsHash(baseSettings),
+        result: {
+          blob: new Blob([new ArrayBuffer(4)]),
+          size: 4,
+          previewUrl: 'blob:global-a',
+        },
+      });
+
+      useSettingsStore.getState().setQuality(40);
+      useSettingsStore.getState().setQuality(75);
+
+      const [customFile, globalFile] = useFileStore.getState().files;
+      expect(customFile.status).toBe('done');
+      expect(customFile.customSettings?.quality).toBe(40);
+      expect(customFile.result?.previewUrl).toBe('blob:custom-a');
+      expect(globalFile.status).toBe('done');
+      expect(globalFile.result?.previewUrl).toBe('blob:global-a');
     });
   });
 });

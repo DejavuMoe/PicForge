@@ -1,14 +1,14 @@
 /**
  * Zustand store for managing compression settings.
  *
- * When global settings change, all done/processing files are reset to 'pending'
- * so the useAutoCompress hook will re-process them with the new settings.
+ * When global settings change, in-flight global-mode work is invalidated.
+ * A matching previous result is restored instead of re-encoding.
  */
 
 import { create } from 'zustand';
 import type { CompressSettings, OutputFormat } from '@pic-forge/codecs';
 import { useFileStore } from './fileStore';
-import { cloneSettings, mergeSettings } from '../utils/settingsUtils';
+import { cloneSettings, getSettingsHash, mergeSettings } from '../utils/settingsUtils';
 
 interface SettingsStore {
   settings: CompressSettings;
@@ -32,9 +32,10 @@ const defaultSettings: CompressSettings = {
   advanced: {},
 };
 
-/** Reset all files to pending so they get re-compressed with new settings */
+/** Invalidate in-flight global work and restore a matching previous result when possible */
 function triggerRecompression() {
-  useFileStore.getState().resetGlobalToPending();
+  const settings = useSettingsStore.getState().settings;
+  useFileStore.getState().resetGlobalToPending(getSettingsHash(settings));
 }
 
 export const useSettingsStore = create<SettingsStore>((set) => ({

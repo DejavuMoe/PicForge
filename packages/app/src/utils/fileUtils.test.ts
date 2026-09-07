@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatFileSize, compressionRatio, replaceExtension, isSupportedImage } from './fileUtils';
+import { formatFileSize, compressionRatio, replaceExtension, isSupportedImage, sanitizeFileName } from './fileUtils';
 
 describe('formatFileSize', () => {
   it('formats 0 bytes', () => {
@@ -80,5 +80,22 @@ describe('isSupportedImage', () => {
   it('rejects unsupported types', () => {
     expect(isSupportedImage(makeFile('doc.pdf', 'application/pdf'))).toBe(false);
     expect(isSupportedImage(makeFile('video.mp4', 'video/mp4'))).toBe(false);
+  });
+});
+
+describe('sanitizeFileName', () => {
+  it('strips traversal, backslashes, drive letters, and control characters', () => {
+    expect(sanitizeFileName('../escaped.png')).toBe('escaped.png');
+    expect(sanitizeFileName('..\\..\\escaped.png')).toBe('escaped.png');
+    expect(sanitizeFileName('C:\\photos\\n.png')).toBe('n.png');
+    expect(sanitizeFileName('C:foo.png')).toBe('C_foo.png');
+    expect(sanitizeFileName('bad\u0000name.png')).toBe('bad_name.png');
+  });
+
+  it('replaces empty and dot-only names', () => {
+    expect(sanitizeFileName('')).toBe('image');
+    expect(sanitizeFileName('.')).toBe('_');
+    expect(sanitizeFileName('..')).toBe('_');
+    expect(sanitizeFileName('   ')).toBe('image');
   });
 });

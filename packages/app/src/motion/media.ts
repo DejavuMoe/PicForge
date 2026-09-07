@@ -51,7 +51,14 @@ export function groupMedia(files: File[], android: boolean): MediaItem[] {
 }
 
 // MotionFlow's binary split, with full top-level box validation before accepting ftyp.
-export function splitMotionPhoto(buffer: ArrayBuffer): MediaOutput {
+// Some cameras append zero padding after the MP4. The box walk determines where the
+// *structure* ends; the exported video always runs to EOF so that JPG + MP4 rebuild
+// the original file byte-for-byte, padding included. A zero size+type pair marks the
+// start of padding explicitly — otherwise a long zero tail would be swallowed as a
+// size-0 "to EOF" box and bypass the padding limit.
+const MAX_TRAILING_PADDING = 4096;
+
+export function splitMotionPhoto(buffer: ArrayBuffer, source?: Blob): MediaOutput {
   const bytes = new Uint8Array(buffer);
   if (bytes[0] !== 0xff || bytes[1] !== 0xd8) throw new Error('invalidMotion');
   const view = new DataView(buffer);
@@ -65,6 +72,7 @@ export function splitMotionPhoto(buffer: ArrayBuffer): MediaOutput {
     while (pos + 8 <= bytes.length) {
       let size = view.getUint32(pos);
       const type = String.fromCharCode(...bytes.subarray(pos + 4, pos + 8));
+      if (size === 0 && type === '\0\0\0\0') break; // zero padding begins here
       let header = 8;
       if (size === 1) {
         if (pos + 16 > bytes.length) break;
@@ -77,12 +85,18 @@ export function splitMotionPhoto(buffer: ArrayBuffer): MediaOutput {
       media ||= type === 'mdat';
       pos += size;
     }
-    if (pos === bytes.length && movie && media) {
-      return {
-        image: new Blob([bytes.subarray(0, start)], { type: 'image/jpeg' }),
-        video: new Blob([bytes.subarray(start)], { type: 'video/mp4' }),
-      };
-    }
+    if (!movie || !media || pos <= start) continue;
+    const tail = bytes.length - pos;
+    if (tail > MAX_TRAILING_PADDING) continue;
+    if (tail > 0 && bytes.subarray(pos).some((byte) => byte !== 0)) continue;
+    return {
+      image: source
+        ? source.slice(0, start, 'image/jpeg')
+        : new Blob([bytes.subarray(0, start)], { type: 'image/jpeg' }),
+      video: source
+        ? source.slice(start, source.size, 'video/mp4')
+        : new Blob([bytes.subarray(start)], { type: 'video/mp4' }),
+    };
   }
   throw new Error('invalidMotion');
 }

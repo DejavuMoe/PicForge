@@ -5,9 +5,14 @@
 import type { CompressSettings, OutputFormat } from '@pic-forge/codecs';
 
 /**
+ * Top-level toolbox view: the landing page or one of the three tools.
+ */
+export type ToolId = 'home' | 'compression' | 'android' | 'ios';
+
+/**
  * Status of an image file in the processing queue.
  */
-export type FileStatus = 'pending' | 'processing' | 'done' | 'error';
+export type FileStatus = 'pending' | 'processing' | 'done' | 'error' | 'cancelled';
 
 /**
  * Whether an image follows global settings or owns a full settings snapshot.
@@ -43,6 +48,8 @@ export interface ImageFile {
   customSettings?: CompressSettings;
   /** Hash of the settings used for the latest completed processing result */
   lastProcessedSettingsHash?: string;
+  /** Incremented when a run is cancelled, retried, or settings change so stale callbacks cannot write back */
+  taskEpoch?: number;
   /** Processing progress (0-100) */
   progress: number;
   /** Object URL for the original image preview */

@@ -85,11 +85,21 @@ export interface WebpOptions {
 }
 
 /**
- * AVIF encoding options.
+ * jSquash AVIF chroma subsample values.
+ * 4:2:0 is 1; 4:4:4 is 3. 0 is monochrome and must not be used for 4:4:4.
+ */
+export const AVIF_CHROMA_SUBSAMPLE = {
+  YUV420: 1,
+  YUV444: 3,
+} as const;
+
+/**
+ * AVIF encoding options matching @jsquash/avif 2.x (`quality` / `qualityAlpha`).
+ * quality is 0–100. quality=100 is not treated as lossless unless `lossless` is set.
  */
 export interface AvifOptions {
-  cqLevel: number;
-  cqAlphaLevel: number;
+  quality: number;
+  qualityAlpha: number;
   denoiseLevel: number;
   tileColsLog2: number;
   tileRowsLog2: number;

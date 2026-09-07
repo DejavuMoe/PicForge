@@ -1,7 +1,7 @@
 import type { CompressSettings } from '@pic-forge/codecs';
 import type { ImageFile } from '../types';
 import { FORMAT_OPTIONS } from '../types';
-import { replaceExtension } from './fileUtils';
+import { replaceExtension, sanitizeFileName } from './fileUtils';
 import { getEffectiveSettings, getSettingsHash } from './settingsUtils';
 
 export interface ExportManifestFile {
@@ -34,11 +34,17 @@ export interface ExportManifest {
   files: ExportManifestFile[];
 }
 
+export function isResultExportable(file: ImageFile, globalSettings: CompressSettings): boolean {
+  if (file.status !== 'done' || !file.result || !file.lastProcessedSettingsHash) return false;
+  const currentHash = getSettingsHash(getEffectiveSettings(file, globalSettings));
+  return file.lastProcessedSettingsHash === currentHash;
+}
+
 export function getOutputName(file: ImageFile, globalSettings: CompressSettings): string {
   const effectiveSettings = getEffectiveSettings(file, globalSettings);
   const formatOption = FORMAT_OPTIONS.find((f) => f.value === effectiveSettings.outputFormat);
   const ext = formatOption?.extension ?? '.bin';
-  return replaceExtension(file.file.name, ext);
+  return replaceExtension(sanitizeFileName(file.file.name), ext);
 }
 
 export function makeUniqueName(name: string, usedNames: Set<string>): string {
@@ -71,7 +77,7 @@ export function createExportManifest(
   appVersion: string,
   date = new Date(),
 ): ExportManifest {
-  const doneFiles = files.filter((file) => file.status === 'done' && file.result);
+  const doneFiles = files.filter((file) => isResultExportable(file, globalSettings));
   const usedNames = new Set<string>();
   const manifestFiles = doneFiles.map((file) => {
     const result = file.result;

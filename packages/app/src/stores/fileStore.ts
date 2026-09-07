@@ -7,6 +7,7 @@ import type { CompressSettings } from '@pic-forge/codecs';
 import type { ImageFile } from '../types';
 import { generateId, createPreviewUrl, revokePreviewUrl, isSupportedImage } from '../utils/fileUtils';
 import { cloneSettings, getSettingsHash, mergeSettings } from '../utils/settingsUtils';
+import { abortAllProcessing, abortFileProcessing } from '../hooks/processingPool';
 
 interface FileStore {
   /** All image files in the queue */
@@ -36,31 +37,58 @@ interface FileStore {
   /** Get file by id */
   getFile: (id: string) => ImageFile | undefined;
 
-  /** Reset global-mode done/processing files to pending after global settings changes */
-  resetGlobalToPending: () => void;
+  /** Invalidate in-flight global-mode work after global settings changes */
+  resetGlobalToPending: (nextSettingsHash?: string) => void;
 
-  /** Reset all done/processing files to pending */
+  /** Reset all done/processing/pending files to pending */
   resetAllToPending: () => void;
+
+  /** User cancel: stop auto-scheduling until explicit retry */
+  cancelFile: (id: string) => void;
+
+  /** Explicit retry for error or cancelled files */
+  retryFile: (id: string) => void;
+
+  /** Cancel pending, processing, and auto-retryable error files in the current batch */
+  cancelIncompleteFiles: () => void;
 }
 
-function clearResult(file: ImageFile): ImageFile {
-  if (file.result?.previewUrl) {
-    revokePreviewUrl(file.result.previewUrl);
-  }
-  return { ...file, result: undefined, outputMeta: undefined };
+function bumpEpoch(file: ImageFile): number {
+  return (file.taskEpoch ?? 0) + 1;
+}
+
+function isInFlightStatus(status: ImageFile['status']): boolean {
+  return status === 'pending' || status === 'processing' || status === 'done';
 }
 
 function markForReprocess(file: ImageFile, nextSettingsHash?: string): ImageFile {
+  const taskEpoch = bumpEpoch(file);
   const keepCurrentResult = !!nextSettingsHash
     && file.lastProcessedSettingsHash === nextSettingsHash
     && !!file.result;
 
+  if (file.status === 'cancelled') {
+    return {
+      ...file,
+      taskEpoch,
+      progress: 0,
+      error: undefined,
+    };
+  }
+
   if (keepCurrentResult) {
-    return { ...file, error: undefined };
+    return {
+      ...file,
+      taskEpoch,
+      status: 'done',
+      progress: 100,
+      error: undefined,
+    };
   }
 
   return {
-    ...clearResult(file),
+    ...file,
+    taskEpoch,
     status: 'pending',
     progress: 0,
     error: undefined,
@@ -83,6 +111,7 @@ export const useFileStore = create<FileStore>((set, get) => ({
         status: 'pending',
         settingsMode: 'global',
         progress: 0,
+        taskEpoch: 0,
         previewUrl: createPreviewUrl(file),
       });
     }
@@ -93,6 +122,7 @@ export const useFileStore = create<FileStore>((set, get) => ({
   },
 
   removeFile: (id) => {
+    abortFileProcessing(id);
     set((state) => {
       const file = state.files.find((f) => f.id === id);
       if (file) {
@@ -106,8 +136,10 @@ export const useFileStore = create<FileStore>((set, get) => ({
   },
 
   clearAll: () => {
+    abortAllProcessing();
     const { files } = get();
     for (const file of files) {
+      abortFileProcessing(file.id);
       revokePreviewUrl(file.previewUrl);
       if (file.result?.previewUrl) {
         revokePreviewUrl(file.result.previewUrl);
@@ -122,7 +154,9 @@ export const useFileStore = create<FileStore>((set, get) => ({
         if (f.id !== id) return f;
         // Revoke old result URL whenever it is replaced or explicitly cleared.
         if (Object.prototype.hasOwnProperty.call(update, 'result') && f.result?.previewUrl) {
-          revokePreviewUrl(f.result.previewUrl);
+          if (update.result?.previewUrl !== f.result.previewUrl) {
+            revokePreviewUrl(f.result.previewUrl);
+          }
         }
         return { ...f, ...update };
       }),
@@ -178,13 +212,13 @@ export const useFileStore = create<FileStore>((set, get) => ({
     return get().files.find((f) => f.id === id);
   },
 
-  resetGlobalToPending: () => {
+  resetGlobalToPending: (nextSettingsHash) => {
     set((state) => ({
       files: state.files.map((f) => {
-        if (f.settingsMode === 'global' && (f.status === 'done' || f.status === 'processing')) {
-          return markForReprocess(f);
-        }
-        return f;
+        if (f.settingsMode !== 'global') return f;
+        if (f.status === 'cancelled' || f.status === 'error') return f;
+        if (!isInFlightStatus(f.status)) return f;
+        return markForReprocess(f, nextSettingsHash);
       }),
     }));
   },
@@ -192,10 +226,59 @@ export const useFileStore = create<FileStore>((set, get) => ({
   resetAllToPending: () => {
     set((state) => ({
       files: state.files.map((f) => {
-        if (f.status === 'done' || f.status === 'processing') {
-          return markForReprocess(f);
-        }
-        return f;
+        if (f.status === 'cancelled' || f.status === 'error') return f;
+        if (!isInFlightStatus(f.status)) return f;
+        return markForReprocess(f);
+      }),
+    }));
+  },
+
+  cancelFile: (id) => {
+    abortFileProcessing(id);
+    set((state) => ({
+      files: state.files.map((f) => {
+        if (f.id !== id) return f;
+        if (f.status === 'done' || f.status === 'error' || f.status === 'cancelled') return f;
+        return {
+          ...f,
+          status: 'cancelled',
+          progress: 0,
+          error: undefined,
+          taskEpoch: bumpEpoch(f),
+        };
+      }),
+    }));
+  },
+
+  retryFile: (id) => {
+    abortFileProcessing(id);
+    set((state) => ({
+      files: state.files.map((f) => {
+        if (f.id !== id) return f;
+        if (f.status !== 'error' && f.status !== 'cancelled') return f;
+        return {
+          ...f,
+          status: 'pending',
+          progress: 0,
+          error: undefined,
+          taskEpoch: bumpEpoch(f),
+        };
+      }),
+    }));
+  },
+
+  cancelIncompleteFiles: () => {
+    set((state) => ({
+      files: state.files.map((f) => {
+        if (f.status === 'done' || f.status === 'cancelled') return f;
+        abortFileProcessing(f.id);
+        return {
+          ...f,
+          status: 'cancelled' as const,
+          progress: 0,
+          error: undefined,
+          taskEpoch: bumpEpoch(f),
+        };
       }),
     }));
   },

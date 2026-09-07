@@ -39,6 +39,18 @@ export function replaceExtension(filename: string, newExt: string): string {
 }
 
 /**
+ * Strip path components, control characters, and other zip/download-unsafe chars.
+ * Matches the Motion workspace sanitizer: `[\\/:*?"<>|\\x00-\\x1f]`, lone dots, empty fallback.
+ * Does not mutate the original File name.
+ */
+export function sanitizeFileName(filename: string, fallback = 'image'): string {
+  const basename = filename.replace(/\\/g, '/').split('/').pop() ?? '';
+  const cleaned = basename.replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').replace(/^\.+$/, '_');
+  const trimmed = cleaned.trim();
+  return trimmed || fallback;
+}
+
+/**
  * Check if a file is a supported image type.
  */
 export function isSupportedImage(file: File): boolean {

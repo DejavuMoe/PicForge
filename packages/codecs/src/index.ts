@@ -19,6 +19,8 @@ export type {
   EncoderOptions,
 } from './types';
 
+export { AVIF_CHROMA_SUBSAMPLE } from './types';
+
 /**
  * Default encoding options for each format.
  */
@@ -71,8 +73,8 @@ export const DEFAULT_OPTIONS = {
     use_sharp_yuv: 0,
   },
   avif: {
-    cqLevel: 33,
-    cqAlphaLevel: -1,
+    quality: 75,
+    qualityAlpha: -1,
     denoiseLevel: 0,
     tileColsLog2: 0,
     tileRowsLog2: 0,

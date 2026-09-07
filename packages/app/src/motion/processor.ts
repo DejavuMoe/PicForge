@@ -17,7 +17,7 @@ export async function processMedia(
   signal.throwIfAborted();
   if ([item.image, item.video].some((file) => file && file.size > 100 * 1024 * 1024))
     throw new Error('tooLarge');
-  if (android && item.image) return splitMotionPhoto(await item.image.arrayBuffer());
+  if (android && item.image) return splitMotionPhoto(await item.image.arrayBuffer(), item.image);
   const output: MediaOutput = {};
   if (item.image) {
     if (/\.jpe?g$/i.test(item.image.name)) output.image = item.image;

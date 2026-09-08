@@ -1,173 +1,150 @@
 import { useEffect, useRef, useState } from 'react';
-import { FiGithub, FiGlobe, FiMoon, FiSun } from 'react-icons/fi';
+import { FiMoon, FiSun, FiMoreHorizontal } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../hooks/useThemeColors';
 import type { ToolId } from '../types';
-import { SUPPORTED_LANGUAGES } from '../i18n';
+import { SUPPORTED_LANGUAGES, chooseLanguage } from '../i18n';
+import { getLanguagePreference } from '../i18n/languagePreference';
+import { SelectionRail } from './SelectionRail';
+import { OpticalLayer } from './OpticalLayer';
+import { SelectControl } from './SelectControl';
 
-const SHORT_LANG: Record<string, string> = {
-  en: 'EN',
-  'zh-CN': '中',
-  'zh-TW': '繁',
-  ja: 'JP',
-  ko: 'KR',
-};
-
-interface HeaderProps {
+const TOOLS = ['compression', 'android', 'ios'] as const;
+export function Header({
+  onHome,
+  tool,
+  onSelect,
+}: {
   onHome: () => void;
   tool: ToolId;
   onSelect: (tool: ToolId) => void;
-}
-
-export function Header({ onHome, tool, onSelect }: HeaderProps) {
+}) {
   const { t, i18n } = useTranslation();
-  const c = useThemeColors();
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const languageMenuRef = useRef<HTMLDivElement>(null);
-  const languageButtonRef = useRef<HTMLButtonElement>(null);
-
-  const currentLang =
-    SUPPORTED_LANGUAGES.find((language) => language.code === i18n.language) ??
-    SUPPORTED_LANGUAGES[0];
-
-  useEffect(() => {
-    if (!isLanguageOpen) return undefined;
-
-    // Move focus into the menu so keyboard users land on the current language.
-    const menu = languageMenuRef.current;
-    const initial =
-      menu?.querySelector<HTMLButtonElement>('.pf-language-item.is-active') ??
-      menu?.querySelector<HTMLButtonElement>('.pf-language-item');
-    initial?.focus();
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (languageMenuRef.current && !languageMenuRef.current.contains(event.target as Node)) {
-        setIsLanguageOpen(false);
-      }
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, [isLanguageOpen]);
-
-  const handleMenuKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      setIsLanguageOpen(false);
-      languageButtonRef.current?.focus();
-      return;
-    }
-    const items = Array.from(
-      languageMenuRef.current?.querySelectorAll<HTMLButtonElement>('.pf-language-item') ?? [],
-    );
-    if (items.length === 0) return;
-    const index = items.indexOf(event.target as HTMLButtonElement);
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      items[(index + 1) % items.length]?.focus();
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      items[(index - 1 + items.length) % items.length]?.focus();
-    } else if (event.key === 'Home') {
-      event.preventDefault();
-      items[0]?.focus();
-    } else if (event.key === 'End') {
-      event.preventDefault();
-      items[items.length - 1]?.focus();
-    } else if (event.key === 'Tab') {
-      setIsLanguageOpen(false);
-    }
+  const theme = useThemeColors();
+  const [languagePreference, setLanguagePreference] = useState<string>(getLanguagePreference);
+  const selectLanguage = (value: string) => {
+    setLanguagePreference(value);
+    void chooseLanguage(value);
   };
-
+  const about = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
+  useEffect(() => {
+    const outside = (event: PointerEvent) => {
+      if (event.target instanceof Element && event.target.closest('.pf-select-menu')) return;
+      if (about.current?.open && !about.current.contains(event.target as Node))
+        about.current.open = false;
+    };
+    window.addEventListener('pointerdown', outside);
+    return () => window.removeEventListener('pointerdown', outside);
+  }, []);
   return (
     <header className="pf-header">
+      <OpticalLayer />
       <button
         type="button"
-        className="pf-brand-link pf-brand-button"
+        className="pf-brand-button"
         onClick={onHome}
-        aria-label={t('app.title')}
+        aria-label={t('entry.home')}
       >
-        <span className="pf-brand">
-          <span className="pf-logo">P</span>
-          <span className="pf-brand-title">{t('app.title')}</span>
+        <span className="pf-logo" aria-hidden="true">
+          P
         </span>
+        <span className="pf-brand-title">PicForge</span>
       </button>
-
-      <nav className="pf-tool-nav" aria-label={t('landing.toolsTitle')}>
-        {(['compression', 'android', 'ios'] as const).map((value) => (
-          <button
-            type="button"
-            key={value}
-            aria-current={tool === value ? 'page' : undefined}
-            onClick={() => onSelect(value)}
+      {tool !== 'home' && (
+        <>
+          <SelectionRail
+            as="nav"
+            activeKey={tool}
+            className="pf-tool-nav"
+            aria-label={t('workbench.tools')}
           >
-            {t(`motion.${value}`)}
-          </button>
-        ))}
-      </nav>
-      <div className="pf-header-spacer" />
-
-      <div className="pf-header-actions">
-        <div className="pf-header-menu-wrap" ref={languageMenuRef} onKeyDown={handleMenuKeyDown}>
-          <button
-            type="button"
-            className="pf-header-button"
-            ref={languageButtonRef}
-            aria-haspopup="menu"
-            aria-expanded={isLanguageOpen}
-            onClick={() => setIsLanguageOpen((open) => !open)}
-          >
-            <FiGlobe className="pf-icon" aria-hidden="true" />
-            <span className="pf-language-full">{currentLang.label}</span>
-            <span className="pf-language-short">{SHORT_LANG[i18n.language] ?? 'EN'}</span>
-          </button>
-
-          {isLanguageOpen && (
-            <div className="pf-language-menu" role="menu">
-              {SUPPORTED_LANGUAGES.map((language) => (
-                <button
-                  key={language.code}
-                  type="button"
-                  className={`pf-language-item${language.code === i18n.language ? ' is-active' : ''}`}
-                  role="menuitem"
-                  onClick={() => {
-                    i18n.changeLanguage(language.code);
-                    setIsLanguageOpen(false);
-                    languageButtonRef.current?.focus();
-                  }}
-                >
-                  {language.label}
-                </button>
+            {TOOLS.map((value) => (
+              <button
+                type="button"
+                key={value}
+                aria-current={tool === value ? 'page' : undefined}
+                onClick={() => onSelect(value)}
+              >
+                {t(`motion.${value}`)}
+              </button>
+            ))}
+          </SelectionRail>
+          <div className="pf-mobile-tool">
+            <SelectControl
+              aria-label={t('workbench.tools')}
+              value={tool}
+              onValueChange={(value) => onSelect(value as ToolId)}
+            >
+              {TOOLS.map((value) => (
+                <option key={value} value={value}>
+                  {t(`motion.${value}`)}
+                </option>
               ))}
-            </div>
-          )}
+            </SelectControl>
+          </div>
+        </>
+      )}
+      <div className="pf-header-actions">
+        <div className="pf-language-control">
+          <SelectControl
+            aria-label={t('workbench.language')}
+            value={languagePreference}
+            onValueChange={selectLanguage}
+          >
+            <option value="auto">{t('workbench.languageAuto')}</option>
+            {SUPPORTED_LANGUAGES.map((language) => (
+              <option key={language.code} value={language.code}>
+                {language.label}
+              </option>
+            ))}
+          </SelectControl>
         </div>
-
-        <a
-          href="https://github.com/DejavuMoe/PicForge"
-          className="pf-icon-button"
-          aria-label={t('tooltips.github')}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <FiGithub className="pf-icon" aria-hidden="true" />
-        </a>
-
         <button
           type="button"
-          className="pf-icon-button"
+          className="pf-icon-button pf-theme-button"
           aria-label={t('tooltips.toggleColorMode')}
-          onClick={c.toggleColorMode}
+          onClick={theme.toggleColorMode}
         >
-          {c.colorMode === 'light' ? (
-            <FiMoon className="pf-icon" aria-hidden="true" />
-          ) : (
-            <FiSun className="pf-icon" aria-hidden="true" />
-          )}
+          {theme.colorMode === 'light' ? <FiMoon aria-hidden /> : <FiSun aria-hidden />}
         </button>
+        <details
+          ref={about}
+          className="pf-about"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.currentTarget.open = false;
+              event.currentTarget.querySelector('summary')?.focus();
+            }
+          }}
+        >
+          <summary className="pf-icon-button" aria-label={t('workbench.preferences')}>
+            <FiMoreHorizontal aria-hidden />
+          </summary>
+          <div className="pf-about-menu">
+            <strong>{t('workbench.preferences')}</strong>
+            <div className="pf-mobile-preferences">
+              <SelectControl
+                aria-label={t('workbench.language')}
+                value={languagePreference}
+                onValueChange={selectLanguage}
+              >
+                <option value="auto">{t('workbench.languageAuto')}</option>
+                {SUPPORTED_LANGUAGES.map((language) => (
+                  <option key={language.code} value={language.code}>
+                    {language.label}
+                  </option>
+                ))}
+              </SelectControl>
+              <button className="pf-text-button" onClick={theme.toggleColorMode}>
+                {theme.colorMode === 'light' ? <FiMoon aria-hidden /> : <FiSun aria-hidden />}
+                {t('tooltips.toggleColorMode')}
+              </button>
+            </div>
+          </div>
+        </details>
       </div>
     </header>
   );

@@ -52,7 +52,11 @@ export function SelectControl({
   const open = () => {
     const rect = trigger.current!.getBoundingClientRect();
     const width = Math.min(Math.max(rect.width, 180), window.innerWidth - 24);
-    const height = Math.min(options.length * 40 + 12, 280);
+    const rowHeight = Math.max(
+      40,
+      parseFloat(getComputedStyle(trigger.current!).getPropertyValue('--pf-control-height')) || 40,
+    );
+    const height = Math.min(options.length * rowHeight + 12, 280);
     const below = window.innerHeight - rect.bottom - 12;
     const above = rect.top - 12;
     const down = below >= Math.min(height, above);

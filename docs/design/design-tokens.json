@@ -1,0 +1,73 @@
+{
+  "status": "optical interaction revision 2026-09-09",
+  "colors": {
+    "light": {
+      "chrome": "#FFFFFF",
+      "surface": "#F6F6F6",
+      "imageMat": "#E8E8E8",
+      "text": "#202322",
+      "secondaryText": "#616762",
+      "separator": "#DDDFDD",
+      "controlBorder": "#858C87",
+      "accent": "#245946",
+      "onPrimary": "#FFFFFF",
+      "primaryButton": "#245946",
+      "selection": "#EDF3F0",
+      "disabledText": "#69736C",
+      "shell": "#EDF1EF"
+    },
+    "dark": {
+      "chrome": "#202222",
+      "surface": "#242626",
+      "imageMat": "#161818",
+      "text": "#ECEEEC",
+      "secondaryText": "#ABB0AC",
+      "separator": "#373B38",
+      "controlBorder": "#747D76",
+      "accent": "#91BBA4",
+      "onPrimary": "#FFFFFF",
+      "primaryButton": "#245946",
+      "selection": "#303E37",
+      "disabledText": "#929D95",
+      "shell": "#1B211E"
+    }
+  },
+  "typography": {
+    "family": "system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+    "body": 14,
+    "metadata": 13,
+    "section": 16,
+    "title": 24,
+    "lineHeight": 1.5,
+    "numbers": "tabular-nums"
+  },
+  "spacing": [4, 8, 12, 16, 24, 32],
+  "radii": {
+    "media": 0,
+    "control": 9,
+    "menu": 14,
+    "workbench": 18,
+    "optical": 24
+  },
+  "layout": {
+    "header": 60,
+    "desktopQueue": [224, 256],
+    "desktopInspector": [280, 304],
+    "footer": [56, 64],
+    "mobileGutter": 16,
+    "mobileTouchMin": 44,
+    "landingHeader": 64
+  },
+  "motion": {
+    "durationMs": [140, 180, 240, 260, 600],
+    "properties": ["transform", "translate", "opacity", "color", "background-color", "box-shadow"],
+    "respectReducedMotion": true,
+    "selectionMs": 260,
+    "popoverMs": 180,
+    "dialogEnterMs": 260,
+    "dialogExitMs": 140,
+    "disclosureMs": 240,
+    "heroEnterMs": 600,
+    "particleFpsCeiling": 30
+  }
+}

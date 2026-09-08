@@ -3,35 +3,43 @@ import { getDefaultCompareMode, isCompareModeAvailable } from './previewUtils';
 
 describe('previewUtils', () => {
   it('uses single view before a result exists', () => {
-    expect(getDefaultCompareMode({
-      hasResult: false,
-      hasDimensionChange: false,
-      isMobile: false,
-    })).toBe('single');
+    expect(
+      getDefaultCompareMode({
+        hasResult: false,
+        hasDimensionChange: false,
+        isMobile: false,
+      }),
+    ).toBe('single');
   });
 
   it('uses slider for same-size desktop comparisons', () => {
-    expect(getDefaultCompareMode({
-      hasResult: true,
-      hasDimensionChange: false,
-      isMobile: false,
-    })).toBe('slider');
+    expect(
+      getDefaultCompareMode({
+        hasResult: true,
+        hasDimensionChange: false,
+        isMobile: false,
+      }),
+    ).toBe('slider');
   });
 
   it('uses side-by-side for resized desktop comparisons', () => {
-    expect(getDefaultCompareMode({
-      hasResult: true,
-      hasDimensionChange: true,
-      isMobile: false,
-    })).toBe('sideBySide');
+    expect(
+      getDefaultCompareMode({
+        hasResult: true,
+        hasDimensionChange: true,
+        isMobile: false,
+      }),
+    ).toBe('sideBySide');
   });
 
-  it('uses stacked side-by-side on mobile even when dimensions match', () => {
-    expect(getDefaultCompareMode({
-      hasResult: true,
-      hasDimensionChange: false,
-      isMobile: true,
-    })).toBe('sideBySide');
+  it('uses a full-size slider comparison by default on mobile', () => {
+    expect(
+      getDefaultCompareMode({
+        hasResult: true,
+        hasDimensionChange: false,
+        isMobile: true,
+      }),
+    ).toBe('slider');
   });
 
   it('only allows compare modes after a result exists', () => {

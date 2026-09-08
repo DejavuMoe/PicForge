@@ -1,24 +1,21 @@
-import { SelectControl } from './SelectControl';
-/**
- * Toolbar — compression settings bar.
- *
- * Native shell controls keep the frequently used settings surface responsive
- * while preserving the existing settings model.
- */
-
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { FiChevronDown } from 'react-icons/fi';
+import { SelectionRail } from './SelectionRail';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CompressSettings, OutputFormat, ResizeMethod } from '@pic-forge/codecs';
 import { AVIF_CHROMA_SUBSAMPLE } from '@pic-forge/codecs';
+import { SelectControl } from './SelectControl';
+import { Inspector, SwitchControl } from './WorkbenchLayout';
+import { ConfirmDialog } from './ConfirmDialog';
 import { useSettingsStore } from '../stores/settingsStore';
-import { PRESETS, type Preset } from '../stores/presets';
-import { FORMAT_OPTIONS } from '../types';
+import { useFileStore } from '../stores/fileStore';
+import { PRESETS } from '../stores/presets';
+import { FORMAT_OPTIONS, type ImageFile } from '../types';
+import { cloneSettings } from '../utils/settingsUtils';
+import { formatFileSize } from '../utils/fileUtils';
+import { getOutputName, isResultExportable } from '../utils/exportManifest';
 import { getRangeProgressStyle } from '../utils/rangeProgress';
 
-type ResizeSettings = NonNullable<CompressSettings['resize']>;
-
-const DEFAULT_RESIZE: ResizeSettings = {
+const DEFAULT_RESIZE: NonNullable<CompressSettings['resize']> = {
   enabled: false,
   mode: 'absolute',
   maxWidth: 1920,
@@ -26,179 +23,150 @@ const DEFAULT_RESIZE: ResizeSettings = {
   percentage: 50,
   method: 'contain',
 };
-
-function isPresetActive(
-  settings: { outputFormat: string; quality: number; advanced?: Record<string, unknown> },
-  preset: Preset,
-): boolean {
-  if (settings.outputFormat !== preset.settings.outputFormat) return false;
-  if (settings.quality !== preset.settings.quality) return false;
-  const adv = settings.advanced ?? {};
-  const presetAdv = (preset.settings.advanced ?? {}) as Record<string, unknown>;
-  for (const key of Object.keys(presetAdv)) {
-    if (adv[key] !== presetAdv[key]) return false;
-  }
-  return true;
+interface SettingsFieldsProps {
+  settings: CompressSettings;
+  updateSettings: (partial: Partial<CompressSettings>) => void;
+}
+function bounded(value: string, fallback: number, min: number, max: number) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(min, Math.min(max, Math.round(number))) : fallback;
 }
 
-function parseBoundedNumber(value: string, fallback: number, min: number, max: number) {
-  const next = Number(value);
-  if (!Number.isFinite(next)) return fallback;
-  return Math.max(min, Math.min(max, Math.round(next)));
-}
-
-function SwitchControl({
-  checked,
-  onChange,
-  ariaLabel,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  ariaLabel: string;
-}) {
+/** One inspector for global settings and complete per-file snapshots. */
+export function Toolbar({ file }: { file: ImageFile | null }) {
+  const { t } = useTranslation();
+  const global = useSettingsStore((state) => state.settings);
+  const updateGlobal = useSettingsStore((state) => state.updateSettings);
+  const resetGlobal = useSettingsStore((state) => state.resetToDefaults);
+  const hasCustomFiles = useFileStore((state) =>
+    state.files.some((item) => item.settingsMode === 'custom'),
+  );
+  const [scope, setScope] = useState<'global' | 'file'>(
+    file?.settingsMode === 'custom' ? 'file' : 'global',
+  );
+  const [resetOpen, setResetOpen] = useState(false);
+  useEffect(() => {
+    setScope(file?.settingsMode === 'custom' ? 'file' : 'global');
+  }, [file?.id, file?.settingsMode]);
+  const settings = scope === 'file' && file?.customSettings ? file.customSettings : global;
+  const updateSettings = (partial: Partial<CompressSettings>) => {
+    if (scope === 'file' && file)
+      useFileStore.getState().updateFileCustomSettings(file.id, partial);
+    else updateGlobal(partial);
+  };
+  const chooseFile = () => {
+    if (!file) return;
+    if (file.settingsMode !== 'custom')
+      useFileStore.getState().setFileCustomSettings(file.id, cloneSettings(global));
+    setScope('file');
+  };
+  const exportable = file && isResultExportable(file, global);
+  const download = async () => {
+    if (!file || !isResultExportable(file, global)) return;
+    const { saveAs } = await import('file-saver');
+    saveAs(file.result!.blob, getOutputName(file, global));
+  };
   return (
-    <button
-      type="button"
-      className={`pf-switch${checked ? ' is-checked' : ''}`}
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      onClick={() => onChange(!checked)}
+    <Inspector
+      title={t('workbench.outputSettings')}
+      footer={
+        file && (
+          <>
+            <div className="pf-result-summary">
+              <span>{t('workbench.result')}</span>
+              <strong>
+                {exportable ? formatFileSize(file.result!.size) : t('workbench.notReady')}
+              </strong>
+            </div>
+            <button className="pf-text-button" disabled={!exportable} onClick={download}>
+              {t('workbench.downloadCurrent')}
+            </button>
+          </>
+        )
+      }
     >
-      <span className="pf-switch-thumb" aria-hidden="true" />
-    </button>
+      <SelectionRail
+        activeKey={scope}
+        className="pf-scope-switch"
+        role="group"
+        aria-label={t('workbench.settingsScope')}
+      >
+        <button aria-pressed={scope === 'global'} onClick={() => setScope('global')}>
+          {t('workbench.allImages')}
+        </button>
+        <button aria-pressed={scope === 'file'} disabled={!file} onClick={chooseFile}>
+          {t('workbench.thisImage')}
+        </button>
+      </SelectionRail>
+      {hasCustomFiles && scope === 'global' && (
+        <p className="pf-field-hint">{t('workbench.globalHint')}</p>
+      )}
+      {scope === 'file' && file && (
+        <div className="pf-scope-note">
+          <p>{t('workbench.customHint')}</p>
+          <button
+            className="pf-text-button"
+            onClick={() => useFileStore.getState().resetFileToGlobal(file.id, global)}
+          >
+            {t('actions.useGlobalSettings')}
+          </button>
+        </div>
+      )}
+      <SettingsFields settings={settings} updateSettings={updateSettings} />
+      <details className="pf-settings-extra">
+        <summary>{t('settings.title')}</summary>
+        <div className="pf-preset-list">
+          {PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              className="pf-button"
+              title={t(preset.descriptionKey)}
+              onClick={() => updateSettings(preset.settings)}
+            >
+              {t(preset.labelKey)}
+            </button>
+          ))}
+        </div>
+        {scope === 'global' && (
+          <button
+            className="pf-text-button"
+            onClick={(event) => {
+              event.currentTarget.focus();
+              setResetOpen(true);
+            }}
+          >
+            {t('actions.resetDefaults')}
+          </button>
+        )}
+      </details>
+      {resetOpen && (
+        <ConfirmDialog
+          title={t('dialog.resetTitle')}
+          body={t('workbench.resetBody')}
+          onCancel={() => setResetOpen(false)}
+          onConfirm={() => {
+            resetGlobal();
+            setResetOpen(false);
+          }}
+        />
+      )}
+    </Inspector>
   );
 }
 
-export function Toolbar() {
+function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
   const { t } = useTranslation();
-  const settings = useSettingsStore((s) => s.settings);
-  const updateSettings = useSettingsStore((s) => s.updateSettings);
-  const setOutputFormat = useSettingsStore((s) => s.setOutputFormat);
-  const setQuality = useSettingsStore((s) => s.setQuality);
-  const resetToDefaults = useSettingsStore((s) => s.resetToDefaults);
-  const [draftQuality, setDraftQuality] = useState(settings.quality);
-  const [showResizeDetails, setShowResizeDetails] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [presetMenuOpen, setPresetMenuOpen] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
-  const presetMenuRef = useRef<HTMLDivElement>(null);
-  const cancelRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    setDraftQuality(settings.quality);
-  }, [settings.quality]);
-
-  useEffect(() => {
-    if (!settings.resize?.enabled) {
-      setShowResizeDetails(false);
-    }
-  }, [settings.resize?.enabled]);
-
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!presetMenuRef.current?.contains(event.target as Node)) {
-        setPresetMenuOpen(false);
-      }
-    };
-    window.addEventListener('pointerdown', handlePointerDown);
-    return () => window.removeEventListener('pointerdown', handlePointerDown);
-  }, []);
-
-  useEffect(() => {
-    if (!resetOpen) return;
-    cancelRef.current?.focus();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setResetOpen(false);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [resetOpen]);
-
-  const applyPreset = (preset: Preset) => {
-    updateSettings({
-      outputFormat: preset.settings.outputFormat,
-      quality: preset.settings.quality,
-      resize: preset.settings.resize,
-      advanced: preset.settings.advanced,
-    });
-    setPresetMenuOpen(false);
-  };
-
-  const handleResizeToggle = (enabled: boolean) => {
-    updateSettings({ resize: { ...(settings.resize ?? DEFAULT_RESIZE), enabled } });
-    setShowResizeDetails(enabled);
-  };
-
-  const commitQuality = (value: number) => {
-    setDraftQuality(value);
-    setQuality(value);
-  };
-
+  const resize = settings.resize ?? DEFAULT_RESIZE;
+  const updateResize = (partial: Partial<typeof resize>) =>
+    updateSettings({ resize: { ...resize, ...partial } });
   return (
-    <div className="pf-toolbar" data-testid="toolbar">
-      <div className="pf-toolbar-row">
-        <div className="pf-toolbar-presets-mobile" ref={presetMenuRef}>
-          <button
-            type="button"
-            className="pf-toolbar-button pf-toolbar-button-outline"
-            aria-expanded={presetMenuOpen}
-            onClick={() => setPresetMenuOpen((open) => !open)}
-          >
-            <span>{t('settings.title')}</span>
-            <FiChevronDown
-              className={`pf-toolbar-chevron${presetMenuOpen ? ' is-open' : ''}`}
-              aria-hidden="true"
-            />
-          </button>
-          {presetMenuOpen && (
-            <div className="pf-toolbar-menu" role="menu">
-              {PRESETS.map((preset) => {
-                const active = isPresetActive(settings, preset);
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    className={`pf-toolbar-menu-item${active ? ' is-active' : ''}`}
-                    role="menuitem"
-                    onClick={() => applyPreset(preset)}
-                  >
-                    <span className="pf-toolbar-menu-title">{t(preset.labelKey)}</span>
-                    <span className="pf-toolbar-menu-copy">{t(preset.descriptionKey)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="pf-toolbar-presets-desktop" aria-label={t('settings.title')}>
-          {PRESETS.map((preset) => {
-            const active = isPresetActive(settings, preset);
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                className={`pf-toolbar-button pf-toolbar-preset${active ? ' is-active' : ''}`}
-                title={t(preset.descriptionKey)}
-                aria-pressed={active}
-                onClick={() => applyPreset(preset)}
-              >
-                {t(preset.labelKey)}
-              </button>
-            );
-          })}
-        </div>
-
-        <span className="pf-toolbar-divider" aria-hidden="true" />
-
+    <div className="pf-settings-fields" data-testid="toolbar">
+      <label className="pf-field">
+        <span>{t('workbench.format')}</span>
         <SelectControl
-          className="pf-toolbar-select pf-toolbar-format"
           value={settings.outputFormat}
-          title={t('tooltips.formatHint')}
-          aria-label={t('tooltips.formatHint')}
-          onValueChange={(value) => setOutputFormat(value as OutputFormat)}
+          aria-label={t('workbench.format')}
+          onValueChange={(value) => updateSettings({ outputFormat: value as OutputFormat })}
         >
           {FORMAT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -206,244 +174,151 @@ export function Toolbar() {
             </option>
           ))}
         </SelectControl>
-
-        <div className="pf-toolbar-quality">
-          <span className="pf-toolbar-label pf-toolbar-quality-label">{t('settings.quality')}</span>
+      </label>
+      <div className="pf-field">
+        <label htmlFor="pf-global-quality">{t('settings.quality')}</label>
+        <div className="pf-range-field">
           <input
-            className="pf-toolbar-range"
+            id="pf-global-quality"
             type="range"
             min={0}
             max={100}
-            step={1}
-            value={draftQuality}
+            value={settings.quality}
             aria-label={t('settings.quality')}
-            style={getRangeProgressStyle(draftQuality, 0, 100)}
-            onChange={(event) => commitQuality(Number(event.target.value))}
+            style={getRangeProgressStyle(settings.quality, 0, 100)}
+            onChange={(event) => updateSettings({ quality: Number(event.target.value) })}
           />
-          <span className="pf-toolbar-value">{draftQuality}</span>
-        </div>
-
-        <span className="pf-toolbar-divider" aria-hidden="true" />
-
-        <div className="pf-toolbar-actions">
-          <label className="pf-toolbar-switch-label">
-            <span>{t('settings.resize')}</span>
-            <SwitchControl
-              checked={!!settings.resize?.enabled}
-              ariaLabel={t('settings.resize')}
-              onChange={handleResizeToggle}
-            />
-          </label>
-
-          <button
-            type="button"
-            className={`pf-toolbar-button pf-toolbar-button-ghost${
-              showResizeDetails ? ' is-open' : ''
-            }`}
-            disabled={!settings.resize?.enabled}
-            aria-expanded={showResizeDetails}
-            onClick={() => setShowResizeDetails((open) => !open)}
-          >
-            <span>{t('settings.resizeOptions')}</span>
-            <FiChevronDown
-              className={`pf-toolbar-chevron${showResizeDetails ? ' is-open' : ''}`}
-              aria-hidden="true"
-            />
-          </button>
-
-          <button
-            type="button"
-            className={`pf-toolbar-button pf-toolbar-button-ghost${showAdvanced ? ' is-open' : ''}`}
-            aria-expanded={showAdvanced}
-            onClick={() => setShowAdvanced((open) => !open)}
-          >
-            <span>{t('settings.advancedTitle')}</span>
-            <FiChevronDown
-              className={`pf-toolbar-chevron${showAdvanced ? ' is-open' : ''}`}
-              aria-hidden="true"
-            />
-          </button>
-
-          <button
-            type="button"
-            className="pf-toolbar-button pf-toolbar-button-ghost"
-            onClick={() => setResetOpen(true)}
-          >
-            {t('actions.resetDefaults')}
-          </button>
-        </div>
-      </div>
-
-      {!!settings.resize?.enabled && showResizeDetails && (
-        <div className="pf-toolbar-panel">
-          <ResizeControls />
-        </div>
-      )}
-
-      {showAdvanced && (
-        <div className="pf-toolbar-panel">
-          <AdvancedControls />
-        </div>
-      )}
-
-      {resetOpen && (
-        <div
-          className="pf-dialog-overlay"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setResetOpen(false);
-          }}
-        >
-          <div
-            className="pf-dialog"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="pf-reset-title"
-            aria-describedby="pf-reset-body"
-          >
-            <h2 className="pf-dialog-title" id="pf-reset-title">
-              {t('dialog.resetTitle')}
-            </h2>
-            <p className="pf-dialog-copy" id="pf-reset-body">
-              {t('dialog.resetBody')}
-            </p>
-            <div className="pf-dialog-actions">
-              <button
-                ref={cancelRef}
-                type="button"
-                className="pf-dialog-button pf-dialog-button-ghost"
-                onClick={() => setResetOpen(false)}
-              >
-                {t('actions.cancel')}
-              </button>
-              <button
-                type="button"
-                className="pf-dialog-button pf-dialog-button-primary"
-                onClick={() => {
-                  resetToDefaults();
-                  setResetOpen(false);
-                }}
-              >
-                {t('actions.confirm')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ResizeControls() {
-  const { t } = useTranslation();
-  const settings = useSettingsStore((s) => s.settings);
-  const updateSettings = useSettingsStore((s) => s.updateSettings);
-  const resize = settings.resize ?? DEFAULT_RESIZE;
-  const [draftPercentage, setDraftPercentage] = useState(resize.percentage ?? 50);
-
-  useEffect(() => {
-    setDraftPercentage(resize.percentage ?? 50);
-  }, [resize.percentage]);
-
-  const updateResize = (partial: Partial<ResizeSettings>) => {
-    updateSettings({ resize: { ...resize, ...partial } });
-  };
-
-  const commitPercentage = (value: number) => {
-    setDraftPercentage(value);
-    updateResize({ percentage: value });
-  };
-
-  return (
-    <div className="pf-resize-controls">
-      <span className="pf-toolbar-panel-label">{t('settings.resizeSettings')}</span>
-
-      <div className="pf-segmented" role="group" aria-label={t('settings.resizeSettings')}>
-        <button
-          type="button"
-          className={`pf-segmented-button${resize.mode === 'absolute' ? ' is-active' : ''}`}
-          onClick={() => updateResize({ mode: 'absolute' })}
-        >
-          {t('settings.absoluteMode')}
-        </button>
-        <button
-          type="button"
-          className={`pf-segmented-button${resize.mode === 'percentage' ? ' is-active' : ''}`}
-          onClick={() => updateResize({ mode: 'percentage' })}
-        >
-          {t('settings.percentageMode')}
-        </button>
-      </div>
-
-      {resize.mode === 'absolute' && (
-        <div className="pf-dimensions">
           <input
-            className="pf-toolbar-input"
+            className="pf-number-value"
             type="number"
-            min={1}
-            max={10000}
-            value={resize.maxWidth ?? 1920}
-            aria-label={t('settings.width')}
-            onChange={(event) => {
-              updateResize({
-                maxWidth: parseBoundedNumber(event.target.value, 1920, 1, 10000),
-              });
-            }}
-          />
-          <span className="pf-dimension-separator">×</span>
-          <input
-            className="pf-toolbar-input"
-            type="number"
-            min={1}
-            max={10000}
-            value={resize.maxHeight ?? 1080}
-            aria-label={t('settings.height')}
-            onChange={(event) => {
-              updateResize({
-                maxHeight: parseBoundedNumber(event.target.value, 1080, 1, 10000),
-              });
-            }}
-          />
-        </div>
-      )}
-
-      {resize.mode === 'percentage' && (
-        <div className="pf-percentage-control">
-          <input
-            className="pf-toolbar-range"
-            type="range"
-            min={1}
+            min={0}
             max={100}
-            step={1}
-            value={draftPercentage}
-            aria-label={t('settings.percentageMode')}
-            style={getRangeProgressStyle(draftPercentage, 1, 100)}
-            onChange={(event) => commitPercentage(Number(event.target.value))}
+            value={settings.quality}
+            aria-label={t('workbench.qualityValue')}
+            onChange={(event) =>
+              updateSettings({ quality: bounded(event.target.value, settings.quality, 0, 100) })
+            }
           />
-          <span className="pf-toolbar-value pf-toolbar-value-wide">{draftPercentage}%</span>
         </div>
-      )}
-
-      <label className="pf-fit-control">
-        <span className="pf-toolbar-label">{t('settings.fitMethod')}</span>
-        <SelectControl
-          className="pf-toolbar-select pf-toolbar-fit-select"
-          value={resize.method ?? 'contain'}
-          onValueChange={(value) => updateResize({ method: value as ResizeMethod })}
-        >
-          <option value="contain">{t('settings.fit.contain')}</option>
-          <option value="cover">{t('settings.fit.cover')}</option>
-          <option value="stretch">{t('settings.fit.stretch')}</option>
-        </SelectControl>
-      </label>
+      </div>
+      <section className="pf-settings-section">
+        <div className="pf-field-heading">
+          <span>{t('settings.resize')}</span>
+          <SwitchControl
+            checked={resize.enabled}
+            ariaLabel={t('settings.resize')}
+            onChange={(enabled) => updateResize({ enabled })}
+          />
+        </div>
+        <fieldset disabled={!resize.enabled} className="pf-resize-controls">
+          <div className="pf-segmented" role="group" aria-label={t('settings.resizeSettings')}>
+            <button
+              aria-pressed={resize.mode === 'absolute'}
+              onClick={() => updateResize({ mode: 'absolute' })}
+            >
+              {t('settings.absoluteMode')}
+            </button>
+            <button
+              aria-pressed={resize.mode === 'percentage'}
+              onClick={() => updateResize({ mode: 'percentage' })}
+            >
+              {t('settings.percentageMode')}
+            </button>
+          </div>
+          {resize.mode === 'absolute' ? (
+            <div className="pf-dimensions">
+              <label className="pf-field">
+                <span>
+                  {t(resize.method === 'contain' ? 'workbench.maxWidth' : 'settings.width')}
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={resize.maxWidth}
+                  aria-label={t('settings.width')}
+                  onChange={(event) =>
+                    updateResize({
+                      maxWidth: bounded(event.target.value, resize.maxWidth, 1, 10000),
+                    })
+                  }
+                />
+              </label>
+              <label className="pf-field">
+                <span>
+                  {t(resize.method === 'contain' ? 'workbench.maxHeight' : 'settings.height')}
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={resize.maxHeight}
+                  aria-label={t('settings.height')}
+                  onChange={(event) =>
+                    updateResize({
+                      maxHeight: bounded(event.target.value, resize.maxHeight, 1, 10000),
+                    })
+                  }
+                />
+              </label>
+            </div>
+          ) : (
+            <label className="pf-field">
+              <span>{t('settings.percentageMode')}</span>
+              <div className="pf-range-field">
+                <input
+                  type="range"
+                  min={1}
+                  max={100}
+                  value={resize.percentage}
+                  style={getRangeProgressStyle(resize.percentage, 1, 100)}
+                  onChange={(event) => updateResize({ percentage: Number(event.target.value) })}
+                />
+                <input
+                  className="pf-number-value"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={resize.percentage}
+                  aria-label={t('settings.percentageMode')}
+                  onChange={(event) =>
+                    updateResize({
+                      percentage: bounded(event.target.value, resize.percentage, 1, 100),
+                    })
+                  }
+                />
+              </div>
+            </label>
+          )}
+          <label className="pf-field">
+            <span>{t('settings.fitMethod')}</span>
+            <SelectControl
+              disabled={!resize.enabled}
+              value={resize.method}
+              aria-label={t('settings.fitMethod')}
+              onValueChange={(value) => updateResize({ method: value as ResizeMethod })}
+            >
+              {(['contain', 'cover', 'stretch'] as const).map((method) => (
+                <option key={method} value={method}>
+                  {t(`settings.fit.${method}`)}
+                </option>
+              ))}
+            </SelectControl>
+          </label>
+        </fieldset>
+        {resize.enabled && resize.method === 'contain' && (
+          <p className="pf-field-hint">{t('workbench.containHint')}</p>
+        )}
+      </section>
+      <details className="pf-settings-extra">
+        <summary>{t('settings.advancedTitle')}</summary>
+        <AdvancedControls settings={settings} updateSettings={updateSettings} />
+      </details>
     </div>
   );
 }
-
-function AdvancedControls() {
+function AdvancedControls({ settings, updateSettings }: SettingsFieldsProps) {
   const { t } = useTranslation();
-  const settings = useSettingsStore((s) => s.settings);
-  const updateSettings = useSettingsStore((s) => s.updateSettings);
   const format = settings.outputFormat;
   const advanced = (settings.advanced ?? {}) as Record<string, unknown>;
 
@@ -459,21 +334,6 @@ function AdvancedControls() {
 
   const avifSubsampleValue = (value: number) =>
     value === 0 ? AVIF_CHROMA_SUBSAMPLE.YUV444 : value;
-
-  const Chip = ({
-    label,
-    tooltip,
-    children,
-  }: {
-    label: string;
-    tooltip: string;
-    children: ReactNode;
-  }) => (
-    <span className="pf-toolbar-chip" title={tooltip}>
-      <span className="pf-toolbar-chip-label">{label}</span>
-      {children}
-    </span>
-  );
 
   return (
     <div className="pf-advanced-controls">
@@ -588,3 +448,18 @@ function AdvancedControls() {
     </div>
   );
 }
+
+const Chip = ({
+  label,
+  tooltip,
+  children,
+}: {
+  label: string;
+  tooltip: string;
+  children: ReactNode;
+}) => (
+  <span className="pf-toolbar-chip" title={tooltip}>
+    <span className="pf-toolbar-chip-label">{label}</span>
+    {children}
+  </span>
+);

@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiCommand, FiUploadCloud } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useFileStore } from '../stores/fileStore';
-import { useSettingsStore } from '../stores/settingsStore';
-import { FORMAT_OPTIONS } from '../types';
 import { extractFiles } from '../utils/fileUtils';
 
 export function DropZone() {
   const { t } = useTranslation();
   const addFiles = useFileStore((state) => state.addFiles);
-  const outputFormat = useSettingsStore((state) => state.settings.outputFormat);
-  const setOutputFormat = useSettingsStore((state) => state.setOutputFormat);
   const [isDragging, setIsDragging] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -114,41 +109,15 @@ export function DropZone() {
         onKeyDown={handleKeyDown}
       >
         <div className="pf-drop-content">
-          <span className="pf-upload-icon" aria-hidden="true">
-            <FiUploadCloud />
-          </span>
           <div>
             <p className="pf-drop-main-text">
-              {isDragging ? t('dropzone.dragActive') : t('dropzone.dragDefault')}
+              {isDragging ? t('dropzone.dragActive') : t('workbench.emptyTitle')}
             </p>
-            <p className="pf-drop-secondary-text">{t('dropzone.clickHint')}</p>
-            <div className="pf-drop-paste">
-              <FiCommand size={12} aria-hidden="true" />
-              <span>{t('dropzone.pasteHint')}</span>
-            </div>
+            <p className="pf-drop-secondary-text">{t('workbench.dropHint')}</p>
           </div>
           <span className="pf-drop-cta" aria-hidden="true">
             {t('motion.select')}
           </span>
-        </div>
-      </div>
-
-      <div className="pf-drop-footer">
-        <div className="pf-drop-format-group" role="group" aria-label={t('tooltips.formatHint')}>
-          {FORMAT_OPTIONS.map((option) => {
-            const active = outputFormat === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                className={`pf-drop-format-button${active ? ' is-active' : ''}`}
-                aria-pressed={active}
-                onClick={() => setOutputFormat(option.value)}
-              >
-                {option.label}
-              </button>
-            );
-          })}
         </div>
       </div>
 

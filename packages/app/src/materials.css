@@ -1,0 +1,688 @@
+/* PicForge optical surfaces and motion. Media pixels never inherit a filter. */
+:root {
+  --pf-optical-tint: rgb(255 255 255 / 40%);
+  --pf-optical-edge: rgb(255 255 255 / 90%);
+  --pf-optical-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 95%), inset 0 -1px 0 rgb(65 87 76 / 14%),
+    0 6px 24px rgb(37 61 49 / 8%);
+  --pf-rail-bg: rgb(122 150 133 / 12%);
+  --pf-shell-bg: #edf1ef;
+  --pf-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --pf-spring: cubic-bezier(0.2, 0.85, 0.3, 1.12);
+}
+html[data-pf-theme='dark'] {
+  --pf-optical-tint: rgb(38 48 43 / 65%);
+  --pf-optical-edge: rgb(225 246 233 / 20%);
+  --pf-optical-shadow:
+    inset 0 1px 0 rgb(241 255 247 / 20%), inset 0 -1px 0 rgb(0 0 0 / 32%),
+    0 6px 24px rgb(0 0 0 / 20%);
+  --pf-rail-bg: rgb(152 185 167 / 12%);
+  --pf-shell-bg: #1b211e;
+}
+.pf-optical-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--pf-optical-tint);
+  border: 1px solid var(--pf-optical-edge);
+  box-shadow: var(--pf-optical-shadow);
+  -webkit-backdrop-filter: var(--hyalite, var(--pf-optical-fallback, blur(6px) saturate(1.2)));
+  backdrop-filter: var(--hyalite, var(--pf-optical-fallback, blur(6px) saturate(1.2)));
+}
+.pf-toolbox {
+  padding: 12px;
+  gap: 10px;
+  background:
+    radial-gradient(ellipse at 72% 0%, rgb(182 212 195 / 23%), transparent 42%), var(--pf-shell-bg);
+}
+.pf-header {
+  position: relative;
+  height: 60px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  gap: 16px;
+  padding: 0 18px;
+}
+.pf-header > :not(.pf-optical-layer) {
+  position: relative;
+  z-index: 1;
+}
+.pf-brand-button {
+  min-height: 44px;
+}
+.pf-logo {
+  border-radius: 9px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 20%);
+}
+.pf-header-actions > .pf-about {
+  display: none;
+}
+.pf-tool-nav {
+  align-self: center;
+  margin-left: auto;
+  gap: 2px;
+}
+.pf-selection-rail {
+  position: relative;
+  display: flex;
+  padding: 4px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--pf-rail-bg);
+  overflow: visible;
+  isolation: isolate;
+}
+.pf-selection-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 10px;
+  transition:
+    transform 260ms var(--pf-spring),
+    width 260ms var(--pf-ease-out);
+  pointer-events: none;
+  z-index: 0;
+}
+.pf-selection-rail > button {
+  position: relative;
+  z-index: 1;
+  min-height: 36px;
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 13px;
+  background: transparent;
+}
+.pf-selection-rail > button + button {
+  border-left: 0;
+}
+.pf-selection-rail > button[aria-pressed='true'],
+.pf-selection-rail > button[aria-current='page'] {
+  background: transparent;
+  box-shadow: none;
+  color: var(--pf-accent);
+}
+.pf-tool-nav button {
+  font-size: 13px;
+}
+.pf-scope-switch {
+  margin-bottom: 24px;
+}
+.pf-scope-switch > button,
+.pf-preview-tabs > button {
+  flex: 1;
+}
+.pf-preview-tabs {
+  flex-shrink: 0;
+}
+.pf-workbench {
+  border: 1px solid color-mix(in srgb, var(--pf-border-default) 60%, transparent);
+  border-radius: 18px;
+}
+.pf-file-list-panel {
+  border-right-color: color-mix(in srgb, var(--pf-border-default) 65%, transparent);
+}
+.pf-file-row,
+.pf-motion-row {
+  border-radius: 12px;
+  transition:
+    background-color 180ms,
+    box-shadow 180ms;
+}
+.pf-file-row.is-selected,
+.pf-motion-row.is-selected {
+  box-shadow: none;
+  background: var(--pf-selected-bg);
+}
+.pf-file-row::before {
+  border-radius: 2px;
+}
+.pf-file-list-header,
+.pf-inspector-disclosure > summary {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.pf-settings-fields {
+  gap: 22px;
+}
+.pf-settings-section {
+  border-top: 0;
+  padding-top: 12px;
+}
+.pf-settings-extra {
+  border-top: 0;
+}
+.pf-settings-extra > summary {
+  border: 0;
+}
+.pf-output-file {
+  border-bottom: 0;
+  padding-bottom: 12px;
+}
+.pf-segmented {
+  border: 0;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+  background: var(--pf-rail-bg);
+}
+.pf-segmented button {
+  border-radius: 7px;
+}
+.pf-segmented button + button {
+  border-left: 0;
+}
+.pf-segmented button[aria-pressed='true'] {
+  background: var(--pf-card-bg);
+  box-shadow: 0 1px 4px rgb(25 43 34 / 10%);
+}
+.pf-button,
+input[type='number'],
+.pf-select {
+  border-radius: 9px;
+}
+.pf-select,
+input[type='number'] {
+  background: color-mix(in srgb, var(--pf-surface-bg) 72%, var(--pf-card-bg));
+  border-color: color-mix(in srgb, var(--pf-control-border) 65%, transparent);
+  transition:
+    background-color 160ms,
+    border-color 160ms,
+    box-shadow 160ms;
+}
+.pf-select:hover:not(:disabled),
+input[type='number']:hover:not(:disabled) {
+  border-color: var(--pf-control-border);
+}
+.pf-select:focus-visible,
+input[type='number']:focus-visible {
+  border-color: var(--pf-accent);
+}
+.pf-button,
+.pf-icon-button,
+.pf-icon-control,
+.pf-text-button,
+.pf-preview-zoom-button,
+.pf-compare-mode-button {
+  transition:
+    background-color 180ms,
+    color 180ms,
+    box-shadow 180ms,
+    transform 200ms var(--pf-spring);
+}
+.pf-button:active:not(:disabled),
+.pf-icon-button:active:not(:disabled),
+.pf-icon-control:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.pf-button.is-primary {
+  background: linear-gradient(160deg, #38775c, #245946);
+  border-color: rgb(34 81 61 / 65%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 20%),
+    0 2px 4px rgb(24 61 44 / 12%);
+}
+.pf-button.is-primary:hover:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 30%),
+    0 4px 12px rgb(24 61 44 / 18%);
+}
+.pf-button:disabled {
+  box-shadow: none;
+}
+.pf-switch {
+  transition: background-color 200ms;
+}
+.pf-switch-thumb {
+  box-shadow:
+    inset 0 1px 0 white,
+    0 1px 3px rgb(0 0 0 / 22%);
+  transition: transform 260ms var(--pf-spring);
+}
+.pf-disclosure-mark {
+  transition: transform 240ms var(--pf-spring);
+}
+.pf-optical-dock {
+  position: relative;
+  padding: 7px;
+  border-radius: 16px;
+  gap: 4px;
+}
+.pf-optical-dock > :not(.pf-optical-layer) {
+  position: relative;
+  z-index: 1;
+}
+.pf-optical-dock .pf-preview-zoom-button,
+.pf-optical-dock .pf-compare-mode-button,
+.pf-optical-dock .pf-icon-control {
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  min-height: 32px;
+}
+.pf-optical-dock .is-active {
+  background: var(--pf-rail-bg);
+}
+.pf-viewer-footer {
+  padding: 12px 20px;
+}
+.pf-motion-glass-footer {
+  position: relative;
+  border-radius: 16px;
+  width: fit-content;
+  margin: 8px auto 16px;
+  min-height: 48px;
+}
+.pf-motion-glass-footer > :not(.pf-optical-layer) {
+  position: relative;
+  z-index: 1;
+}
+.pf-select-menu,
+.pf-about-menu,
+.pf-project-menu,
+.pf-file-context-menu {
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--pf-card-bg) 87%, transparent);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--pf-optical-shadow);
+  animation: pf-popover-in 180ms var(--pf-ease-out) both;
+}
+.pf-select-option {
+  border-radius: 8px;
+  transition: background-color 120ms;
+}
+.pf-select-chevron {
+  transition: transform 200ms var(--pf-spring);
+}
+.pf-select[aria-expanded='true'] .pf-select-chevron {
+  transform: rotate(180deg);
+}
+.pf-status-bar {
+  border-top: 0;
+  background: transparent;
+  padding: 10px 12px 0;
+  min-height: 58px;
+  gap: 18px;
+}
+.pf-project-info {
+  min-width: 0;
+  flex: 1;
+  font-size: 12px;
+  color: var(--pf-text-secondary);
+}
+.pf-project-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+.pf-project-info a,
+.pf-project-info button {
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+}
+.pf-project-info button {
+  cursor: pointer;
+}
+.pf-project-info a:hover,
+.pf-project-info button:hover {
+  color: var(--pf-text-primary);
+}
+.pf-project-info--landing {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
+}
+.pf-project-info--landing .pf-project-links {
+  justify-content: center;
+}
+.pf-project-info--landing .pf-project-sponsor {
+  color: var(--pf-text-tertiary);
+  font-size: 12px;
+}
+.pf-about-dialog {
+  position: fixed;
+  isolation: isolate;
+  width: min(540px, calc(100vw - 32px));
+  max-height: min(720px, calc(100dvh - 48px));
+  padding: 28px;
+  overflow: auto;
+  border: 0;
+  border-radius: 24px;
+  color: var(--pf-text-primary);
+  background: color-mix(in srgb, var(--pf-card-bg) 94%, transparent);
+  box-shadow: 0 24px 90px rgb(0 0 0 / 22%);
+  animation: pf-dialog-in 260ms var(--pf-ease-out) both;
+}
+.pf-about-dialog > :not(.pf-optical-layer) {
+  position: relative;
+  z-index: 1;
+}
+.pf-about-dialog::backdrop,
+.pf-dialog::backdrop {
+  background: rgb(20 31 25 / 28%);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  animation: pf-backdrop-in 200ms both;
+}
+.pf-about-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+}
+.pf-about-heading h2 {
+  font-size: 23px;
+}
+.pf-about-heading span {
+  color: var(--pf-text-secondary);
+  font-size: 12px;
+}
+.pf-about-description {
+  line-height: 1.8;
+  margin: 24px 0 12px;
+}
+.pf-about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+.pf-about-links a,
+.pf-license-list a {
+  text-decoration: none;
+}
+.pf-about-dialog h3 {
+  font-size: 15px;
+}
+.pf-about-caption {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--pf-text-secondary);
+  margin-top: 8px;
+}
+.pf-license-list {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+}
+.pf-license-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 0;
+}
+.pf-license-list li > div {
+  display: grid;
+  gap: 3px;
+}
+.pf-license-list li span {
+  color: var(--pf-text-secondary);
+  font-size: 11px;
+}
+.pf-notices-link {
+  margin-top: 12px;
+}
+.pf-license-document > .pf-text-button {
+  margin: 16px 0;
+}
+.pf-license-document pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font:
+    12px/1.75 ui-monospace,
+    monospace;
+  max-height: 420px;
+  overflow-y: auto;
+  margin-bottom: 0;
+}
+.pf-dialog {
+  border-radius: 20px;
+  animation: pf-dialog-in 240ms var(--pf-ease-out) both;
+}
+.pf-tool-panel:not([hidden]) {
+  animation: pf-panel-in 220ms var(--pf-ease-out) both;
+}
+@keyframes pf-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pf-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pf-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pf-backdrop-in {
+  from {
+    background-color: transparent;
+  }
+}
+@supports (interpolate-size: allow-keywords) {
+  .pf-settings-extra,
+  .pf-inspector-disclosure {
+    interpolate-size: allow-keywords;
+  }
+  .pf-settings-extra::details-content,
+  .pf-inspector-disclosure::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 240ms var(--pf-ease-out),
+      content-visibility 240ms allow-discrete;
+  }
+  .pf-settings-extra[open]::details-content,
+  .pf-inspector-disclosure[open]::details-content {
+    block-size: auto;
+  }
+}
+@media (max-width: 1100px) {
+  .pf-tool-nav {
+    display: none;
+  }
+  .pf-mobile-tool {
+    display: block;
+    margin-left: auto;
+    max-width: 36%;
+  }
+  .pf-mobile-tool .pf-select {
+    border: 0;
+    background: var(--pf-rail-bg);
+    font-size: 13px;
+  }
+  .pf-header-actions {
+    margin-left: 0;
+  }
+  .pf-header {
+    gap: 12px;
+  }
+  .pf-viewer-footer {
+    padding: 12px;
+  }
+}
+@media (max-width: 767px) {
+  .pf-toolbox {
+    padding: 0;
+    gap: 0;
+  }
+  .pf-header {
+    border-radius: 0 0 18px 18px;
+    padding: 0 14px;
+    height: 64px;
+    margin: 0 0 8px;
+  }
+  .pf-header-actions > .pf-about {
+    display: block;
+  }
+  .pf-mobile-preferences {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+  .pf-mobile-tool {
+    max-width: 48%;
+  }
+  .pf-workbench {
+    border-radius: 0;
+    border: 0;
+  }
+  .pf-selection-rail > button {
+    min-height: 40px;
+  }
+  .pf-preview-tabs {
+    width: 100%;
+  }
+  .pf-viewer-footer {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .pf-optical-dock {
+    margin: 0 auto;
+  }
+  .pf-optical-dock .pf-icon-control,
+  .pf-optical-dock .pf-preview-zoom-button,
+  .pf-optical-dock .pf-compare-mode-button {
+    min-height: 44px;
+  }
+  .pf-status-bar {
+    padding: 8px 14px max(10px, env(safe-area-inset-bottom));
+    min-height: 66px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pf-project-info--workbench {
+    flex: 0 0 auto;
+  }
+  .pf-project-info--workbench .pf-project-links > a {
+    display: none;
+  }
+  .pf-project-links a,
+  .pf-project-links button {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .pf-project-info--landing .pf-project-links {
+    gap: 4px 18px;
+  }
+  .pf-batch-status:empty {
+    display: none;
+  }
+  .pf-motion-workspace .pf-batch-status {
+    flex-basis: auto;
+  }
+  .pf-about-dialog {
+    padding: 22px;
+  }
+  .pf-license-list li {
+    gap: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pf-toolbox *,
+  .pf-toolbox *::before,
+  .pf-toolbox *::after,
+  .pf-about-dialog,
+  .pf-dialog,
+  .pf-select-menu,
+  .pf-about-dialog::backdrop,
+  .pf-dialog::backdrop {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .pf-optical-layer,
+  .pf-select-menu,
+  .pf-about-menu {
+    background: var(--pf-card-bg);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  .pf-about-dialog::backdrop,
+  .pf-dialog::backdrop {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .pf-inspector {
+    overflow: hidden;
+  }
+  .pf-inspector-disclosure {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .pf-inspector-footer {
+    flex-shrink: 0;
+  }
+  .pf-preview-viewport > .pf-optical-dock {
+    position: absolute;
+    left: 50%;
+    bottom: 38px;
+    transform: translateX(-50%);
+    z-index: 5;
+    width: max-content;
+    max-width: calc(100% - 24px);
+  }
+}
+.pf-particle-ribbon {
+  mask-image: radial-gradient(ellipse at center, black 48%, transparent 76%);
+}
+
+/* The preview dock must stay legible over both black and white image content. */
+.pf-optical-dock > .pf-optical-layer {
+  background: rgb(255 255 255 / 60%);
+}
+html[data-pf-theme='dark'] .pf-optical-dock > .pf-optical-layer {
+  background: rgb(38 48 43 / 82%);
+}
+.pf-optical-dock .pf-preview-zoom-button,
+.pf-optical-dock .pf-compare-mode-button,
+.pf-optical-dock .pf-icon-control,
+.pf-optical-dock .pf-preview-zoom-value {
+  color: var(--pf-text-primary);
+}
+.pf-optical-dock .is-active {
+  background: var(--pf-active-bg);
+  color: var(--pf-accent);
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .pf-optical-dock > .pf-optical-layer,
+  html[data-pf-theme='dark'] .pf-optical-dock > .pf-optical-layer {
+    background: var(--pf-card-bg);
+  }
+}

@@ -60,11 +60,25 @@ try {
   page.on('request', (request) => requests.push(request.url()));
   await page.goto('http://127.0.0.1:4187');
   const panel = page.locator('.pf-tool-panel:not([hidden])');
+  const openTool = async (name) => {
+    const entry = page
+      .locator('.pf-entry-tool')
+      .filter({ has: page.getByText(name, { exact: true }) });
+    if (await entry.isVisible()) {
+      await entry.click();
+      return;
+    }
+    const picker = page.locator('.pf-mobile-tool .pf-select');
+    if (await picker.isVisible()) {
+      await picker.click();
+      await page.getByRole('option', { name, exact: true }).click();
+    } else await page.locator('.pf-tool-nav').getByRole('button', { name, exact: true }).click();
+  };
   const waitDone = () =>
     page.waitForFunction(
       () => {
         const root = document.querySelector('.pf-tool-panel:not([hidden])');
-        const error = root.querySelector('.pf-motion-error');
+        const error = root.querySelector('[role=alert]');
         if (error) throw new Error(error.textContent);
         return root.textContent.includes('Completed');
       },
@@ -96,19 +110,16 @@ try {
     buffer: Buffer.from(synthetic, 'base64'),
   };
   const compressStatic = async () => {
-    await page
-      .locator('.pf-tool-nav')
-      .getByRole('button', { name: 'Image compression', exact: true })
-      .click();
-    await panel.locator('input[type=file]').setInputFiles(staticFile);
+    await openTool('Image compression');
+    await panel.getByTestId('add-file-input').setInputFiles(staticFile);
     const button = page.getByRole('button', {
-      name: 'Download the currently previewed image',
+      name: 'Download this image',
       exact: true,
     });
     await page.waitForFunction(
       () => {
         const button = document.querySelector(
-          '[aria-label="Download the currently previewed image"]',
+          '.pf-tool-panel:not([hidden]) .pf-inspector-footer button',
         );
         return button && !button.disabled;
       },
@@ -151,7 +162,7 @@ try {
     console.log('PASS: production static compression, download dimensions, mobile width');
   }
   assert.deepEqual(errors, []);
-  await page.getByRole('button', { name: 'PicForge', exact: true }).click();
+  await page.getByRole('button', { name: 'PicForge home', exact: true }).click();
   if (syntheticMedia) {
     // Generate test signals, never use private camera media.
     const png = resolve(output, 'synthetic.png');
@@ -216,15 +227,12 @@ try {
     server.kill();
     process.exit(0);
   }
-  await page
-    .locator('.pf-tool-nav')
-    .getByRole('button', { name: 'Android Motion Photos', exact: true })
-    .click();
+  await openTool('Android Motion Photos');
   await panel.locator('input[type=file]').setInputFiles(sampleAndroid);
-  await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
+  await panel.getByRole('button', { name: 'Extract pending files', exact: true }).click();
   await waitDone();
-  await download(/^JPG ·/, 'android.jpg');
-  await download(/^MP4 ·/, 'android.mp4');
+  await download(/^Download JPG/, 'android.jpg');
+  await download(/^Download MP4/, 'android.mp4');
   assert.deepEqual(
     Buffer.concat([
       await readFile(resolve(output, 'android.jpg')),
@@ -233,23 +241,21 @@ try {
     await readFile(sampleAndroid),
   );
   assert(!requests.some((url) => /ffmpeg|heif-/.test(url)), 'Android must not load Apple engines');
-  await page.getByRole('button', { name: 'PicForge', exact: true }).click();
-  await page
-    .locator('.pf-tool-nav')
-    .getByRole('button', { name: 'iOS Live Photos', exact: true })
-    .click();
+  await page.getByRole('button', { name: 'PicForge home', exact: true }).click();
+  await openTool('iOS Live Photos');
   const originals = [sampleIosHeic, sampleIosMov];
   await panel.locator('input[type=file]').setInputFiles(originals);
+  await panel.locator('.pf-motion-row').first().click();
   await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
-  await panel.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await panel.getByRole('button', { name: 'Cancel processing', exact: true }).click();
   await panel.getByText('Cancelled. You can retry this item.', { exact: true }).waitFor();
   const started = Date.now();
   await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
   await waitDone();
   console.log(`${engine}: iOS pair ${Date.now() - started} ms`);
-  await download(/^JPG ·/, 'ios.jpg');
-  await download(/^MP4 ·/, 'ios.mp4');
-  await download('Download ZIP', 'ios.zip');
+  await download(/^Download JPG/, 'ios.jpg');
+  await download(/^Download MP4/, 'ios.mp4');
+  await download('Export completed files', 'ios.zip');
   const require = createRequire(new URL('../packages/app/package.json', import.meta.url));
   const zip = await require('jszip').loadAsync(await readFile(resolve(output, 'ios.zip')));
   assert(zip.file('picforge-manifest.json'));
@@ -288,12 +294,16 @@ try {
   const sourcePrimary = probe(originals[1]).streams.find((stream) => stream.codec_type === 'video');
   // Derive the expected display geometry from this input, not a previous private
   // sample. Recent native ffprobe exposes QuickTime clap as Frame Cropping.
-  const crop = sourcePrimary.side_data_list?.find((side) => side.side_data_type === 'Frame Cropping');
+  const crop = sourcePrimary.side_data_list?.find(
+    (side) => side.side_data_type === 'Frame Cropping',
+  );
   let expectedWidth = sourcePrimary.width - (crop?.crop_left ?? 0) - (crop?.crop_right ?? 0);
   let expectedHeight = sourcePrimary.height - (crop?.crop_top ?? 0) - (crop?.crop_bottom ?? 0);
-  const rotation = sourcePrimary.side_data_list?.find((side) => side.rotation !== undefined)?.rotation ?? 0;
+  const rotation =
+    sourcePrimary.side_data_list?.find((side) => side.rotation !== undefined)?.rotation ?? 0;
   assert.equal(Math.abs(rotation) % 90, 0, 'Qualification fixture uses a right-angle rotation');
-  if (Math.abs(rotation) % 180 === 90) [expectedWidth, expectedHeight] = [expectedHeight, expectedWidth];
+  if (Math.abs(rotation) % 180 === 90)
+    [expectedWidth, expectedHeight] = [expectedHeight, expectedWidth];
   const scale = Math.min(1, 1920 / expectedWidth, 1920 / expectedHeight);
   expectedWidth = Math.floor(Math.round(expectedWidth * scale) / 2) * 2;
   expectedHeight = Math.floor(Math.round(expectedHeight * scale) / 2) * 2;
@@ -331,10 +341,19 @@ try {
     'VFR duration within one final-frame interval',
   );
   const still = probe(resolve(output, 'ios.jpg')).streams[0];
-  const expectedStill = syntheticMedia ? [320, 240] : execFileSync(
-    'magick', ['identify', '-format', '%w %h', `${originals[0]}[0]`], { encoding: 'utf8' },
-  ).trim().split(/\s+/).map(Number);
-  assert.deepEqual([still.width, still.height], expectedStill, 'Native primary HEIC display dimensions');
+  const expectedStill = syntheticMedia
+    ? [320, 240]
+    : execFileSync('magick', ['identify', '-format', '%w %h', `${originals[0]}[0]`], {
+        encoding: 'utf8',
+      })
+        .trim()
+        .split(/\s+/)
+        .map(Number);
+  assert.deepEqual(
+    [still.width, still.height],
+    expectedStill,
+    'Native primary HEIC display dimensions',
+  );
   if (syntheticMedia) {
     const rgb = await page.evaluate(
       async (base64) => {
@@ -355,7 +374,7 @@ try {
       'HEIC solid-color fidelity',
     );
   }
-  await panel.locator('.pf-motion-workspace').evaluate((element) => {
+  await panel.locator('.pf-workbench').evaluate((element) => {
     element.scrollTop = 0;
   });
   await page.screenshot({ path: resolve(output, 'desktop.png') });
@@ -369,34 +388,29 @@ try {
     await context.setOffline(true);
     await page.reload();
 
-    await page
-      .locator('.pf-tool-nav')
-      .getByRole('button', { name: 'iOS Live Photos', exact: true })
-      .click();
+    await openTool('iOS Live Photos');
     await panel.locator('input[type=file]').setInputFiles(originals);
+    await panel.locator('.pf-motion-row').first().click();
     await panel.getByRole('button', { name: 'Process batch', exact: true }).click();
     await waitDone();
     console.log('Offline reload and conversion passed');
   }
   await context.setOffline(false);
-  await page.getByRole('button', { name: 'PicForge', exact: true }).click();
-  await page
-    .locator('.pf-tool-nav')
-    .getByRole('button', { name: 'Image compression', exact: true })
-    .click();
+  await page.getByRole('button', { name: 'PicForge home', exact: true }).click();
+  await openTool('Image compression');
   await page.locator('[data-active-tool="compression"]').waitFor();
   if (await panel.locator('.pf-file-row').count()) {
-    await panel.getByRole('button', { name: 'Clear all', exact: true }).click();
-    await panel
-      .getByRole('alertdialog')
-      .getByRole('button', { name: 'Confirm', exact: true })
-      .click();
+    const clear = panel.getByRole('button', { name: 'Clear all', exact: true });
+    if (!(await clear.isVisible()))
+      await panel.getByRole('button', { name: 'Back to files', exact: true }).click();
+    await clear.click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   }
-  await panel.locator('input[type=file]').setInputFiles(resolve(output, 'ios.jpg'));
+  await panel.getByTestId('add-file-input').setInputFiles(resolve(output, 'ios.jpg'));
   await page.waitForFunction(
     () => {
       const button = document.querySelector(
-        '[data-testid=status-bar] button[aria-label="Download the currently previewed image"]',
+        '.pf-tool-panel:not([hidden]) .pf-inspector-footer button',
       );
       return button && !button.disabled;
     },

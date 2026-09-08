@@ -1,8 +1,11 @@
+import { SelectionRail } from './SelectionRail';
+import { OpticalLayer } from './OpticalLayer';
 /**
  * Preview — native image comparison workspace.
  *
  * Same-size outputs default to a split slider for quick compression-quality checks.
- * Resized outputs default to a two-up compare view with synchronized zoom/pan.
+ * Resized desktop outputs default to two-up; mobile keeps a full-size slider.
+ * Both comparison layouts retain synchronized zoom/pan.
  */
 
 import {
@@ -10,7 +13,6 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiColumns,
-  FiImage,
   FiMaximize,
   FiSliders,
 } from 'react-icons/fi';
@@ -19,7 +21,6 @@ import {
   type CSSProperties,
   type JSX,
   type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -30,7 +31,9 @@ import type { ImageFile } from '../types';
 import { formatFileSize, compressionRatio } from '../utils/fileUtils';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useFileStore } from '../stores/fileStore';
-import { cloneSettings } from '../utils/settingsUtils';
+import { getEffectiveSettings } from '../utils/settingsUtils';
+import { isResultExportable } from '../utils/exportManifest';
+import { FORMAT_OPTIONS } from '../types';
 import {
   getDefaultCompareMode,
   isCompareModeAvailable,
@@ -38,7 +41,6 @@ import {
 } from '../utils/previewUtils';
 import { getSliderClipPath, getSliderPointerMode } from '../utils/sliderCompare';
 import { PREVIEW_TEST_IDS } from '../utils/previewLayers';
-import { FileSettingsPanel } from './FileSettingsPanel';
 
 interface PreviewProps {
   file: ImageFile | null;
@@ -94,13 +96,12 @@ export function Preview({
 }: PreviewProps) {
   const { t } = useTranslation();
   const globalSettings = useSettingsStore((s) => s.settings);
-  const setFileCustomSettings = useFileStore((s) => s.setFileCustomSettings);
-  const resetFileToGlobal = useFileStore((s) => s.resetFileToGlobal);
   const isMobile = useIsMobile();
 
   const [viewport, setViewport] = useState<CompareViewport>({ zoom: 1, panX: 0, panY: 0 });
   const [sliderPos, setSliderPos] = useState(50);
   const [compareMode, setCompareMode] = useState<CompareMode>('single');
+  const [view, setView] = useState<'original' | 'result' | 'compare'>('compare');
   const [isInteracting, setIsInteracting] = useState(false);
 
   const isPanning = useRef(false);
@@ -114,8 +115,7 @@ export function Preview({
   const rafId = useRef<number | null>(null);
 
   const ratio = file?.result ? compressionRatio(file.originalSize, file.result.size) : 0;
-  const hasResult = !!file?.result;
-  const isCustom = file?.settingsMode === 'custom';
+  const hasResult = !!file && isResultExportable(file, globalSettings);
   const hasDimensionChange =
     !!file?.outputMeta &&
     (file.outputMeta.originalWidth !== file.outputMeta.outputWidth ||
@@ -150,7 +150,7 @@ export function Preview({
   }, [file, t]);
 
   const outputMeta = useMemo<ImageMeta | null>(() => {
-    if (!file?.result) return null;
+    if (!file?.result || !hasResult) return null;
     return {
       label: t('preview.compressed'),
       src: file.result.previewUrl,
@@ -160,7 +160,7 @@ export function Preview({
         : undefined,
       ratio,
     };
-  }, [file, ratio, t]);
+  }, [file, hasResult, ratio, t]);
 
   useEffect(() => {
     viewportRef.current = DEFAULT_VIEWPORT;
@@ -186,6 +186,14 @@ export function Preview({
   useEffect(() => {
     if (!file) return;
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || containerRef.current?.closest('[hidden]')) return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest(
+          'input, textarea, button, select, [role=combobox], [role=slider], [contenteditable]',
+        )
+      )
+        return;
       if (event.key === 'ArrowLeft' && hasPrev) {
         event.preventDefault();
         onPrev();
@@ -336,7 +344,7 @@ export function Preview({
   }, [commitViewport]);
 
   const handleWheel = useCallback(
-    (event: ReactWheelEvent) => {
+    (event: WheelEvent) => {
       event.preventDefault();
       if (!containerRef.current) return;
 
@@ -363,6 +371,13 @@ export function Preview({
     },
     [commitViewport],
   );
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+    element.addEventListener('wheel', handleWheel, { passive: false });
+    return () => element.removeEventListener('wheel', handleWheel);
+  }, [handleWheel, file?.id]);
 
   const beginPointerInteraction = useCallback((event: ReactPointerEvent<HTMLElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return false;
@@ -404,6 +419,12 @@ export function Preview({
   const handleSliderComparePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
       const rect = event.currentTarget.getBoundingClientRect();
+      if (
+        event.pointerType === 'touch' &&
+        viewportRef.current.zoom <= 1 &&
+        Math.abs(event.clientX - rect.left - (rect.width * sliderPos) / 100) > 24
+      )
+        return;
       const mode = getSliderPointerMode({
         zoom: viewportRef.current.zoom,
         sliderPos,
@@ -424,6 +445,7 @@ export function Preview({
 
   const handleInspectPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
+      if (event.pointerType === 'touch' && viewportRef.current.zoom <= 1) return;
       if (!beginPointerInteraction(event)) return;
       event.preventDefault();
       setIsInteracting(true);
@@ -482,16 +504,6 @@ export function Preview({
     };
   }, [applyInteractionMove, finishInteraction]);
 
-  const handleCustomize = useCallback(() => {
-    if (!file) return;
-    setFileCustomSettings(file.id, cloneSettings(globalSettings));
-  }, [file, globalSettings, setFileCustomSettings]);
-
-  const handleUseGlobal = useCallback(() => {
-    if (!file) return;
-    resetFileToGlobal(file.id, globalSettings);
-  }, [file, globalSettings, resetFileToGlobal]);
-
   if (!file || !originalMeta) {
     return (
       <div className="pf-preview-empty">
@@ -500,29 +512,89 @@ export function Preview({
     );
   }
 
-  return (
-    <div className="pf-preview">
-      <PreviewHeader
-        file={file}
-        isCustom={!!isCustom}
-        hasResult={hasResult}
-        hasPrev={hasPrev}
-        hasNext={hasNext}
-        showBackButton={showBackButton}
-        onBackToList={onBackToList}
-        onPrev={onPrev}
-        onNext={onNext}
-        onCustomize={handleCustomize}
-        onUseGlobal={handleUseGlobal}
-        compareMode={activeCompareMode}
-        onCompareModeChange={setCompareMode}
-        zoom={viewport.zoom}
-        onSetZoom={setZoomLevel}
-        onResetZoom={resetViewport}
+  const controls = (
+    <div className="pf-viewer-controls pf-optical-dock">
+      <OpticalLayer />
+      {view === 'compare' && hasResult && (
+        <CompareModeSwitch mode={activeCompareMode} onChange={setCompareMode} />
+      )}
+      <ZoomControls zoom={viewport.zoom} onSetZoom={setZoomLevel} onResetZoom={resetViewport} />
+      <IconControl
+        label={t('preview.previous')}
+        onClick={onPrev}
+        disabled={!hasPrev}
+        icon={<FiChevronLeft aria-hidden />}
       />
+      <IconControl
+        label={t('preview.next')}
+        onClick={onNext}
+        disabled={!hasNext}
+        icon={<FiChevronRight aria-hidden />}
+      />
+    </div>
+  );
 
-      {isCustom && <FileSettingsPanel file={file} />}
-
+  return (
+    <div
+      className={`pf-preview${view === 'compare' && activeCompareMode === 'sideBySide' ? ' is-two-up' : ''}`}
+    >
+      <header className="pf-preview-header">
+        <div className="pf-preview-nav">
+          {showBackButton && onBackToList && (
+            <IconControl
+              className="pf-preview-back"
+              label={t('preview.backToList')}
+              onClick={onBackToList}
+              icon={<FiArrowLeft aria-hidden />}
+            />
+          )}
+          <span className="pf-preview-filename" title={file.file.name}>
+            {file.file.name}
+          </span>
+        </div>
+        <SelectionRail
+          activeKey={hasResult ? view : 'original'}
+          className="pf-preview-tabs"
+          role="group"
+          aria-label={t('preview.compareMode')}
+          data-testid={PREVIEW_TEST_IDS.toolbarLayer}
+        >
+          {(['original', 'result', 'compare'] as const).map((value) => (
+            <button
+              key={value}
+              aria-pressed={(hasResult ? view : 'original') === value}
+              disabled={value !== 'original' && !hasResult}
+              onClick={() => setView(value)}
+            >
+              {t(`workbench.${value}`)}
+            </button>
+          ))}
+        </SelectionRail>
+      </header>
+      {!hasResult && file.result && (file.status === 'pending' || file.status === 'processing') && (
+        <p className="pf-preview-notice" role="status">
+          {t('workbench.updating')}
+        </p>
+      )}
+      {(file.status === 'error' || file.status === 'cancelled') && (
+        <div className={`pf-preview-feedback${file.status === 'error' ? ' is-error' : ''}`}>
+          <p role={file.status === 'error' ? 'alert' : 'status'}>
+            {t(file.status === 'error' ? 'workbench.processingFailed' : 'status.cancelled')}
+          </p>
+          <button
+            className="pf-text-button"
+            onClick={() => useFileStore.getState().retryFile(file.id)}
+          >
+            {t('tooltips.retryImage')}
+          </button>
+          {file.status === 'error' && file.error && (
+            <details>
+              <summary>{t('workbench.errorDetails')}</summary>
+              <p>{file.error}</p>
+            </details>
+          )}
+        </div>
+      )}
       <div
         ref={containerRef}
         data-testid={PREVIEW_TEST_IDS.viewport}
@@ -530,10 +602,10 @@ export function Preview({
         style={{
           ...previewViewportStyle,
           cursor: getPreviewCursor(activeCompareMode, viewport.zoom, hasResult),
+          touchAction: viewport.zoom > 1 ? 'none' : 'pan-y',
         }}
-        onWheel={handleWheel}
       >
-        {activeCompareMode === 'sideBySide' && outputMeta ? (
+        {view === 'compare' && activeCompareMode === 'sideBySide' && outputMeta ? (
           <SideBySideCompareView
             original={originalMeta}
             output={outputMeta}
@@ -541,19 +613,20 @@ export function Preview({
             isPanning={isInteracting}
             onPointerDown={handleInspectPointerDown}
           />
-        ) : activeCompareMode === 'slider' && outputMeta ? (
+        ) : view === 'compare' && outputMeta ? (
           <SliderCompareView
             original={originalMeta}
             output={outputMeta}
             imageTransform={imageTransform}
             sliderPos={sliderPos}
+            onSliderChange={setSliderPos}
             isPanning={isInteracting}
             ratio={ratio}
             onPointerDown={handleSliderComparePointerDown}
           />
         ) : (
           <SingleImageView
-            image={outputMeta ?? originalMeta}
+            image={view === 'original' ? originalMeta : (outputMeta ?? originalMeta)}
             imageTransform={imageTransform}
             isPanning={isInteracting}
             onPointerDown={handleInspectPointerDown}
@@ -563,91 +636,25 @@ export function Preview({
         {(file.status === 'processing' || file.status === 'pending') && !hasResult && (
           <ProcessingOverlay progress={file.progress} />
         )}
+        {!isMobile && controls}
+      </div>
+      <div className="pf-viewer-footer">
+        <span className="pf-viewer-metadata">
+          {(view === 'original' ? originalMeta : (outputMeta ?? originalMeta)).dimensions}
+          {hasResult && (
+            <span>
+              {
+                FORMAT_OPTIONS.find(
+                  (option) =>
+                    option.value === getEffectiveSettings(file, globalSettings).outputFormat,
+                )?.label
+              }
+            </span>
+          )}
+        </span>
+        {isMobile && controls}
       </div>
     </div>
-  );
-}
-
-function PreviewHeader({
-  file,
-  isCustom,
-  hasResult,
-  hasPrev,
-  hasNext,
-  showBackButton,
-  onBackToList,
-  onPrev,
-  onNext,
-  onCustomize,
-  onUseGlobal,
-  compareMode,
-  onCompareModeChange,
-  zoom,
-  onSetZoom,
-  onResetZoom,
-}: {
-  file: ImageFile;
-  isCustom: boolean;
-  hasResult: boolean;
-  hasPrev: boolean;
-  hasNext: boolean;
-  showBackButton: boolean;
-  onBackToList?: () => void;
-  onPrev: () => void;
-  onNext: () => void;
-  onCustomize: () => void;
-  onUseGlobal: () => void;
-  compareMode: CompareMode;
-  onCompareModeChange: (mode: CompareMode) => void;
-  zoom: number;
-  onSetZoom: (zoom: number) => void;
-  onResetZoom: () => void;
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <header className="pf-preview-header">
-      <div className="pf-preview-nav">
-        {showBackButton && onBackToList && (
-          <IconControl
-            className="pf-preview-back"
-            label={t('preview.backToList')}
-            onClick={onBackToList}
-            icon={<FiArrowLeft aria-hidden="true" />}
-          />
-        )}
-        <IconControl
-          label={t('preview.previous')}
-          onClick={onPrev}
-          disabled={!hasPrev}
-          icon={<FiChevronLeft aria-hidden="true" />}
-        />
-        <span className="pf-preview-filename" title={file.file.name}>
-          {file.file.name}
-        </span>
-        <IconControl
-          label={t('preview.next')}
-          onClick={onNext}
-          disabled={!hasNext}
-          icon={<FiChevronRight aria-hidden="true" />}
-        />
-      </div>
-
-      <div className="pf-preview-tools" data-testid={PREVIEW_TEST_IDS.toolbarLayer}>
-        {hasResult && <CompareModeSwitch mode={compareMode} onChange={onCompareModeChange} />}
-        <span className={`pf-preview-mode-badge${isCustom ? ' is-custom' : ''}`}>
-          {isCustom ? t('settings.mode.custom') : t('settings.mode.global')}
-        </span>
-        <button
-          type="button"
-          className="pf-preview-text-button"
-          onClick={isCustom ? onUseGlobal : onCustomize}
-        >
-          {isCustom ? t('actions.useGlobalSettings') : t('actions.customizeImage')}
-        </button>
-        <ZoomControls zoom={zoom} onSetZoom={onSetZoom} onResetZoom={onResetZoom} />
-      </div>
-    </header>
   );
 }
 
@@ -693,7 +700,6 @@ function CompareModeSwitch({
       icon: <FiColumns aria-hidden="true" />,
       label: t('preview.modes.sideBySide'),
     },
-    { mode: 'single', icon: <FiImage aria-hidden="true" />, label: t('preview.modes.single') },
   ];
 
   return (
@@ -793,6 +799,7 @@ function SliderCompareView({
   output,
   imageTransform,
   sliderPos,
+  onSliderChange,
   isPanning,
   ratio,
   onPointerDown,
@@ -801,6 +808,7 @@ function SliderCompareView({
   output: ImageMeta;
   imageTransform: string;
   sliderPos: number;
+  onSliderChange: (value: number) => void;
   isPanning: boolean;
   ratio: number;
   onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
@@ -813,15 +821,15 @@ function SliderCompareView({
     >
       <div data-testid={PREVIEW_TEST_IDS.sliderImageLayer} className="pf-slider-image-layer">
         <PreviewImage
-          src={original.src}
-          alt={original.label}
+          src={output.src}
+          alt={output.label}
           imageTransform={imageTransform}
           isPanning={isPanning}
         />
         <div className="pf-slider-clip" style={{ clipPath: getSliderClipPath(sliderPos) }}>
           <PreviewImage
-            src={output.src}
-            alt={output.label}
+            src={original.src}
+            alt={original.label}
             imageTransform={imageTransform}
             isPanning={isPanning}
           />
@@ -829,11 +837,38 @@ function SliderCompareView({
       </div>
       <div data-testid={PREVIEW_TEST_IDS.sliderOverlayLayer} className="pf-slider-overlay-layer">
         <span className="pf-slider-line" style={{ left: `${sliderPos}%` }} aria-hidden="true" />
-        <span className="pf-slider-handle" style={{ left: `${sliderPos}%` }} aria-hidden="true">
-          ⇄
-        </span>
-        <PreviewLabel text={output.label} top left isInteracting={isPanning} />
-        <PreviewLabel text={original.label} top right isInteracting={isPanning} />
+        <button
+          className="pf-slider-handle"
+          style={{ left: `${sliderPos}%` }}
+          role="slider"
+          aria-label={`${original.label} / ${output.label}`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(sliderPos)}
+          onKeyDown={(event) => {
+            const delta = event.shiftKey ? 10 : 1;
+            const next =
+              event.key === 'ArrowLeft'
+                ? sliderPos - delta
+                : event.key === 'ArrowRight'
+                  ? sliderPos + delta
+                  : event.key === 'Home'
+                    ? 0
+                    : event.key === 'End'
+                      ? 100
+                      : null;
+            if (next !== null) {
+              event.preventDefault();
+              event.stopPropagation();
+              onSliderChange(Math.max(0, Math.min(100, next)));
+            }
+          }}
+        >
+          <FiChevronLeft aria-hidden />
+          <FiChevronRight aria-hidden />
+        </button>
+        <PreviewLabel text={original.label} top left isInteracting={isPanning} />
+        <PreviewLabel text={output.label} top right isInteracting={isPanning} />
         <CompareSummary
           originalSize={original.size}
           outputSize={output.size}

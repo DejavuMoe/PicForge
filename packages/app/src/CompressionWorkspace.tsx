@@ -6,9 +6,10 @@ import { FiAlertTriangle } from 'react-icons/fi';
 import { DropZone } from './components/DropZone';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { StatusBar } from './components/StatusBar';
-import { ToolHeading } from './components/ToolHeading';
 import { Toolbar } from './components/Toolbar';
-import { Workspace } from './components/Workspace';
+import { WorkbenchLayout } from './components/WorkbenchLayout';
+import { FileList } from './components/FileList';
+import { Preview } from './components/Preview';
 import { useAutoCompress } from './hooks/useAutoCompress';
 import { useFileStore } from './stores/fileStore';
 import { getMissingBrowserFeatures } from './utils/browserSupport';
@@ -20,10 +21,12 @@ export default function CompressionWorkspace({ active }: { active: boolean }) {
   const files = useFileStore((s) => s.files);
   const addFiles = useFileStore((s) => s.addFiles);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<'list' | 'preview'>('list');
+  const [mobileView, setMobileView] = useState<'list' | 'preview'>(() =>
+    window.matchMedia('(max-width: 767px)').matches ? 'list' : 'preview',
+  );
   const [missingFeatures] = useState(() => getMissingBrowserFeatures());
 
-  useAutoCompress();
+  const { abortAll } = useAutoCompress();
 
   const hasFiles = files.length > 0;
 
@@ -45,7 +48,7 @@ export default function CompressionWorkspace({ active }: { active: boolean }) {
   // explicitly by selecting a row.
   useEffect(() => {
     if (files.length === 0) {
-      setMobileView('list');
+      setMobileView(window.matchMedia('(max-width: 767px)').matches ? 'list' : 'preview');
     }
   }, [files.length]);
 
@@ -123,33 +126,28 @@ export default function CompressionWorkspace({ active }: { active: boolean }) {
   return (
     <ErrorBoundary>
       <div className="pf-app" data-testid="app-root">
-        <ToolHeading tool="compression" />
-        {hasFiles ? (
-          <>
-            <Toolbar />
-            <Workspace
-              selectedId={selectedId}
-              selectedFile={selectedFile}
-              mobileView={mobileView}
-              currentIdx={currentIdx}
-              fileCount={files.length}
-              onSelect={handleSelect}
-              onBackToList={handleBackToList}
-              onPrev={handlePrev}
-              onNext={handleNext}
-            />
-          </>
-        ) : (
-          <main className="pf-main" data-testid="app-main">
-            <section className="pf-empty-state" data-testid="empty-state">
-              <div className="pf-empty-state-inner">
-                <DropZone />
-              </div>
-            </section>
-          </main>
-        )}
-
-        {hasFiles && <StatusBar selectedFile={selectedFile} />}
+        <WorkbenchLayout
+          hasFiles={hasFiles}
+          mobileView={mobileView}
+          queue={<FileList selectedId={selectedId} onSelect={handleSelect} />}
+          viewer={
+            hasFiles ? (
+              <Preview
+                file={selectedFile}
+                onPrev={handlePrev}
+                onNext={handleNext}
+                hasPrev={currentIdx > 0}
+                hasNext={currentIdx < files.length - 1}
+                onBackToList={handleBackToList}
+                showBackButton={mobileView === 'preview'}
+              />
+            ) : (
+              <DropZone />
+            )
+          }
+          inspector={<Toolbar key={selectedFile?.id ?? 'empty'} file={selectedFile} />}
+        />
+        <StatusBar onCancel={abortAll} />
       </div>
     </ErrorBoundary>
   );

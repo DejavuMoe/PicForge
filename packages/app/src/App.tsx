@@ -2,10 +2,16 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from './components/Header';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { Landing } from './landing/Landing';
 import { SERVICE_WORKER_UPDATE_EVENT } from './registerServiceWorker';
 import type { ToolId } from './types';
 import CompressionWorkspace from './CompressionWorkspace';
+import Landing from './landing/Landing';
+import { OpticalScope } from './components/OpticalLayer';
+
+function toolFromLocation(): ToolId {
+  const value = new URLSearchParams(window.location.search).get('tool');
+  return value === 'compression' || value === 'android' || value === 'ios' ? value : 'home';
+}
 
 const MotionWorkspace = lazy(() => import('./motion/MotionWorkspace'));
 
@@ -19,34 +25,35 @@ export default function App() {
     return () => window.removeEventListener(SERVICE_WORKER_UPDATE_EVENT, ready);
   }, []);
 
-  const [tool, setTool] = useState<ToolId>(() => {
-    if (typeof window !== 'undefined') {
-      const param = new URLSearchParams(window.location.search).get('tool');
-      if (param === 'compression' || param === 'android' || param === 'ios') {
-        return param;
-      }
-    }
-    return 'home';
-  });
-  // Tool workspaces stay mounted once visited so queues survive navigation.
+  const [tool, setTool] = useState<ToolId>(toolFromLocation);
+  // Tool workspaces stay mounted once visited so queues survive home/back navigation.
   const [visited, setVisited] = useState<ToolId[]>(() => {
-    if (typeof window !== 'undefined') {
-      const param = new URLSearchParams(window.location.search).get('tool');
-      if (param === 'compression' || param === 'android' || param === 'ios') {
-        return [param];
-      }
-    }
-    return [];
+    const initial = toolFromLocation();
+    return initial === 'home' ? [] : [initial];
   });
-
-  const openTool = useCallback((value: ToolId) => {
+  const selectTool = useCallback((value: ToolId) => {
     setTool(value);
-    if (value !== 'home') {
+    if (value !== 'home')
       setVisited((previous) => (previous.includes(value) ? previous : [...previous, value]));
-    }
   }, []);
+  useEffect(() => {
+    const restore = () => selectTool(toolFromLocation());
+    window.addEventListener('popstate', restore);
+    return () => window.removeEventListener('popstate', restore);
+  }, [selectTool]);
 
-  const goHome = useCallback(() => setTool('home'), []);
+  const openTool = useCallback(
+    (value: ToolId) => {
+      if (value === tool) return;
+      const url = new URL(window.location.href);
+      if (value === 'home') url.searchParams.delete('tool');
+      else url.searchParams.set('tool', value);
+      window.history.pushState(null, '', `${url.pathname}${url.search}${url.hash}`);
+      selectTool(value);
+    },
+    [selectTool, tool],
+  );
+  const goHome = useCallback(() => openTool('home'), [openTool]);
 
   return (
     <ErrorBoundary>
@@ -57,13 +64,15 @@ export default function App() {
 
         {visited.map((value) => (
           <div className="pf-tool-panel" key={value} hidden={tool !== value}>
-            <Suspense fallback={<p role="status">{t('motion.loading')}</p>}>
-              {value === 'compression' ? (
-                <CompressionWorkspace active={tool === value} />
-              ) : (
-                <MotionWorkspace android={value === 'android'} />
-              )}
-            </Suspense>
+            <OpticalScope value={tool === value}>
+              <Suspense fallback={<p role="status">{t('motion.loading')}</p>}>
+                {value === 'compression' ? (
+                  <CompressionWorkspace active={tool === value} />
+                ) : (
+                  <MotionWorkspace android={value === 'android'} active={tool === value} />
+                )}
+              </Suspense>
+            </OpticalScope>
           </div>
         ))}
 

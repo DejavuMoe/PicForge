@@ -53,7 +53,7 @@ export default defineConfig({
           fileName: 'precache.json',
           source: JSON.stringify(
             Object.keys(bundle)
-              .filter((name) => /\.(js|css)$/.test(name))
+              .filter((name) => /\.(js|css|svg|png|jpe?g|webp|avif)$/.test(name))
               .map((name) => `/${name}`),
           ),
         });

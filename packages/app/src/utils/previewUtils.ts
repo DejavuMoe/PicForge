@@ -12,7 +12,7 @@ export function getDefaultCompareMode({
   isMobile,
 }: DefaultCompareModeInput): CompareMode {
   if (!hasResult) return 'single';
-  if (isMobile) return 'sideBySide';
+  if (isMobile) return 'slider';
   return hasDimensionChange ? 'sideBySide' : 'slider';
 }
 

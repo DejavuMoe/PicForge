@@ -55,58 +55,77 @@ export const FileRow = memo(function FileRow({
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
   const handleSelect = useCallback(() => onSelect(file), [file, onSelect]);
 
-  const handleRemove = useCallback((event?: ReactMouseEvent) => {
-    event?.stopPropagation();
-    onRemove(file.id);
-    closeContextMenu();
-  }, [closeContextMenu, file.id, onRemove]);
+  const handleRemove = useCallback(
+    (event?: ReactMouseEvent) => {
+      event?.stopPropagation();
+      onRemove(file.id);
+      closeContextMenu();
+    },
+    [closeContextMenu, file.id, onRemove],
+  );
 
-  const handleRetry = useCallback((event?: ReactMouseEvent) => {
-    event?.stopPropagation();
-    onRetry(file.id);
-    closeContextMenu();
-  }, [closeContextMenu, file.id, onRetry]);
+  const handleRetry = useCallback(
+    (event?: ReactMouseEvent) => {
+      event?.stopPropagation();
+      onRetry(file.id);
+      closeContextMenu();
+    },
+    [closeContextMenu, file.id, onRetry],
+  );
 
-  const handleDownload = useCallback(async (event?: ReactMouseEvent) => {
-    event?.stopPropagation();
-    if (!isResultExportable(file, settings)) return;
-    const { saveAs } = await import('file-saver');
-    saveAs(file.result!.blob, getOutputName(file, settings));
-    closeContextMenu();
-  }, [closeContextMenu, file, settings]);
+  const handleDownload = useCallback(
+    async (event?: ReactMouseEvent) => {
+      event?.stopPropagation();
+      if (!isResultExportable(file, settings)) return;
+      const { saveAs } = await import('file-saver');
+      saveAs(file.result!.blob, getOutputName(file, settings));
+      closeContextMenu();
+    },
+    [closeContextMenu, file, settings],
+  );
 
-  const handleCustomize = useCallback((event?: ReactMouseEvent) => {
-    event?.stopPropagation();
-    setFileCustomSettings(file.id, cloneSettings(settings));
-    closeContextMenu();
-  }, [closeContextMenu, file.id, settings, setFileCustomSettings]);
+  const handleCustomize = useCallback(
+    (event?: ReactMouseEvent) => {
+      event?.stopPropagation();
+      setFileCustomSettings(file.id, cloneSettings(settings));
+      closeContextMenu();
+    },
+    [closeContextMenu, file.id, settings, setFileCustomSettings],
+  );
 
-  const handleUseGlobal = useCallback((event?: ReactMouseEvent) => {
-    event?.stopPropagation();
-    resetFileToGlobal(file.id, settings);
-    closeContextMenu();
-  }, [closeContextMenu, file.id, resetFileToGlobal, settings]);
+  const handleUseGlobal = useCallback(
+    (event?: ReactMouseEvent) => {
+      event?.stopPropagation();
+      resetFileToGlobal(file.id, settings);
+      closeContextMenu();
+    },
+    [closeContextMenu, file.id, resetFileToGlobal, settings],
+  );
 
-  const handleCancel = useCallback((event?: ReactMouseEvent) => {
-    event?.stopPropagation();
-    useFileStore.getState().cancelFile(file.id);
-  }, [file.id]);
+  const handleCancel = useCallback(
+    (event?: ReactMouseEvent) => {
+      event?.stopPropagation();
+      useFileStore.getState().cancelFile(file.id);
+    },
+    [file.id],
+  );
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onSelect(file);
-    }
-  }, [file, onSelect]);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.target !== event.currentTarget) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        onSelect(file);
+      }
+    },
+    [file, onSelect],
+  );
 
   const handleContextMenu = useCallback((event: ReactMouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
     setContextMenu({
-      x: Math.min(
-        event.clientX,
-        window.innerWidth - CONTEXT_MENU_WIDTH - CONTEXT_MENU_GUTTER,
-      ),
+      x: Math.min(event.clientX, window.innerWidth - CONTEXT_MENU_WIDTH - CONTEXT_MENU_GUTTER),
       y: event.clientY,
     });
   }, []);
@@ -147,15 +166,16 @@ export const FileRow = memo(function FileRow({
   const ratio = file.result ? compressionRatio(file.originalSize, file.result.size) : 0;
   const canExport = isResultExportable(file, settings);
   const canRetry = file.status === 'error' || file.status === 'cancelled';
-  const statusClass = file.status === 'processing'
-    ? 'is-processing'
-    : file.status === 'done'
-      ? 'is-done'
-      : file.status === 'error'
-        ? 'is-error'
-        : file.status === 'cancelled'
-          ? 'is-cancelled'
-          : '';
+  const statusClass =
+    file.status === 'processing'
+      ? 'is-processing'
+      : file.status === 'done'
+        ? 'is-done'
+        : file.status === 'error'
+          ? 'is-error'
+          : file.status === 'cancelled'
+            ? 'is-cancelled'
+            : '';
 
   return (
     <div
@@ -163,6 +183,7 @@ export const FileRow = memo(function FileRow({
       role="button"
       tabIndex={0}
       aria-label={file.file.name}
+      aria-describedby={`file-status-${file.id}`}
       aria-pressed={isSelected}
       onClick={handleSelect}
       onKeyDown={handleKeyDown}
@@ -189,12 +210,15 @@ export const FileRow = memo(function FileRow({
         <div className="pf-file-name" title={file.file.name}>
           {file.file.name}
         </div>
+        <div id={`file-status-${file.id}`} className={`pf-file-status-text ${statusClass}`}>
+          {t(`status.${file.status}`, { progress: file.progress })}
+        </div>
         <div className="pf-file-meta">
           {file.settingsMode === 'custom' && (
             <span className="pf-file-custom-label">{t('settings.mode.custom')}</span>
           )}
           <span className="pf-file-size-muted">{formatFileSize(file.originalSize)}</span>
-          {file.result && (
+          {canExport && file.result && (
             <>
               <span className="pf-file-arrow">→</span>
               <span className={`pf-file-result-size ${ratio > 0 ? 'is-positive' : 'is-negative'}`}>

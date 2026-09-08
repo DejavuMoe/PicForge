@@ -26,6 +26,8 @@ Working version **0.15.0**, browser-only image toolbox. The initial integration 
 - UI changes: verify actual desktop/mobile behavior; use [QA checklist](docs/QA_CHECKLIST.md). `pnpm format` applies Prettier.
 
 - Experimental wasm-vips: `pnpm test:vips` checks an isolated temporary build, dev loading, failure recovery and compatibility without isolation headers. It does not switch the default pipeline. See [Phase 2 validation](docs/phase2-validation.md) and [Phase 3 engine contract](docs/phase3-validation.md).
+- Phase 4 engine: `pnpm test:vips:engine` qualifies JPEG/WebP transforms, color/alpha, settings, cancellation/crash/timeout and offline behavior in a temporary build. Requires ImageMagick; set `PICFORGE_SRGB_PROFILE` / `PICFORGE_P3_PROFILE` outside macOS for ICC fixtures. See [Phase 4 validation](docs/phase4-validation.md). Production still registers Compat only. Use the shared `vipsImageEngine` lane for future integration, never one instance per Compat worker. The pinned browser patch must keep its pthread pool and `VIPS_MAX_THREADS` equal (six), with pool growth disabled.
+- Private camera acceptance uses `PICFORGE_SAMPLE_ANDROID`, `PICFORGE_SAMPLE_IOS_HEIC` and `PICFORGE_SAMPLE_IOS_MOV`. `sample/` is ignored. Expected frames/PTS/crop/rotation come from the current source; recent native ffprobe with Frame Cropping support and ImageMagick are needed for arbitrary camera fixtures.
 
 ## Minimum constraints
 

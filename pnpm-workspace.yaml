@@ -16,3 +16,4 @@ minimumReleaseAgeExclude:
 patchedDependencies:
   '@jsquash/avif@2.1.1': patches/@jsquash__avif@2.1.1.patch
   '@jsquash/oxipng@2.3.0': patches/@jsquash__oxipng@2.3.0.patch
+  wasm-vips@0.0.18: patches/wasm-vips@0.0.18.patch

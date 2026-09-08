@@ -285,10 +285,21 @@ try {
     );
   const video = probe(resolve(output, 'ios.mp4')).streams;
   const primary = video.find((stream) => stream.codec_type === 'video');
+  const sourcePrimary = probe(originals[1]).streams.find((stream) => stream.codec_type === 'video');
+  // Derive the expected display geometry from this input, not a previous private
+  // sample. Recent native ffprobe exposes QuickTime clap as Frame Cropping.
+  const crop = sourcePrimary.side_data_list?.find((side) => side.side_data_type === 'Frame Cropping');
+  let expectedWidth = sourcePrimary.width - (crop?.crop_left ?? 0) - (crop?.crop_right ?? 0);
+  let expectedHeight = sourcePrimary.height - (crop?.crop_top ?? 0) - (crop?.crop_bottom ?? 0);
+  const rotation = sourcePrimary.side_data_list?.find((side) => side.rotation !== undefined)?.rotation ?? 0;
+  assert.equal(Math.abs(rotation) % 90, 0, 'Qualification fixture uses a right-angle rotation');
+  if (Math.abs(rotation) % 180 === 90) [expectedWidth, expectedHeight] = [expectedHeight, expectedWidth];
+  const scale = Math.min(1, 1920 / expectedWidth, 1920 / expectedHeight);
+  expectedWidth = Math.floor(Math.round(expectedWidth * scale) / 2) * 2;
+  expectedHeight = Math.floor(Math.round(expectedHeight * scale) / 2) * 2;
   assert.equal(primary.codec_name, 'h264');
-  assert.equal(primary.width, syntheticMedia ? 320 : 1308);
-  assert.equal(primary.height, syntheticMedia ? 240 : 1744);
-  assert.equal(primary.nb_frames, syntheticMedia ? '10' : '49');
+  assert.equal(primary.width, expectedWidth, 'Source crop/rotation/resize width');
+  assert.equal(primary.height, expectedHeight, 'Source crop/rotation/resize height');
   assert(!primary.side_data_list?.some((side) => side.rotation));
   assert.equal(video.find((stream) => stream.codec_type === 'audio').codec_name, 'aac');
   const pts = (path) =>
@@ -311,14 +322,19 @@ try {
     )
       .packets.map((packet) => Number(packet.pts_time))
       .sort((a, b) => a - b);
-  assert.deepEqual(pts(resolve(output, 'ios.mp4')), pts(originals[1]));
+  const sourcePts = pts(originals[1]);
+  assert.equal(primary.nb_frames, String(sourcePts.length), 'Every source frame is retained');
+  assert.deepEqual(pts(resolve(output, 'ios.mp4')), sourcePts);
+  const finalInterval = sourcePts.length > 1 ? sourcePts.at(-1) - sourcePts.at(-2) : 1 / 30;
   assert(
-    Math.abs(Number(primary.duration) - (syntheticMedia ? 1 : 1.666667)) < 0.034,
+    Math.abs(Number(primary.duration) - Number(sourcePrimary.duration)) < finalInterval + 1 / 600,
     'VFR duration within one final-frame interval',
   );
   const still = probe(resolve(output, 'ios.jpg')).streams[0];
-  assert.equal(still.width, syntheticMedia ? 320 : 4284);
-  assert.equal(still.height, syntheticMedia ? 240 : 5712);
+  const expectedStill = syntheticMedia ? [320, 240] : execFileSync(
+    'magick', ['identify', '-format', '%w %h', `${originals[0]}[0]`], { encoding: 'utf8' },
+  ).trim().split(/\s+/).map(Number);
+  assert.deepEqual([still.width, still.height], expectedStill, 'Native primary HEIC display dimensions');
   if (syntheticMedia) {
     const rgb = await page.evaluate(
       async (base64) => {

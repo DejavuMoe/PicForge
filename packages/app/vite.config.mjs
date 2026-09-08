@@ -21,10 +21,30 @@ const isolationHeaders = {
   'Cross-Origin-Embedder-Policy': 'require-corp',
 };
 
+function preserveIsolationHeaders(server, headers) {
+  // Vite's cached-transform 304 fast path bypasses server.headers. WebKit
+  // requires COEP on these revalidated Worker imports as well as on 200s.
+  server.middlewares.use((_request, response, next) => {
+    for (const name of Object.keys(isolationHeaders)) {
+      if (headers?.[name] !== undefined) response.setHeader(name, headers[name]);
+    }
+    next();
+  });
+}
+
 export default defineConfig({
   plugins: [
     react(),
     wasm(),
+    {
+      name: 'picforge-isolation-revalidation',
+      configureServer(server) {
+        preserveIsolationHeaders(server, server.config.server.headers);
+      },
+      configurePreviewServer(server) {
+        preserveIsolationHeaders(server, server.config.preview.headers);
+      },
+    },
     {
       name: 'picforge-precache',
       generateBundle(_options, bundle) {

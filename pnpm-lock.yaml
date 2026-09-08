@@ -7,6 +7,7 @@ settings:
 patchedDependencies:
   '@jsquash/avif@2.1.1': 758029a7e0ec54288d9cf400a79e2839299a57b7f8aef8834462253a7490ae7b
   '@jsquash/oxipng@2.3.0': fe72cd78a17c49af0e5305447df53c5e150e443ad7462bb0c9d2f6c61163db70
+  wasm-vips@0.0.18: 69f5975100da7a6f299b53ce50e2bc3bb45361025497c9157496ef1bce701d64
 
 importers:
 
@@ -129,7 +130,7 @@ importers:
         version: link:../codecs
       wasm-vips:
         specifier: 0.0.18
-        version: 0.0.18
+        version: 0.0.18(patch_hash=69f5975100da7a6f299b53ce50e2bc3bb45361025497c9157496ef1bce701d64)
 
 packages:
 
@@ -2319,7 +2320,7 @@ snapshots:
 
   wasm-feature-detect@1.8.0: {}
 
-  wasm-vips@0.0.18: {}
+  wasm-vips@0.0.18(patch_hash=69f5975100da7a6f299b53ce50e2bc3bb45361025497c9157496ef1bce701d64): {}
 
   which@2.0.2:
     dependencies:

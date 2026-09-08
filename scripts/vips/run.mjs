@@ -224,9 +224,17 @@ try {
     await new Promise((resolve) => server.httpServer.close(resolve));
     server = undefined;
   }
-  const dev = await createServer({ ...config, server: { host: '127.0.0.1', port: 0 } });
+  const dev = await createServer({
+    ...config,
+    cacheDir: await mkdtemp(resolve(tmpdir(), 'picforge-vips-probe-dev-cache-')),
+    optimizeDeps: {
+      entries: [resolve(root, 'packages/app/index.html'), resolve(root, 'scripts/vips/browser.ts')],
+    },
+    server: { host: '127.0.0.1', port: 0 },
+  });
   try {
     await dev.listen();
+    await dev.environments.client.depsOptimizer?.scanProcessing;
     const page = await browser.newPage();
     await page.goto(dev.resolvedUrls.local[0]);
     await page.evaluate(

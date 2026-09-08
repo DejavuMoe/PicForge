@@ -4,6 +4,7 @@
     "composite": true,
     "outDir": "dist",
     "rootDir": "src",
+    "types": ["node"],
     "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"]
   },
   "include": ["src"]

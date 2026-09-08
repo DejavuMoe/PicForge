@@ -29,7 +29,9 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      ...reactHooks.configs.recommended.rules,
+      // Preserve the existing Hooks gate; new recommended rules need a separate UI audit.
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'warn',

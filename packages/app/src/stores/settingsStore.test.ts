@@ -2,10 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { CompressSettings } from '@pic-forge/codecs';
 
 // Mock browser APIs
-vi.stubGlobal('URL', {
-  createObjectURL: vi.fn(() => 'blob:mock-url'),
-  revokeObjectURL: vi.fn(),
-});
+vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
 let uuidCounter = 0;
 vi.stubGlobal('crypto', {

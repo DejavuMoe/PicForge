@@ -15,9 +15,9 @@ Binary is copied without modification from the pinned npm package by scripts/pre
 Redistributors must satisfy corresponding-source distribution obligations for the codec binary;
 these links identify upstream sources and are not a substitute for a corresponding-source release archive.
 
-libheif-js 1.19.8: LGPL-3.0, includes libheif/libde265.
-License: libheif-LGPL-3.0.txt, plus /wasm/heif-1.19.8/LICENSE (bundled component notices).
-Source and build scripts: https://github.com/catdad-experiments/libheif-js/tree/v1.19.8
+libheif-js 1.23.2: LGPL-3.0, includes libheif/libde265.
+License: libheif-LGPL-3.0.txt, plus /wasm/heif-1.23.2/LICENSE (bundled component notices).
+Source and build scripts: https://github.com/catdad-experiments/libheif-js/tree/v1.23.2
 https://github.com/strukturag/libheif
 https://github.com/strukturag/libde265
 The browser module is copied unmodified and can be replaced independently.

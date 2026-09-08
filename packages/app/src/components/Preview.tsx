@@ -17,6 +17,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import {
   type CSSProperties,
+  type JSX,
   type PointerEvent as ReactPointerEvent,
   type WheelEvent as ReactWheelEvent,
   useCallback,

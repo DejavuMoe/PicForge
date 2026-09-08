@@ -3,7 +3,7 @@ import { encodeImage, DEFAULT_OPTIONS } from '@pic-forge/codecs';
 interface HeifImage {
   get_width(): number;
   get_height(): number;
-  handle: number;
+  is_primary(): boolean;
   display(
     target: { data: Uint8ClampedArray; width: number; height: number },
     callback: (value: { data: Uint8ClampedArray } | null) => void,
@@ -12,14 +12,12 @@ interface HeifImage {
 }
 self.onmessage = async ({ data }: MessageEvent<{ buffer: ArrayBuffer; quality: number }>) => {
   try {
-    const url = new URL('/wasm/heif-1.19.8/libheif-bundle.mjs', self.location.origin).href;
+    const url = new URL('/wasm/heif-1.23.2/libheif-bundle.mjs', self.location.origin).href;
     const { default: createHeif } = await import(/* @vite-ignore */ url);
     const heif = await createHeif();
     const images: HeifImage[] = new heif.HeifDecoder().decode(new Uint8Array(data.buffer));
     try {
-      // The 1.19.8 is_primary() wrapper references a missing global; use its exported C binding.
-      const primary =
-        images.find((image) => heif.heif_image_handle_is_primary_image(image.handle)) ?? images[0];
+      const primary = images.find((image) => image.is_primary()) ?? images[0];
       if (!primary) throw new Error('invalidHeic');
       const width = primary.get_width();
       const height = primary.get_height();

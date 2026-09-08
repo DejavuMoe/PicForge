@@ -15,7 +15,7 @@ for (const [directory, entries] of [
     ],
   ],
   [
-    'heif-1.19.8',
+    'heif-1.23.2',
     [
       [resolve(heif, 'libheif-wasm/libheif-bundle.mjs'), 'libheif-bundle.mjs'],
       [resolve(heif, 'libheif-wasm/LICENSE'), 'LICENSE'],

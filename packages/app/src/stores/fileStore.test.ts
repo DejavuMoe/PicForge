@@ -3,10 +3,8 @@ import type { CompressSettings } from '@pic-forge/codecs';
 import { getSettingsHash } from '../utils/settingsUtils';
 
 // Mock browser APIs not available in Node
-vi.stubGlobal('URL', {
-  createObjectURL: vi.fn(() => 'blob:mock-url'),
-  revokeObjectURL: vi.fn(),
-});
+vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
 let uuidCounter = 0;
 vi.stubGlobal('crypto', {

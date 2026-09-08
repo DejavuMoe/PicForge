@@ -7,26 +7,33 @@ import { chromium } from 'playwright';
 
 const output = await mkdtemp(resolve(tmpdir(), 'picforge-ui-'));
 const testSample = resolve(output, 'test-motion.jpg');
-await writeFile(
-  testSample,
-  Buffer.concat([
-    Buffer.from([
-      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00,
-      0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
-    ]),
-    Buffer.from([0, 0, 0, 0x14]),
-    Buffer.from('ftypmp42'),
-    Buffer.alloc(8),
-    Buffer.from([0, 0, 0, 8]),
-    Buffer.from('moov'),
-    Buffer.from([0, 0, 4, 8]),
-    Buffer.from('mdat'),
-    Buffer.alloc(1024),
-  ]),
-);
 const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader'] });
 try {
   const page = await browser.newPage({ reducedMotion: 'reduce' });
+  const jpeg = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 240;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#336699';
+    ctx.fillRect(0, 0, 320, 240);
+    return canvas.toDataURL('image/jpeg').split(',')[1];
+  });
+  // A decodable still for preview checks, with structural MP4 boxes for extraction checks.
+  await writeFile(
+    testSample,
+    Buffer.concat([
+      Buffer.from(jpeg, 'base64'),
+      Buffer.from([0, 0, 0, 0x14]),
+      Buffer.from('ftypmp42'),
+      Buffer.alloc(8),
+      Buffer.from([0, 0, 0, 8]),
+      Buffer.from('moov'),
+      Buffer.from([0, 0, 4, 8]),
+      Buffer.from('mdat'),
+      Buffer.alloc(1024),
+    ]),
+  );
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   for (const theme of ['light', 'dark']) {
@@ -75,9 +82,7 @@ try {
   }
   // Navigation keeps visited queues mounted; returning must preserve imported work.
   await page.locator('.pf-tool-nav button').nth(0).click();
-  await page
-    .locator('input[data-testid="file-input"]')
-    .setInputFiles(testSample);
+  await page.locator('input[data-testid="file-input"]').setInputFiles(testSample);
   await page.locator('.pf-file-row').first().waitFor();
   await page.locator('.pf-tool-nav button').nth(1).click();
   await page.locator('.pf-tool-nav button').nth(0).click();

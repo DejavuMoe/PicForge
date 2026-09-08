@@ -14,7 +14,7 @@ Working version **0.15.0**, browser-only image toolbox. The initial integration 
 - `packages/app/src/App.tsx`: shared header, tool navigation, update prompt. `CompressionWorkspace.tsx`: original compressor, active-tool clipboard import.
 - `packages/app/src/motion/`: grouping/extraction/encoder arguments (`media.ts`), worker lifecycle (`processor.ts`), HEIC worker and QuickTime clean-aperture adapter.
 - Compression: Zustand `fileStore`/`settingsStore` → `useAutoCompress` → `packages/worker` → `packages/codecs`. Per-image settings are complete snapshots.
-- UI: React 18 + Vite 5, native `app-shell.css`, shared theme, i18next with five locales. Keep translation keys/interpolation aligned across all locales.
+- UI: React 19 + Vite 8, native `app-shell.css`, shared theme, i18next with five locales. Keep translation keys/interpolation aligned across all locales.
 - All packages are ESM; internal dependencies use `workspace:*` and export TypeScript source. Tooling/TypeScript is shared from the root.
 
 ## Commands and checks
@@ -22,6 +22,7 @@ Working version **0.15.0**, browser-only image toolbox. The initial integration 
 - `pnpm install`; `pnpm dev` (127.0.0.1:5173); `pnpm build`; `pnpm preview`.
 - Required before release: `pnpm lint`, `pnpm test`, `pnpm typecheck`, `pnpm build`. No CI workflow currently exists. Vitest uses Node; mock browser APIs when needed.
 - Media/PWA changes: `pnpm test:browser` (Playwright Chromium + native `ffprobe`). This builds, previews and checks acceptance when fixtures are provided; artifacts default to a temporary directory. Override with `PICFORGE_BROWSER`, `PICFORGE_BROWSER_EXECUTABLE`, `PICFORGE_QA_OUTPUT`.
+- Synthetic media smoke: `PICFORGE_SYNTHETIC_MEDIA=1 pnpm test:browser` requires native `heif-enc`, `ffmpeg` (libx264/libx265) and `ffprobe`; all fixtures/exports stay temporary. Upgrade evidence: [Phase 1 validation](docs/phase1-validation.md).
 - UI changes: verify actual desktop/mobile behavior; use [QA checklist](docs/QA_CHECKLIST.md). `pnpm format` applies Prettier.
 
 ## Minimum constraints

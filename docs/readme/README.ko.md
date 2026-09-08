@@ -16,9 +16,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-0.15.0-blue.svg" alt="Version 0.15.0" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License MIT" />
-  <img src="https://img.shields.io/badge/react-18-blue.svg" alt="React 18" />
-  <img src="https://img.shields.io/badge/typescript-5-blue.svg" alt="TypeScript 5" />
-  <img src="https://img.shields.io/badge/vite-5-646CFF.svg" alt="Vite 5" />
+  <img src="https://img.shields.io/badge/react-19-blue.svg" alt="React 19" />
+  <img src="https://img.shields.io/badge/typescript-6-blue.svg" alt="TypeScript 6" />
+  <img src="https://img.shields.io/badge/vite-8-646CFF.svg" alt="Vite 8" />
   <img src="https://img.shields.io/badge/pwa-offline_ready-orange.svg" alt="PWA Ready" />
   <img src="https://img.shields.io/badge/tests-128%20passed-brightgreen.svg" alt="Tests" />
 </p>
@@ -117,7 +117,7 @@ PicForge는 `pnpm` 기반의 모듈형 TypeScript 모노레포로 구성되어 �
 PicForge/
 ├── docs/                       # QA 체크리스트, 성능 벤치마크, 다국어 문서
 ├── packages/
-│   ├── app/                    # React 18 + Vite 클라이언트 앱, Zustand 스토어, UI 워크스페이스
+│   ├── app/                    # React 19 + Vite 클라이언트 앱, Zustand 스토어, UI 워크스페이스
 │   │   ├── public/             # PWA Manifest, Service Worker, 폰트 및 벤더 WASM 자산
 │   │   └── src/
 │   │       ├── components/     # UI 위젯 (DropZone, Preview, FileList, Settings, Toolbar 등)
@@ -135,7 +135,7 @@ PicForge/
 ## 빠른 시작
 
 ### 요구 사양
-* **Node.js**: `^20.11.0` 또는 `^22.0.0` (LTS 권장)
+* **Node.js**: `>=22.12.0` (LTS 권장)
 * **pnpm**: `^11.8.0`
 
 ### 설치 및 로컬 개발

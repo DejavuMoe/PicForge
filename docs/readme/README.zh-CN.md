@@ -16,9 +16,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-0.15.0-blue.svg" alt="Version 0.15.0" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License MIT" />
-  <img src="https://img.shields.io/badge/react-18-blue.svg" alt="React 18" />
-  <img src="https://img.shields.io/badge/typescript-5-blue.svg" alt="TypeScript 5" />
-  <img src="https://img.shields.io/badge/vite-5-646CFF.svg" alt="Vite 5" />
+  <img src="https://img.shields.io/badge/react-19-blue.svg" alt="React 19" />
+  <img src="https://img.shields.io/badge/typescript-6-blue.svg" alt="TypeScript 6" />
+  <img src="https://img.shields.io/badge/vite-8-646CFF.svg" alt="Vite 8" />
   <img src="https://img.shields.io/badge/pwa-offline_ready-orange.svg" alt="PWA Ready" />
   <img src="https://img.shields.io/badge/tests-128%20passed-brightgreen.svg" alt="Tests" />
 </p>
@@ -117,7 +117,7 @@ PicForge 采用基于 `pnpm` 管理的模块化 TypeScript Monorepo 架构：
 PicForge/
 ├── docs/                       # QA 检查清单、验证基准与多语言文档
 ├── packages/
-│   ├── app/                    # React 18 + Vite 客户端应用、Zustand 状态与 UI 工作区
+│   ├── app/                    # React 19 + Vite 客户端应用、Zustand 状态与 UI 工作区
 │   │   ├── public/             # PWA Manifest、Service Worker、字体及 vendor 级 WASM 资产
 │   │   └── src/
 │   │       ├── components/     # UI 视图组件（DropZone、Preview、FileList、Settings 等）
@@ -135,7 +135,7 @@ PicForge/
 ## 快速上手
 
 ### 环境要求
-* **Node.js**：`^20.11.0` 或 `^22.0.0`（推荐 LTS 版本）
+* **Node.js**：`>=22.12.0`（推荐 LTS 版本）
 * **pnpm**：`^11.8.0`
 
 ### 本地开发

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, mkdir } from 'node:fs/promises';
+import { mkdtemp, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
@@ -53,7 +53,10 @@ try {
   page.on('console', (message) => {
     if (message.type() === 'error') console.log('BROWSER ERROR', message.text());
   });
-  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('pageerror', (error) => {
+    errors.push(error.message);
+    console.error(error);
+  });
   page.on('request', (request) => requests.push(request.url()));
   await page.goto('http://127.0.0.1:4187');
   const panel = page.locator('.pf-tool-panel:not([hidden])');
@@ -73,9 +76,10 @@ try {
     await panel.getByRole('button', { name }).click();
     await (await waiting).saveAs(resolve(output, filename));
   };
-  const sampleAndroid = process.env.PICFORGE_SAMPLE_ANDROID;
-  const sampleIosHeic = process.env.PICFORGE_SAMPLE_IOS_HEIC;
-  const sampleIosMov = process.env.PICFORGE_SAMPLE_IOS_MOV;
+  let sampleAndroid = process.env.PICFORGE_SAMPLE_ANDROID;
+  let sampleIosHeic = process.env.PICFORGE_SAMPLE_IOS_HEIC;
+  let sampleIosMov = process.env.PICFORGE_SAMPLE_IOS_MOV;
+  const syntheticMedia = process.env.PICFORGE_SYNTHETIC_MEDIA === '1';
   // Always exercise the production compressor/PWA, even without private media fixtures.
   const synthetic = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
@@ -148,6 +152,57 @@ try {
   }
   assert.deepEqual(errors, []);
   await page.getByRole('button', { name: 'PicForge', exact: true }).click();
+  if (syntheticMedia) {
+    // Generate test signals, never use private camera media.
+    const png = resolve(output, 'synthetic.png');
+    sampleIosHeic = resolve(output, 'synthetic.heic');
+    sampleIosMov = resolve(output, 'synthetic.mov');
+    sampleAndroid = resolve(output, 'synthetic-motion.jpg');
+    const mp4 = resolve(output, 'synthetic.mp4');
+    await writeFile(png, staticFile.buffer);
+    execFileSync('heif-enc', ['-q', '80', png, '-o', sampleIosHeic], { stdio: 'pipe' });
+    execFileSync('ffmpeg', [
+      '-y',
+      '-v',
+      'error',
+      '-f',
+      'lavfi',
+      '-i',
+      'testsrc2=size=320x240:rate=10:duration=1',
+      '-f',
+      'lavfi',
+      '-i',
+      'sine=frequency=440:duration=1',
+      '-c:v',
+      'libx265',
+      '-x265-params',
+      'pools=1:frame-threads=1:log-level=error',
+      '-tag:v',
+      'hvc1',
+      '-pix_fmt',
+      'yuv420p',
+      '-c:a',
+      'pcm_s16le',
+      '-shortest',
+      sampleIosMov,
+    ]);
+    execFileSync('ffmpeg', [
+      '-y',
+      '-v',
+      'error',
+      '-i',
+      sampleIosMov,
+      '-c:v',
+      'libx264',
+      '-c:a',
+      'aac',
+      mp4,
+    ]);
+    await writeFile(
+      sampleAndroid,
+      Buffer.concat([await readFile(resolve(output, 'static.jpg')), await readFile(mp4)]),
+    );
+  }
   if (
     !sampleAndroid ||
     !sampleIosHeic ||
@@ -231,9 +286,9 @@ try {
   const video = probe(resolve(output, 'ios.mp4')).streams;
   const primary = video.find((stream) => stream.codec_type === 'video');
   assert.equal(primary.codec_name, 'h264');
-  assert.equal(primary.width, 1308);
-  assert.equal(primary.height, 1744);
-  assert.equal(primary.nb_frames, '49');
+  assert.equal(primary.width, syntheticMedia ? 320 : 1308);
+  assert.equal(primary.height, syntheticMedia ? 240 : 1744);
+  assert.equal(primary.nb_frames, syntheticMedia ? '10' : '49');
   assert(!primary.side_data_list?.some((side) => side.rotation));
   assert.equal(video.find((stream) => stream.codec_type === 'audio').codec_name, 'aac');
   const pts = (path) =>
@@ -258,12 +313,32 @@ try {
       .sort((a, b) => a - b);
   assert.deepEqual(pts(resolve(output, 'ios.mp4')), pts(originals[1]));
   assert(
-    Math.abs(Number(primary.duration) - 1.666667) < 0.034,
+    Math.abs(Number(primary.duration) - (syntheticMedia ? 1 : 1.666667)) < 0.034,
     'VFR duration within one final-frame interval',
   );
   const still = probe(resolve(output, 'ios.jpg')).streams[0];
-  assert.equal(still.width, 4284);
-  assert.equal(still.height, 5712);
+  assert.equal(still.width, syntheticMedia ? 320 : 4284);
+  assert.equal(still.height, syntheticMedia ? 240 : 5712);
+  if (syntheticMedia) {
+    const rgb = await page.evaluate(
+      async (base64) => {
+        const image = new Image();
+        image.src = `data:image/jpeg;base64,${base64}`;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, 0, 0);
+        return [...ctx.getImageData(160, 120, 1, 1).data].slice(0, 3);
+      },
+      (await readFile(resolve(output, 'ios.jpg'))).toString('base64'),
+    );
+    assert(
+      rgb.every((value, index) => Math.abs(value - [51, 102, 153][index]) < 12),
+      'HEIC solid-color fidelity',
+    );
+  }
   await panel.locator('.pf-motion-workspace').evaluate((element) => {
     element.scrollTop = 0;
   });
@@ -293,6 +368,14 @@ try {
     .locator('.pf-tool-nav')
     .getByRole('button', { name: 'Image compression', exact: true })
     .click();
+  await page.locator('[data-active-tool="compression"]').waitFor();
+  if (await panel.locator('.pf-file-row').count()) {
+    await panel.getByRole('button', { name: 'Clear all', exact: true }).click();
+    await panel
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Confirm', exact: true })
+      .click();
+  }
   await panel.locator('input[type=file]').setInputFiles(resolve(output, 'ios.jpg'));
   await page.waitForFunction(
     () => {

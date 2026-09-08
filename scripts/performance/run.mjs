@@ -31,7 +31,7 @@ await build({
   ...config,
   build: {
     outDir,
-    rollupOptions: {
+    rolldownOptions: {
       input: resolve(root, 'scripts/performance/browser.ts'),
       output: { entryFileNames: 'benchmark.js' },
     },

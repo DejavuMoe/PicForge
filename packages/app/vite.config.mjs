@@ -51,16 +51,15 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@pic-forge/codecs', '@pic-forge/worker', '@ffmpeg/ffmpeg'],
   },
-  esbuild: {
+  oxc: {
     target: 'es2020',
   },
   build: {
     target: 'es2020',
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks(id) {
-          if (isReactVendor(id)) return 'vendor';
-          return undefined;
+        codeSplitting: {
+          groups: [{ name: 'vendor', test: isReactVendor }],
         },
       },
     },

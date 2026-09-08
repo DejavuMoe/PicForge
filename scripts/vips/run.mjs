@@ -135,25 +135,14 @@ try {
       assert.notEqual(result.first.instanceId, result.third.instanceId);
       assert.deepEqual([result.second.width, result.second.height], [160, 120]);
       for (const [i, expected] of [51, 102, 153].entries())
-        assert(Math.abs(result.pixel[i] - expected) <= 5);
+        assert(Math.abs(result.pixel[i] - expected) <= 5, `Probe pixel: ${result.pixel}`);
       assert(requests.some((url) => url.endsWith('.wasm')));
       assert(!requests.some((url) => /vips-(heif|jxl|resvg)/.test(url)));
     } else {
       assert.match(result.error, /unavailable/);
       assert(!requests.some((url) => /vips.*\.(wasm|js)/.test(new URL(url).pathname)));
     }
-    const compatibility = await page.evaluate(() =>
-      window.baseline.run(
-        {
-          name: 'compatibility',
-          width: 320,
-          height: 240,
-          mime: 'image/png',
-          kind: 'photo',
-        },
-        1,
-      ),
-    );
+    const compatibility = await page.evaluate(() => window.verifyCompatEngine());
     assert.equal(compatibility.status, 'ok');
     if (isolated) {
       failVips = true;
@@ -168,18 +157,7 @@ try {
       });
       assert.notEqual(failure, 'unexpected success');
       assert.equal(await page.evaluate(() => window.probe.vipsInitializable), false);
-      const afterFailure = await page.evaluate(() =>
-        window.baseline.run(
-          {
-            name: 'after-init-failure',
-            width: 320,
-            height: 240,
-            mime: 'image/png',
-            kind: 'photo',
-          },
-          1,
-        ),
-      );
+      const afterFailure = await page.evaluate(() => window.verifyCompatEngine());
       assert.equal(afterFailure.status, 'ok');
       failVips = false;
       const nextWorker = page.waitForEvent('worker', (worker) => /vipsWorker/.test(worker.url()));
@@ -233,6 +211,7 @@ try {
           }
         });
         assert(offline);
+        assert.equal((await page.evaluate(() => window.verifyCompatEngine())).status, 'ok');
         await page.context().setOffline(false);
       }
     }

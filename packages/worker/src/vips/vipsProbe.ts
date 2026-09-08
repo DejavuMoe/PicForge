@@ -1,12 +1,6 @@
 /** Internal Phase 2 experiment; the application still uses its existing codec pipeline. */
-export function getVipsCapabilities() {
-  return {
-    crossOriginIsolated: globalThis.crossOriginIsolated === true,
-    sharedArrayBuffer: typeof SharedArrayBuffer !== 'undefined',
-    worker: typeof Worker !== 'undefined',
-    wasm: typeof WebAssembly !== 'undefined',
-  };
-}
+import { getImageRuntimeCapabilities as getVipsCapabilities } from '../imageEngine';
+export { getVipsCapabilities };
 
 export interface VipsProbeResult {
   instanceId: string;

@@ -1,11 +1,11 @@
 /**
  * Auto-compress runtime: debounce, bounded concurrency, cancel/retry, and
- * task-epoch checks around decode, enqueue, and store write-back.
+ * task-epoch checks around engine execution and store write-back.
  *
  * The React hook is a thin subscriber around this controller.
  */
 
-import { decodeImage, resizeImage } from '@pic-forge/worker';
+import type { ImageEngine } from '@pic-forge/worker';
 import type { CompressSettings } from '@pic-forge/codecs';
 import { useFileStore } from '../stores/fileStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -19,15 +19,13 @@ import {
   runWithConcurrency,
   validateImageDimensions,
 } from '../utils/processingGuards';
-import { abortAllProcessing, getPool } from './processingPool';
+import { abortAllProcessing, imageProcessor } from './processingPool';
 
 export const AUTO_COMPRESS_DEBOUNCE_MS = 300;
 const MAX_RETRIES = 2;
 
 export interface AutoCompressDeps {
-  decodeImage: typeof decodeImage;
-  resizeImage: typeof resizeImage;
-  getPool: typeof getPool;
+  processImage: ImageEngine['process'];
   readImageDimensions: typeof readImageDimensions;
   validateImageDimensions: typeof validateImageDimensions;
   getImageSafetyLimits: typeof getImageSafetyLimits;
@@ -38,9 +36,7 @@ export interface AutoCompressDeps {
 }
 
 const defaultDeps: AutoCompressDeps = {
-  decodeImage,
-  resizeImage,
-  getPool,
+  processImage: imageProcessor.process,
   readImageDimensions,
   validateImageDimensions,
   getImageSafetyLimits,
@@ -99,106 +95,63 @@ export function createAutoCompressController(partialDeps: Partial<AutoCompressDe
 
   async function processFile(
     fileId: string,
-    fileBuffer: ArrayBuffer,
+    source: Blob,
     settings: CompressSettings,
     settingsHash: string,
     epoch: number,
   ): Promise<void> {
     if (!isTaskCurrent(fileId, epoch, settingsHash)) return;
 
-    useFileStore.getState().updateFile(fileId, { status: 'processing', progress: 0 });
-
-    const { data, width, height } = await deps.decodeImage(fileBuffer);
-    if (!isTaskCurrent(fileId, epoch, settingsHash)) return;
-
-    useFileStore.getState().updateFile(fileId, { progress: 30 });
-
-    let pixelData = data;
-    let finalWidth = width;
-    let finalHeight = height;
-
-    if (settings.resize?.enabled) {
-      const resized = deps.resizeImage(data, width, height, settings.resize);
-      pixelData = resized.data;
-      finalWidth = resized.width;
-      finalHeight = resized.height;
-    }
-
-    if (!isTaskCurrent(fileId, epoch, settingsHash)) return;
-    useFileStore.getState().updateFile(fileId, { progress: 50 });
-
-    const pixelBuffer = pixelData.buffer.slice(0) as ArrayBuffer;
-    if (!isTaskCurrent(fileId, epoch, settingsHash)) return;
-
-    const pool = deps.getPool();
-
-    return new Promise<void>((resolve, reject) => {
-      if (!isTaskCurrent(fileId, epoch, settingsHash)) {
-        resolve();
-        return;
-      }
-
-      pool.enqueue(fileId, pixelBuffer, finalWidth, finalHeight, fileBuffer.byteLength, settings, {
-        onProgress: (taskId: string, progress: number) => {
-          if (!isTaskCurrent(taskId, epoch, settingsHash)) return;
-          useFileStore.getState().updateFile(taskId, { progress });
+    const abort = new AbortController();
+    const unsubscribe = useFileStore.subscribe(() => {
+      if (!isTaskCurrent(fileId, epoch, settingsHash)) abort.abort();
+    });
+    try {
+      const result = await deps.processImage(
+        {
+          id: fileId,
+          source,
+          settings,
+          onProgress: (progress) => {
+            if (!isTaskCurrent(fileId, epoch, settingsHash)) return;
+            useFileStore.getState().updateFile(fileId, { status: 'processing', progress });
+          },
         },
-        onResult: (taskId: string, resultBuffer: ArrayBuffer, _orig: number, compressed: number) => {
-          const formatOption = FORMAT_OPTIONS.find((f) => f.value === settings.outputFormat);
-          const mime = formatOption?.mimeType ?? 'application/octet-stream';
-          const blob = new Blob([resultBuffer], { type: mime });
-          const resultUrl = URL.createObjectURL(blob);
-
-          if (!isTaskCurrent(taskId, epoch, settingsHash)) {
-            URL.revokeObjectURL(resultUrl);
-            resolve();
-            return;
-          }
-
-          const current = useFileStore.getState().getFile(taskId);
-          if (!current) {
-            URL.revokeObjectURL(resultUrl);
-            resolve();
-            return;
-          }
-
-          useFileStore.getState().updateFile(taskId, {
-            status: 'done',
-            progress: 100,
-            lastProcessedSettingsHash: settingsHash,
-            result: { blob, size: compressed, previewUrl: resultUrl },
-            outputMeta: {
-              originalWidth: width,
-              originalHeight: height,
-              outputWidth: finalWidth,
-              outputHeight: finalHeight,
-              settingsHash,
-            },
-          });
-          resolve();
-        },
-        onError: (taskId: string, error: string) => {
-          if (!isTaskCurrent(taskId, epoch, settingsHash)) {
-            resolve();
-            return;
-          }
-          if (error === 'Task cancelled' || error === 'Task aborted') {
-            const current = useFileStore.getState().getFile(taskId);
-            if (current && current.status !== 'cancelled') {
-              useFileStore.getState().updateFile(taskId, {
-                status: 'cancelled',
-                progress: 0,
-                error: undefined,
-              });
-            }
-            resolve();
-            return;
-          }
-          useFileStore.getState().updateFile(taskId, { status: 'error', progress: 0, error });
-          reject(new Error(error));
+        abort.signal,
+      );
+      if (!isTaskCurrent(fileId, epoch, settingsHash)) return;
+      const mime =
+        FORMAT_OPTIONS.find((f) => f.value === settings.outputFormat)?.mimeType ??
+        'application/octet-stream';
+      const blob = new Blob([result.buffer], { type: mime });
+      const resultUrl = URL.createObjectURL(blob);
+      useFileStore.getState().updateFile(fileId, {
+        status: 'done',
+        progress: 100,
+        lastProcessedSettingsHash: settingsHash,
+        result: { blob, size: result.outputSize, previewUrl: resultUrl },
+        outputMeta: {
+          originalWidth: result.originalWidth,
+          originalHeight: result.originalHeight,
+          outputWidth: result.width,
+          outputHeight: result.height,
+          settingsHash,
         },
       });
-    });
+    } catch (error) {
+      if (!isTaskCurrent(fileId, epoch, settingsHash)) return;
+      if (error instanceof Error && error.name === 'AbortError') {
+        useFileStore.getState().updateFile(fileId, {
+          status: 'cancelled',
+          progress: 0,
+          error: undefined,
+        });
+        return;
+      }
+      throw error;
+    } finally {
+      unsubscribe();
+    }
   }
 
   async function processAllPending(batchGeneration: number): Promise<void> {
@@ -258,15 +211,7 @@ export function createAutoCompressController(partialDeps: Partial<AutoCompressDe
             return;
           }
 
-          const buffer = await current.file.arrayBuffer();
-          if (
-            batchGeneration !== runGeneration
-            || !isTaskCurrent(current.id, epoch, settingsHash)
-          ) {
-            return;
-          }
-
-          await processFile(current.id, buffer, settings, settingsHash, epoch);
+          await processFile(current.id, current.file, settings, settingsHash, epoch);
           const processed = useFileStore.getState().getFile(current.id);
           if (processed?.status === 'done') retryCount.delete(current.id);
         } catch (err) {

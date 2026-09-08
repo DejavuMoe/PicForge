@@ -32,3 +32,8 @@ Source/build scripts: https://github.com/kleisauke/wasm-vips/tree/v0.0.18
 Only vips-es6.js and vips.wasm are used; optional HEIF/JXL/resvg modules are excluded.
 Before public binary distribution, provide corresponding sources and required relinking materials;
 these upstream links alone do not replace those obligations.
+
+PicForge applies version-specific pnpm patches to @jsquash/avif 2.1.1 and
+@jsquash/oxipng 2.3.0 JavaScript initialization wrappers to retain single-thread
+encoding under cross-origin isolation. Patch sources are in the repository's
+patches/ directory. The WASM binaries and upstream license notices are unchanged.

@@ -1,0 +1,41 @@
+diff --git a/optimise.js b/optimise.js
+index 3ee0f00badfa256bcc5888e8c5bc71e71ef58491..a7aaf1bbb50714611327ce3fb4e4cecec8d27504 100644
+--- a/optimise.js
++++ b/optimise.js
+@@ -11,13 +11,6 @@
+  * limitations under the License.
+  */
+ import { defaultOptions } from './meta.js';
+-import { threads } from 'wasm-feature-detect';
+-async function initMT(moduleOrPath) {
+-    const { default: init, initThreadPool, optimise, optimise_raw, } = await import('./codec/pkg-parallel/squoosh_oxipng.js');
+-    await init(moduleOrPath);
+-    await initThreadPool(globalThis.navigator.hardwareConcurrency);
+-    return { optimise, optimise_raw };
+-}
+ async function initST(moduleOrPath) {
+     const { default: init, optimise, optimise_raw, } = await import('./codec/pkg/squoosh_oxipng.js');
+     await init(moduleOrPath);
+@@ -25,20 +18,9 @@ async function initST(moduleOrPath) {
+ }
+ let wasmReady;
+ export async function init(moduleOrPath) {
+-    var _a;
+     if (!wasmReady) {
+-        const hasHardwareConcurrency = ((_a = globalThis.navigator) === null || _a === void 0 ? void 0 : _a.hardwareConcurrency) > 1;
+-        const isWorker = typeof self !== 'undefined' &&
+-            typeof WorkerGlobalScope !== 'undefined' &&
+-            self instanceof WorkerGlobalScope;
+-        // We only use multi-threading if the browser has threads and we're in a Worker context
+-        // This is a caveat of threading library we use (wasm-bindgen-rayon)
+-        if (isWorker && hasHardwareConcurrency && (await threads())) {
+-            wasmReady = initMT(moduleOrPath);
+-        }
+-        else {
+-            wasmReady = initST(moduleOrPath);
+-        }
++        // PicForge manages concurrency in WorkerPool and ships the single-thread WASM only.
++        wasmReady = initST(moduleOrPath);
+     }
+     return wasmReady;
+ }

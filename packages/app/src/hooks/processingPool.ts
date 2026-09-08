@@ -5,7 +5,7 @@
  * so store tests and pre-enqueue cancel/remove do not construct Workers.
  */
 
-import { WorkerPool } from '@pic-forge/worker';
+import { WorkerPool, createCompatImageEngine, createImageProcessor } from '@pic-forge/worker';
 
 let pool: WorkerPool | null = null;
 
@@ -28,3 +28,6 @@ export function setPoolForTests(next: WorkerPool | null): void {
   }
   pool = next;
 }
+
+// Session lifetime; Phase 4 can supply a qualified preferred engine here.
+export const imageProcessor = createImageProcessor(createCompatImageEngine(getPool));

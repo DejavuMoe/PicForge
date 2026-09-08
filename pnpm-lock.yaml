@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@jsquash/avif@2.1.1': 758029a7e0ec54288d9cf400a79e2839299a57b7f8aef8834462253a7490ae7b
+  '@jsquash/oxipng@2.3.0': fe72cd78a17c49af0e5305447df53c5e150e443ad7462bb0c9d2f6c61163db70
+
 importers:
 
   .:
@@ -107,13 +111,13 @@ importers:
     dependencies:
       '@jsquash/avif':
         specifier: ^2.1.1
-        version: 2.1.1
+        version: 2.1.1(patch_hash=758029a7e0ec54288d9cf400a79e2839299a57b7f8aef8834462253a7490ae7b)
       '@jsquash/jpeg':
         specifier: ^1.6.0
         version: 1.6.0
       '@jsquash/oxipng':
         specifier: ^2.3.0
-        version: 2.3.0
+        version: 2.3.0(patch_hash=fe72cd78a17c49af0e5305447df53c5e150e443ad7462bb0c9d2f6c61163db70)
       '@jsquash/webp':
         specifier: ^1.5.0
         version: 1.5.0
@@ -1515,13 +1519,13 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@jsquash/avif@2.1.1':
+  '@jsquash/avif@2.1.1(patch_hash=758029a7e0ec54288d9cf400a79e2839299a57b7f8aef8834462253a7490ae7b)':
     dependencies:
       wasm-feature-detect: 1.8.0
 
   '@jsquash/jpeg@1.6.0': {}
 
-  '@jsquash/oxipng@2.3.0':
+  '@jsquash/oxipng@2.3.0(patch_hash=fe72cd78a17c49af0e5305447df53c5e150e443ad7462bb0c9d2f6c61163db70)':
     dependencies:
       wasm-feature-detect: 1.8.0
 

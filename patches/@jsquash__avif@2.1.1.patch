@@ -1,0 +1,32 @@
+diff --git a/encode.js b/encode.js
+index a4ca0722ee5d02a82880ba02ae146adfa2c092cf..572359b6e7b1e50997d856135a42c7efd79dfe5f 100644
+--- a/encode.js
++++ b/encode.js
+@@ -12,12 +12,7 @@
+  */
+ import { defaultOptions } from './meta.js';
+ import { initEmscriptenModule } from './utils.js';
+-import { threads } from 'wasm-feature-detect';
+ let emscriptenModule;
+-const isRunningInNode = () => typeof process !== 'undefined' &&
+-    process.release &&
+-    process.release.name === 'node';
+-const isRunningInCloudflareWorker = () => { var _a; return ((_a = globalThis.caches) === null || _a === void 0 ? void 0 : _a.default) !== undefined; };
+ export async function init(module, moduleOptionOverrides) {
+     let actualModule = module;
+     let actualOptions = moduleOptionOverrides;
+@@ -26,13 +21,7 @@ export async function init(module, moduleOptionOverrides) {
+         actualModule = undefined;
+         actualOptions = module;
+     }
+-    if (!isRunningInNode() &&
+-        !isRunningInCloudflareWorker() &&
+-        (await threads())) {
+-        const avifEncoder = await import('./codec/enc/avif_enc_mt.js');
+-        emscriptenModule = initEmscriptenModule(avifEncoder.default, actualModule, actualOptions);
+-        return emscriptenModule;
+-    }
++    // PicForge manages concurrency in WorkerPool and ships the single-thread WASM only.
+     const avifEncoder = await import('./codec/enc/avif_enc.js');
+     emscriptenModule = initEmscriptenModule(avifEncoder.default, actualModule, actualOptions);
+     return emscriptenModule;

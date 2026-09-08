@@ -1,14 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CompressSettings } from '@pic-forge/codecs';
 import type { TaskCallbacks } from '@pic-forge/worker';
-import { WorkerPool } from '@pic-forge/worker';
+import { WorkerPool, createCompatImageEngine, type CompatImageEngineDeps } from '@pic-forge/worker';
 import {
   AUTO_COMPRESS_DEBOUNCE_MS,
-  createAutoCompressController,
+  createAutoCompressController as createControllerWithEngine,
   isAutoCompressCandidate,
-  type AutoCompressDeps,
+  type AutoCompressDeps as ControllerDeps,
 } from './autoCompressController';
-import { setPoolForTests } from './processingPool';
+import { setPoolForTests, getPool as defaultGetPool } from './processingPool';
+
+type AutoCompressDeps = ControllerDeps & CompatImageEngineDeps;
+
+// Keep the real compatibility adapter in scheduler race tests; gate its browser work only.
+function createAutoCompressController(overrides: Partial<AutoCompressDeps> = {}) {
+  const { getPool = defaultGetPool, decodeImage, resizeImage, ...controller } = overrides;
+  const compat = createCompatImageEngine(getPool, {
+    ...(decodeImage ? { decodeImage } : {}),
+    ...(resizeImage ? { resizeImage } : {}),
+  });
+  return createControllerWithEngine({ processImage: compat.process, ...controller });
+}
 
 const NativeURL = globalThis.URL;
 
@@ -751,7 +763,7 @@ describe('auto-compress settings invalidation and abort', () => {
     expect(useFileStore.getState().files[0].status).toBe('done');
     expect(useFileStore.getState().files[0].result?.previewUrl).toBe('blob:result-a');
 
-    vi.mocked(URL.createObjectURL).mockReturnValue('blob:result-b');
+    vi.mocked(URL.createObjectURL).mockClear().mockReturnValue('blob:result-b');
     lateTask.callbacks.onResult?.(id, new ArrayBuffer(8), 32, 8);
     controller.schedule();
     await running.catch(() => undefined);
@@ -761,6 +773,6 @@ describe('auto-compress settings invalidation and abort', () => {
     expect(restored.result?.previewUrl).toBe('blob:result-a');
     expect(isResultExportable(restored, useSettingsStore.getState().settings)).toBe(true);
     expect(URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:result-a');
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:result-b');
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 });

@@ -25,6 +25,8 @@ Working version **0.15.0**, browser-only image toolbox. The initial integration 
 - Synthetic media smoke: `PICFORGE_SYNTHETIC_MEDIA=1 pnpm test:browser` requires native `heif-enc`, `ffmpeg` (libx264/libx265) and `ffprobe`; all fixtures/exports stay temporary. Upgrade evidence: [Phase 1 validation](docs/phase1-validation.md).
 - UI changes: verify actual desktop/mobile behavior; use [QA checklist](docs/QA_CHECKLIST.md). `pnpm format` applies Prettier.
 
+- Experimental wasm-vips: `pnpm test:vips` checks an isolated temporary build, dev loading, failure recovery and compatibility without isolation headers. It does not switch the default pipeline. See [Phase 2 validation](docs/phase2-validation.md).
+
 ## Minimum constraints
 
 1. **Privacy and workspace hygiene.** Sample media fixtures containing personal data must never be committed. Write exports/screenshots to temporary directories. Preserve unrelated working changes; do not commit, push or deploy without authorization.

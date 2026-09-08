@@ -16,6 +16,11 @@ function isReactVendor(id) {
   );
 }
 
+const isolationHeaders = {
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+};
+
 export default defineConfig({
   plugins: [
     react(),
@@ -40,9 +45,11 @@ export default defineConfig({
   },
   server: {
     host: '127.0.0.1',
+    headers: isolationHeaders,
   },
   preview: {
     host: '127.0.0.1',
+    headers: isolationHeaders,
   },
   worker: {
     format: 'es',

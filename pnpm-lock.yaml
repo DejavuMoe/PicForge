@@ -123,6 +123,9 @@ importers:
       '@pic-forge/codecs':
         specifier: workspace:*
         version: link:../codecs
+      wasm-vips:
+        specifier: 0.0.18
+        version: 0.0.18
 
 packages:
 
@@ -1267,6 +1270,10 @@ packages:
   wasm-feature-detect@1.8.0:
     resolution: {integrity: sha512-zksaLKM2fVlnB5jQQDqKXXwYHLQUVH9es+5TOOHwGOVJOCeRBCiPjwSg+3tN2AdTCzjgli4jijCH290kXb/zWQ==}
 
+  wasm-vips@0.0.18:
+    resolution: {integrity: sha512-AJyCvxZj/3qceKNnh+YyEobu/IaJFoPN7x7SxyyHmYBS3kASMqJqxQEuN0ZHKQDWsCJ8armfx4Tq3uKrNc+nMA==}
+    engines: {node: '>=17.0.0'}
+
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
     engines: {node: '>= 8'}
@@ -2307,6 +2314,8 @@ snapshots:
   void-elements@3.1.0: {}
 
   wasm-feature-detect@1.8.0: {}
+
+  wasm-vips@0.0.18: {}
 
   which@2.0.2:
     dependencies:

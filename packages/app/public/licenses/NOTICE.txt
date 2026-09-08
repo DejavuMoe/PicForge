@@ -24,3 +24,11 @@ The browser module is copied unmodified and can be replaced independently.
 
 Existing image encoders: @jsquash/jpeg, @jsquash/webp, @jsquash/avif, @jsquash/oxipng.
 Source, licenses and build instructions: https://github.com/jamsinclair/jSquash
+
+Experimental wasm-vips 0.0.18: MIT JavaScript wrapper; libvips/glib and other components
+have their own licenses, including LGPLv3. Not included in the default application bundle.
+See wasm-vips-MIT.txt and wasm-vips-0.0.18-NOTICES.md for upstream component notices.
+Source/build scripts: https://github.com/kleisauke/wasm-vips/tree/v0.0.18
+Only vips-es6.js and vips.wasm are used; optional HEIF/JXL/resvg modules are excluded.
+Before public binary distribution, provide corresponding sources and required relinking materials;
+these upstream links alone do not replace those obligations.

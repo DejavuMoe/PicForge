@@ -9,6 +9,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@pic-forge/codecs": "workspace:*"
+    "@pic-forge/codecs": "workspace:*",
+    "wasm-vips": "0.0.18"
   }
 }

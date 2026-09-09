@@ -1,6 +1,5 @@
 import { SelectControl } from './SelectControl';
 import { SelectionRail } from './SelectionRail';
-import { OpticalLayer } from './OpticalLayer';
 /**
  * Preview — native image comparison workspace.
  *
@@ -113,6 +112,7 @@ export function Preview({
   const activePointerId = useRef<number | null>(null);
   const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<CompareViewport>(DEFAULT_VIEWPORT);
   const pendingViewportRef = useRef<CompareViewport | null>(null);
   const rafId = useRef<number | null>(null);
@@ -516,8 +516,7 @@ export function Preview({
   }
 
   const controls = (
-    <div className="pf-viewer-controls pf-optical-dock">
-      <OpticalLayer />
+    <div className="pf-viewer-controls pf-preview-controls">
       {view === 'compare' && hasResult && (
         <CompareModeSwitch mode={activeCompareMode} onChange={setCompareMode} />
       )}
@@ -530,29 +529,17 @@ export function Preview({
           onClick={() => {
             const action = document.fullscreenElement
               ? document.exitFullscreen()
-              : containerRef.current?.requestFullscreen();
+              : previewRef.current?.requestFullscreen();
             void action?.catch(() => undefined);
           }}
         />
       )}
-
-      <IconControl
-        label={t('preview.previous')}
-        onClick={onPrev}
-        disabled={!hasPrev}
-        icon={<FiChevronLeft aria-hidden />}
-      />
-      <IconControl
-        label={t('preview.next')}
-        onClick={onNext}
-        disabled={!hasNext}
-        icon={<FiChevronRight aria-hidden />}
-      />
     </div>
   );
 
   return (
     <div
+      ref={previewRef}
       className={`pf-preview${view === 'compare' && activeCompareMode === 'sideBySide' ? ' is-two-up' : ''}`}
     >
       <header className="pf-preview-header">
@@ -592,9 +579,22 @@ export function Preview({
               )}
             </span>
           </div>
+          <div className="pf-preview-pagination">
+            <IconControl
+              label={t('preview.previous')}
+              onClick={onPrev}
+              disabled={!hasPrev}
+              icon={<FiChevronLeft aria-hidden />}
+            />
+            <IconControl
+              label={t('preview.next')}
+              onClick={onNext}
+              disabled={!hasNext}
+              icon={<FiChevronRight aria-hidden />}
+            />
+          </div>
         </div>
         <SelectionRail
-          activeKey={hasResult ? view : 'original'}
           className="pf-preview-tabs"
           role="group"
           aria-label={t('preview.compareMode')}
@@ -690,24 +690,8 @@ export function Preview({
         {(file.status === 'processing' || file.status === 'pending') && !hasResult && (
           <ProcessingOverlay progress={file.progress} />
         )}
-        {!isMobile && controls}
       </div>
-      <div className="pf-viewer-footer">
-        <span className="pf-viewer-metadata">
-          {(view === 'original' ? originalMeta : (outputMeta ?? originalMeta)).dimensions}
-          {hasResult && (
-            <span>
-              {
-                FORMAT_OPTIONS.find(
-                  (option) =>
-                    option.value === getEffectiveSettings(file, globalSettings).outputFormat,
-                )?.label
-              }
-            </span>
-          )}
-        </span>
-        {isMobile && controls}
-      </div>
+      <div className="pf-viewer-footer">{controls}</div>
     </div>
   );
 }

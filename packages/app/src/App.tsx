@@ -1,12 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from './components/Header';
+import { FiLock } from 'react-icons/fi';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SERVICE_WORKER_UPDATE_EVENT } from './registerServiceWorker';
 import type { ToolId } from './types';
-import CompressionWorkspace from './CompressionWorkspace';
-import Landing from './landing/Landing';
-import { OpticalScope } from './components/OpticalLayer';
 
 function toolFromLocation(): ToolId {
   const value = new URLSearchParams(window.location.search).get('tool');
@@ -14,6 +12,8 @@ function toolFromLocation(): ToolId {
 }
 
 const MotionWorkspace = lazy(() => import('./motion/MotionWorkspace'));
+const CompressionWorkspace = lazy(() => import('./CompressionWorkspace'));
+const Landing = lazy(() => import('./landing/Landing'));
 
 export default function App() {
   const { t } = useTranslation();
@@ -55,24 +55,61 @@ export default function App() {
   );
   const goHome = useCallback(() => openTool('home'), [openTool]);
 
+  useEffect(() => {
+    document.title =
+      tool === 'home'
+        ? 'PicForge — Your images, on your device'
+        : `${t(`motion.${tool}`)} · PicForge`;
+  }, [tool, t]);
+
   return (
     <ErrorBoundary>
       <div className="pf-toolbox" data-active-tool={tool}>
+        <a className="pf-skip-link" href="#pf-main">
+          {t('workbench.skipToContent')}
+        </a>
         <Header onHome={goHome} tool={tool} onSelect={openTool} />
 
-        {tool === 'home' && <Landing onSelect={openTool} />}
+        {tool === 'home' && (
+          <Suspense
+            fallback={
+              <div className="pf-tool-loading" role="status">
+                {t('motion.loading')}
+              </div>
+            }
+          >
+            <Landing onSelect={openTool} />
+          </Suspense>
+        )}
+
+        {tool !== 'home' && (
+          <div className="pf-workspace-heading">
+            <h1 id="pf-main" tabIndex={-1}>
+              {t(`motion.${tool}`)}
+            </h1>
+            <p>{t(`entry.${tool}`)}</p>
+            <span className="pf-workspace-local">
+              <FiLock aria-hidden />
+              {t('workbench.local')}
+            </span>
+          </div>
+        )}
 
         {visited.map((value) => (
           <div className="pf-tool-panel" key={value} hidden={tool !== value}>
-            <OpticalScope value={tool === value}>
-              <Suspense fallback={<p role="status">{t('motion.loading')}</p>}>
-                {value === 'compression' ? (
-                  <CompressionWorkspace active={tool === value} />
-                ) : (
-                  <MotionWorkspace android={value === 'android'} active={tool === value} />
-                )}
-              </Suspense>
-            </OpticalScope>
+            <Suspense
+              fallback={
+                <div className="pf-tool-loading" role="status">
+                  {t('motion.loading')}
+                </div>
+              }
+            >
+              {value === 'compression' ? (
+                <CompressionWorkspace active={tool === value} />
+              ) : (
+                <MotionWorkspace android={value === 'android'} active={tool === value} />
+              )}
+            </Suspense>
           </div>
         ))}
 

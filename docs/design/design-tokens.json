@@ -1,73 +1,86 @@
 {
-  "status": "optical interaction revision 2026-09-09",
+  "status": "neutral/vermilion workbench, 0.16.0, 2026-09-10",
   "colors": {
     "light": {
-      "chrome": "#FFFFFF",
-      "surface": "#F6F6F6",
-      "imageMat": "#E8E8E8",
-      "text": "#202322",
-      "secondaryText": "#616762",
-      "separator": "#DDDFDD",
-      "controlBorder": "#858C87",
-      "accent": "#245946",
-      "onPrimary": "#FFFFFF",
-      "primaryButton": "#245946",
-      "selection": "#EDF3F0",
-      "disabledText": "#69736C",
-      "shell": "#EDF1EF"
+      "chrome": "#ffffff",
+      "surface": "#f5f5f4",
+      "imageMat": "#e9e9e7",
+      "text": "#222221",
+      "secondaryText": "#636360",
+      "separator": "#dededb",
+      "controlBorder": "#b8b8b3",
+      "accent": "#b8422d",
+      "onPrimary": "#ffffff",
+      "primaryButton": "#c44832",
+      "selection": "#efefec",
+      "disabledText": "#858580",
+      "shell": "#ffffff"
     },
     "dark": {
-      "chrome": "#202222",
-      "surface": "#242626",
-      "imageMat": "#161818",
-      "text": "#ECEEEC",
-      "secondaryText": "#ABB0AC",
-      "separator": "#373B38",
-      "controlBorder": "#747D76",
-      "accent": "#91BBA4",
-      "onPrimary": "#FFFFFF",
-      "primaryButton": "#245946",
-      "selection": "#303E37",
-      "disabledText": "#929D95",
-      "shell": "#1B211E"
+      "chrome": "#202020",
+      "surface": "#242424",
+      "imageMat": "#141414",
+      "text": "#f2f2f0",
+      "secondaryText": "#b5b5b1",
+      "separator": "#3b3b38",
+      "controlBorder": "#62625d",
+      "accent": "#f08b76",
+      "onPrimary": "#ffffff",
+      "primaryButton": "#c44832",
+      "selection": "#30302d",
+      "disabledText": "#888883",
+      "shell": "#181818"
     }
   },
   "typography": {
     "family": "system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif",
     "body": 14,
-    "metadata": 13,
+    "metadata": 12,
     "section": 16,
-    "title": 24,
+    "title": 18,
     "lineHeight": 1.5,
-    "numbers": "tabular-nums"
+    "numbers": "tabular-nums",
+    "landingTitle": [
+      40,
+      66
+    ]
   },
-  "spacing": [4, 8, 12, 16, 24, 32],
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
   "radii": {
     "media": 0,
-    "control": 9,
-    "menu": 14,
-    "workbench": 18,
-    "optical": 24
+    "control": 4,
+    "menu": 8,
+    "workbench": 0
   },
   "layout": {
-    "header": 60,
-    "desktopQueue": [224, 256],
-    "desktopInspector": [280, 304],
-    "footer": [56, 64],
+    "header": 64,
+    "desktopQueue": 240,
+    "desktopInspector": 300,
+    "footer": 64,
     "mobileGutter": 16,
     "mobileTouchMin": 44,
-    "landingHeader": 64
+    "mobileBreakpoint": 767,
+    "tabletBreakpoint": 1100
   },
   "motion": {
-    "durationMs": [140, 180, 240, 260, 600],
-    "properties": ["transform", "translate", "opacity", "color", "background-color", "box-shadow"],
+    "durationMs": [
+      120,
+      150
+    ],
+    "properties": [
+      "color",
+      "background-color",
+      "border-color",
+      "transform"
+    ],
     "respectReducedMotion": true,
-    "selectionMs": 260,
-    "popoverMs": 180,
-    "dialogEnterMs": 260,
-    "dialogExitMs": 140,
-    "disclosureMs": 240,
-    "heroEnterMs": 600,
-    "particleFpsCeiling": 30
+    "continuousDecoration": false
   }
 }

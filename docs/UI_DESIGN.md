@@ -1,141 +1,97 @@
-# PicForge image workbench
+# PicForge interface and validation
 
-Implemented visual baseline, 2026-09-09. The accepted direction and concept assets
-are in [visual-direction.md](design/visual-direction.md); semantic values are in
-[design-tokens.json](design/design-tokens.json). Concepts contain illustrative data.
-The application renders real components and imported media.
+Implemented baseline: **0.16.0**, 2026-09-10. This is a working version, not a release or deployment. The user replaced the green optical direction with a neutral, restrained image utility. See the [current design brief](design/editorial-redesign.md) and [tokens](design/design-tokens.json).
 
-## Entry and shared structure
+The [previous implementation report](UI_DESIGN.optical-2026-09-09.md) is preserved unchanged from revision `58b797db38ede4779654f0761f905d3fd497e898`. Its optical requirements and screenshots are historical; its unaffected media evidence is not being replaced by new performance claims.
 
-The default entry and legacy `tool=home` open the compact Landing Page. Users
-select one of three tools; explicit tool URLs still open their workspaces. The
-brand returns home. Navigation updates browser history and keeps visited queues
-mounted, including when returning home and using Back/Forward. See the latest
-[optical interaction system](design/interaction-redesign.md).
+## Product flow
 
-`WorkbenchLayout` provides shared queue, viewer and inspector regions.
-`Inspector`, `SwitchControl`, `SelectControl` and `ConfirmDialog` provide consistent
-controls and focus behavior. `Header` contains tool navigation, language, theme
-and a mobile preferences menu. `ProjectInfo` has separate Landing and workbench variants. The user removed the
-About entry: Landing shows copyright/GitHub and a separate sponsorship line,
-centered and naturally wrapping. Tool footers retain GitHub beside batch actions.
-License files remain available in the distribution.
+Home presents three direct links: image compression, Android Motion Photos, and iOS Live Photos. A labelled JPEG/WebP sample comparison demonstrates the purpose of the product. Try this image opens a generated, non-personal JPEG in the actual compressor. The preview uses pre-encoded examples; its image sizes are not benchmarks. On mobile, all three tool entries precede the example and are visible in the first viewport.
 
-Desktop uses an 80px optical header with an 18px outer inset, proportional
-queue/inspector widths around a flexible preview, and separate beveled panes. Navigation, preview tabs and settings
-scope share one moving glass selection thumb, without underline indicators. The
-preview control dock refracts the image beneath it; source/result pixels and all
-exported data remain unchanged. The inspector scrolls its settings independently
-while keeping selected-result download visible. System fonts and all five locales
-remain; numbers use tabular figures.
+Every workspace uses a task heading, file list, image viewer, settings/output inspector, and batch action bar. Desktop has a 240px list and 300px inspector around a flexible neutral image mat. At 768–1100px, list and preview share a pane beside settings. Below 768px, selecting a file opens its preview with an explicit return action; settings follow the image in the same scroll area. Batch actions stay outside that scroll area.
 
-At 768–1100px, queue and selected preview alternate beside the inspector, and the
-header uses a tool selector. At 767px and below, queue/preview alternate in a
-scrollable single column, with the inspector following the preview. The preview
-dock returns to normal document flow on phones. Footer space and 44px touch
-controls remain. Landing is a separate responsive layout with an interactive
-particle/photo scene and three tool choices, not a compressed copy of the editor.
+Previously visited workspaces stay mounted. Tool switches, home and browser Back/Forward preserve their queues. Reloading or closing the page clears in-memory media, and the update/error copy now says so. No files are persisted or uploaded.
 
-Browser language is resolved from supported navigator preferences, with English
-fallback. A manually selected language persists under `picforge.language`; choose
-Browser language to resume automatic detection. URL overrides are transient and
-the old `i18nextLng` cache is ignored. Regional Chinese and language variants map
-to the five actual resource bundles.
+## Visual system
 
-## Tool behavior
+White and graphite surfaces, neutral image mats, system typography and one restrained vermilion accent replace tinted glass. Headers, panes and file rows are flat. Preview controls sit below the image, with previous/next beside the filename. Fullscreen includes the complete preview and its controls. Images and exported media never inherit a filter.
 
-- **Compression:** a flat queue, original/result/compare viewer, zoom/pan and
-  previous/next navigation. The inspector exposes global or selected-image
-  settings, format, quality, absolute/percentage resize, fit method, advanced
-  options and presets. Custom settings remain complete snapshots; global edits
-  do not overwrite them, and returning to global settings is explicit. Contain
-  fields say maximum width/height. Existing automatic processing is retained.
-- **Android:** the same queue and paired photo/video preview, with a read-only
-  output inspector and individual JPG/MP4 downloads. Extraction preserves the
-  source bytes and exposes no re-encoding controls.
-- **iOS:** paired groups, JPG/video results and batch settings in the inspector.
-  Existing settings locks, standalone photo/video support, cancellation, retry,
-  individual downloads and ZIP export remain. The interface identifies basename
-  pairing without claiming Apple identifier verification. Hidden tools pause video.
+The header contains a code-native P mark, navigation, native language select and theme toggle. Phones use a native tool select and a compact preferences disclosure. The Landing footer retains centered copyright/GitHub and a separate sponsorship line. The workbench gives space to task actions on mobile; no About or raw license link has been introduced.
 
-Empty, pending, processing, completed, stale, failed, cancelled, duplicate-pair
-and playback-fallback states have explicit text. Compression exports require a
-result matching current settings; stale previews show the original with notice.
-Errors offer retry and expandable details. Destructive clearing uses a modal
-confirmation with Tab containment, Escape cancellation and focus restoration.
-Batch export and selected-file download occupy distinct stable positions.
+Global/per-image and original/result/compare selections use CSS states. Focus is visible, touch controls are at least 44px on phone layouts, and reduced-motion removes transitions/continuous spinner motion. Layout uses progressive CSS enhancement for aligned Motion Photo media; unsupported subgrid falls back to the original flex layout.
 
-## Reference fidelity and intentional adaptations
+## Interaction changes
 
-| Accepted direction                              | Implemented result and verification                                                             |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Quiet continuous header and three tools         | Shared header, underline selection; mobile uses a full-name selector                            |
-| Flat left file list                             | Thumbnail rows with actual status/size, restrained selection and visible actions                |
-| Large neutral central preview                   | Uncropped contain view, synchronized comparison, persistent zoom controls                       |
-| Right output inspector                          | Shared field hierarchy and spacing; tool-specific controls reflect real capabilities            |
-| Forest accent, white/gray and charcoal surfaces | Semantic light/dark colors with visible focus and readable disabled text                        |
-| Stable bottom action bar                        | Real completed cohort, cancellation when running, actual file/ZIP download                      |
-| Natural mobile reflow                           | Queue/preview navigation, full-width media and scrollable settings; no squeezed desktop columns |
+- Native selects replace the custom popup/portal implementation, providing platform keyboard navigation and touch pickers.
+- File selection and download/retry/cancel/remove are independent native buttons. The hidden right-click-only settings menu is removed; the inspector remains the visible route to per-image customization. Offscreen file thumbnails load lazily.
+- Number inputs allow an empty or partial draft. Blur/Enter clamps and commits once; Escape restores the original value. This prevents intermediate dimensions from triggering a series of recompressions while typing.
+- Disabled resize fields are collapsed. Percentage sizing stays in Advanced settings. PNG clearly identifies its lossless behavior and disables the ineffective quality control.
+- Selected results show actual original/output bytes and the percentage increase or decrease. A larger result is labelled as larger, not presented as a saving.
+- Global settings preserve complete per-file snapshots, and reconnecting a file to global settings remains explicit.
+- Android exposes extraction and downloads without encoder settings. iOS keeps filename-pairing guidance, settings locks, cancellation and retry. Hidden tools pause video. Unsupported native playback still has its static/download fallback.
+- Language follows the browser, with English fallback and explicit-only persistence. Theme follows the browser's exposed system preference until explicitly chosen. Blocked local storage does not break either feature.
 
-The reference is a composition guide, not a literal pixel specification. Its
-approximate side widths and enlarged text are replaced by the documented
-256/304px columns and 14px controls. Secondary selections use pale backgrounds
-and underlines instead of solid green. Existing percentage resize, presets and
-two-up comparison remain accessible. File counts, dimensions and output sizes
-come from real QA files and results; no concept values are hardcoded. Generated
-QA photography and browser screenshots remain outside the repository.
+## Runtime and dependencies
 
-## Verification, 2026-09-09
+The refactor removes Hyalite, its adapter/observers, the particle renderer, cursor effects, two old hero assets, unused font files/precache entries, and the unused language-detector package. Their applicable license notices remain. No animation library was added.
 
-- `pnpm lint`, `pnpm typecheck`, `pnpm test` (185 tests across 21 files), and
-  `pnpm build` passed after implementation.
-- `node scripts/ui-check.mjs` passed three interaction groups with 25 captures covering
-  desktop, tablet and mobile layouts; five locales; loaded compression and
-  motion states; settings scope, keyboard controls, modal focus and downloads.
-  Set `PICFORGE_UI_GROUPS=entry` for Landing/language/footer/history checks,
-  `layout,interaction` for the workbenches, and optionally
-  `PICFORGE_UI_IMAGE`, `PICFORGE_UI_URL` or `PICFORGE_QA_OUTPUT`. Default fixtures
-  are synthetic; this script does not convert HEIC/MOV or start the Apple engine.
-- Additional focused Chromium checks verified WebP bytes, ZIP manifests,
-  Android reconstruction of original bytes, generated JPEG/MP4 iOS cancellation
-  and retry, setting locks, hidden-video pause, pairing errors and confirmed reset.
-- Production static-image browser acceptance passed, including mobile JPEG
-  export and offline reload. Real camera media was deliberately omitted because
-  processing, codecs, workers and conversion arguments are unchanged.
-- Final visual inspection compared the accepted reference against actual
-  1536×1024 desktop, 1024×768 tablet and 390×844 mobile screenshots, including
-  Android downloads, dark iOS, compression errors and mobile settings.
+Landing and compression now have separate lazy entry points. Motion remains lazy. JSZip and FileSaver are retained for their established export behavior. Existing React, Vite, Zustand, i18next, `@jsquash/*`, FFmpeg and libheif versions are preserved. The production engine is still Compat; wasm-vips registration, pthread limits, source Blob ownership, clean-aperture handling and media guards are unchanged.
 
-The in-app browser was used first for live interactions. Its mobile screenshots
-were scaled incorrectly and its Blob download waiter timed out; existing
-Playwright Chromium was used for reliable pixel captures and downloaded-byte
-assertions. Mobile evidence is browser viewport/touch emulation, not physical
-phone testing. Firefox and Playwright WebKit received targeted UI/fallback checks in the optical
-revision; these do not qualify real Safari or rerun camera conversions.
-Temporary evidence is under `/tmp/picforge-workbench-final`,
-`/tmp/picforge-workbench-ui` and `/tmp/picforge-workbench-production`.
+Native [select controls](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/select) and CSS [feature queries](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@supports) provide the relevant platform behavior without a new compatibility library.
 
-Performance baselines, workers, codec packages, engine policy, stores and motion
-processing/encoder arguments are unchanged. Production still registers Compat;
-this work makes no speedup claim or Vips-default expansion. Performance and
-conversion changes require separate implementation and evidence. No release,
-version/cache bump, commit, push or deployment is part of this visual pass.
+The root/app version and service-worker cache version are synchronized at 0.16.0. Codec preparation, generated precache manifest and cache algorithms remain intact. App modules may still be fetched by the service worker for offline availability; lazy rendering is not a claim that the service worker never downloads them.
 
-## Optical revision validation
+### Build comparison
 
-The final implementation passed lint, 185 tests in 21 files, typecheck and build.
-The opt-in entry group passed 15 captures (five locales at 1440×718, 856×718 and
-390×844), browser-language default, complete centered footer, About focus and
-keyboard entry/history. The existing workbench groups passed 25 captures and
-three interaction groups. Additional live checks verified real displacement
-changes painted pixels, particle/pointer response, offscreen pause, reduced
-motion/transparency, sticky download, dark appearance and retained queues.
+Same host, Node 24.21.0, pnpm 11.8.0, Vite 8.2.2. Baseline is `58b797db38ede4779654f0761f905d3fd497e898`; comparison is the 0.16.0 working tree. Decimal kB, uncompressed emitted assets:
 
-Firefox and Playwright WebKit passed targeted home/footer, dialog close/focus and
-tool-entry checks. WebKit's mouse-click focus behavior required explicitly
-focusing modal triggers; this was fixed and rechecked. Their optical fallback
-was retained. Production static-image export and offline reload/re-encode passed;
-real camera samples were omitted. An actual interaction recording and final
-screenshots are under `/tmp/picforge-v2-qa`; they are temporary QA evidence.
+| Artifact | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Main `index` JavaScript chunk | 211.00 kB | 126.15 kB | −40.2% |
+| All emitted CSS | 64.23 kB | 47.13 kB | −26.6% |
+| Home photographs, combined | 268.27 kB | 203.06 kB | −24.3% |
 
-The prototype-fidelity follow-up in [interaction-redesign.md](design/interaction-redesign.md) supersedes earlier footer/About and simplified-hero descriptions in historical validation notes. It also moves percentage mode into Advanced settings, adds a real fullscreen/zoom dock, and aligns component geometry across light/dark themes.
+The shared React vendor chunk remains 189.71 kB. Compression now has a separate 47.40 kB chunk, and Landing a 4.09 kB chunk. These are build-size measurements, not page-load latency, memory/RSS, codec speed, or image-quality benchmarks. Historical media baselines remain independent.
+
+## Verification
+
+Checks ran against the final interface on Linux x86_64. Generated sample photography and synthetic files were used; no private camera fixtures were uploaded or committed.
+
+| Check | Result |
+| --- | --- |
+| ESLint | Pass |
+| App/worker/codec TypeScript | Pass |
+| Vitest | 189 tests, 22 files pass, including four locale-contract cases |
+| Production build | Pass |
+| Chromium 145.0.7632.6 UI | 47 layout captures, 6 interaction groups pass |
+| Firefox 146.0.1 UI | 47 layout captures, 6 interaction groups pass |
+| Playwright WebKit 26.0 UI subset | 43 layout captures, 3 interaction groups pass: entry, layout, usability |
+| Production Chromium | Static compression, downloaded dimensions, mobile width, offline reload and re-encoding pass |
+| In-app browser | Homepage, real sample import, format change and rendered preview inspected |
+
+The UI matrix covers all five locales, both themes, desktop, tablet, 390px phones and a focused 320px preview. Checks include no horizontal overflow/framework overlay/runtime errors, keyboard entry/history, global/custom settings, dialog focus/Escape, file/ZIP downloads, sample-to-real-processing, numeric drafts, resize output geometry, lossless guidance, fullscreen controls, 44px preview targets, blocked storage and system-theme changes.
+
+The production test's tool helper now waits for the lazy first screen before choosing its navigation path. The Firefox theme test compares against the browser's actual exposed preference before explicitly emulating changes; it does not assume a context option has already changed `matchMedia`.
+
+### WebKit limitation
+
+The pinned Linux WebKit bundle required Ubuntu compatibility libraries absent from this Arch-based host. The missing ICU 74, libxml2 and Flite packages were downloaded from official Ubuntu package mirrors, verified against their published SHA-256 values and extracted under a temporary directory. No system libraries or settings were changed.
+
+The full interaction run reached the Android invalid-MP4 preview and the native `WPEWebProcess` aborted (SIGABRT). The system core trace places the abort in `libWPEWebKit`; most native frames have no symbols. No OOM kill was recorded, and approximately 20 GiB was available when inspected. This identifies a native runtime failure, but does not prove its exact cause or establish whether it is specific to the host's mixed runtime libraries. No private media was involved.
+
+The independent entry/layout/usability subset, including real JPEG/WebP compression, passed. The Linux WebKit invalid-video/playback path remains unqualified. No production user-agent deny rule, codec fallback change or assertion deletion was introduced to hide this result. Real Safari and physical iPhone/iPad testing are still required for a Safari qualification; Playwright WebKit is not a substitute.
+
+### Reproduction and evidence
+
+With `pnpm dev` running:
+
+```sh
+PICFORGE_UI_GROUPS=entry,layout,interaction,usability node scripts/ui-check.mjs
+PICFORGE_UI_BROWSER=firefox PICFORGE_UI_GROUPS=entry,layout,interaction,usability node scripts/ui-check.mjs
+PICFORGE_UI_BROWSER=webkit PICFORGE_UI_GROUPS=entry,layout,usability node scripts/ui-check.mjs
+pnpm test:browser
+```
+
+Use `PICFORGE_UI_EXECUTABLE` only when a test environment needs an explicit browser executable/wrapper. The normal path uses the project's pinned Playwright browser. `PICFORGE_UI_IMAGE`, `PICFORGE_UI_URL` and `PICFORGE_QA_OUTPUT` select the fixture, origin and temporary evidence directory.
+
+Local evidence for this run: `/tmp/picforge-ui-final`, `/tmp/picforge-ui-firefox`, `/tmp/picforge-ui-webkit-safe`, and `/tmp/picforge-production-check.log`. These are temporary, reproducible evidence, not committed product assets. Real HEIC/MOV camera conversion was not repeated: the processing implementation, dependencies, worker policy and encoder arguments did not change. Existing camera and engine qualifications retain their original source revisions.

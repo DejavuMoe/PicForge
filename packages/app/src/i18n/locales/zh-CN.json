@@ -124,12 +124,12 @@
     "missingFeatures": "缺少能力：{{features}}"
   },
   "pwa": {
-    "updateReady": "新版本已可用",
+    "updateReady": "新版本已就绪，请先下载结果再刷新。",
     "refresh": "刷新"
   },
   "errorBoundary": {
     "title": "出现了一些问题",
-    "copy": "发生了意外错误。你的文件仍保留在当前页面中。",
+    "copy": "工具运行出现错误。刷新会清除当前队列，之后需要重新添加文件。",
     "reload": "重新加载页面"
   },
   "preview": {
@@ -154,55 +154,6 @@
     "zoomOut": "缩小",
     "zoomLevel": "缩放比例",
     "fullscreen": "切换全屏"
-  },
-  "landing": {
-    "eyebrow": "本地优先的图片工具箱",
-    "heroTitleA": "锻造你的图片。",
-    "heroTitleB": "每个像素都留在本机。",
-    "heroBody": "批量压缩、Motion Photo 提取与实况照片转换——由 WebAssembly 驱动，完全在你的设备上运行。无上传、无账号、无痕迹。",
-    "ctaPrimary": "浏览全部工具",
-    "ctaSecondary": "GitHub 源码",
-    "toolsEyebrow": "工具箱",
-    "toolsTitle": "三件工具，一座锻造台",
-    "toolsBody": "每件工具都有独立工作区，切换时保持驻留——队列始终在你离开时的样子。",
-    "cards": {
-      "compression": {
-        "title": "图片压缩",
-        "body": "批量转换与缩放，支持单图设置、滑块对比与 ZIP 导出。",
-        "meta": "MozJPEG · WebP · PNG · AVIF"
-      },
-      "android": {
-        "title": "Android 动态照片",
-        "body": "将 Motion Photos 拆分为原始 JPG 和 MP4——逐字节保留，不重新编码。",
-        "meta": "无损提取"
-      },
-      "ios": {
-        "title": "iOS 实况照片",
-        "body": "将 HEIC + MOV 原片转换为网页可用的 JPG 与 H.264 MP4 配对文件。",
-        "meta": "净光圈感知"
-      }
-    },
-    "featuresEyebrow": "为什么选择 PicForge",
-    "featuresTitle": "隐私设计，极速体验",
-    "features": {
-      "local": {
-        "title": "100% 本地",
-        "body": "文件永不离开你的设备，所有处理都在浏览器的沙箱 Worker 中运行。"
-      },
-      "wasm": {
-        "title": "原生级引擎",
-        "body": "MozJPEG、libheif 与 FFmpeg 编译为 WebAssembly，首次使用时按需加载。"
-      },
-      "offline": {
-        "title": "离线可用",
-        "body": "完整的 PWA——缓存之后，工具箱与引擎无需网络也能继续工作。"
-      },
-      "open": {
-        "title": "开源透明",
-        "body": "应用代码采用 MIT 许可，依赖可审计且全部自托管，永无遥测。"
-      }
-    },
-    "sponsor": "由 <sponsor>Riven Cloud</sponsor> 提供赞助"
   },
   "motion": {
     "compression": "图片压缩",
@@ -289,7 +240,7 @@
     "local": "文件仅在本机处理",
     "completedCount": "{{done}} / {{total}} 已完成",
     "cancelProcessing": "取消处理",
-    "exportCompleted": "导出已完成文件",
+    "exportCompleted": "下载结果",
     "batchProgress": "批次进度",
     "files": "文件",
     "pairs": "文件组",
@@ -315,18 +266,45 @@
     "processingFailed": "无法处理此图片，请重试或选择另一份原始文件。",
     "errorDetails": "详细信息",
     "preferences": "偏好设置",
-    "languageAuto": "跟随浏览器"
+    "languageAuto": "跟随浏览器",
+    "skipToContent": "跳转到内容",
+    "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
+    "qualityHint": "降低质量可缩小体积，下载前建议对比细节。",
+    "losslessHint": "PNG 使用无损压缩，不受质量滑块影响。",
+    "smaller": "体积减小 {{percent}}%",
+    "larger": "体积增大 {{percent}}%"
   },
   "entry": {
-    "title": "让每一张影像，恰到好处。",
+    "title": "减小体积。",
     "description": "压缩图片，拆分动态照片，转换实况照片。文件始终留在你的设备上。",
-    "compression": "调整体积与尺寸，保留你需要的细节。",
-    "android": "提取原始 JPG 和 MP4，不重新编码。",
-    "ios": "将照片与视频，转换为通用格式。",
+    "compression": "调整体积与尺寸，细节由你决定。",
+    "android": "提取原始照片与视频，无需重新编码。",
+    "ios": "将 HEIC + MOV 转成通用格式。",
     "home": "PicForge 首页",
-    "summary": "压缩图片，拆分动态照片，转换实况照片。",
+    "summary": "压缩图片，拆分动态照片，把实况照片转成随处可用的格式。",
     "privacy": "文件始终留在你的设备上。",
-    "tagline": "让图像更轻盈"
+    "tagline": "让图像更轻盈",
+    "principles": {
+      "local": {
+        "title": "无需上传",
+        "body": "处理过程全部在浏览器中完成。"
+      },
+      "originals": {
+        "title": "原文件保持不变",
+        "body": "下载处理结果，保留原始文件。"
+      },
+      "ready": {
+        "title": "打开就能用",
+        "body": "不注册，不安装。"
+      }
+    },
+    "titleAccent": "留住细节。",
+    "sampleAlt": "浅蓝天空下的金色沙丘，沙纹清晰可见。",
+    "sampleCompare": "对比 JPEG 与 WebP 示例图",
+    "samplePosition": "显示 {{value}}% 的原始 JPEG",
+    "sampleNote": "示例图片 · 拖动对比",
+    "trySample": "试试这张图片",
+    "sampleFailed": "示例暂不可用，请选择自己的图片开始。"
   },
   "about": {
     "description": "在本机完成图片压缩、动态照片提取与实况照片转换。文件始终留在你的设备上。",
@@ -338,5 +316,10 @@
     "back": "返回概览",
     "loading": "正在加载许可…",
     "unavailable": "未能加载此许可，请重试。"
+  },
+  "nav": {
+    "compression": "图片压缩",
+    "android": "动态照片",
+    "ios": "实况照片"
   }
 }

@@ -1,14 +1,14 @@
 {
-  "name": "PicForge - Privacy-First Image & Motion Toolbox",
+  "name": "PicForge — Image & Motion Photo Tools",
   "short_name": "PicForge",
-  "description": "High-performance local batch image compression, Android Motion Photo extraction, and iOS Live Photo conversion powered by WebAssembly.",
+  "description": "Compress images, extract Motion Photos and convert Live Photos. Files stay on your device.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0a0d14",
-  "theme_color": "#0a0d14",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "categories": [
     "photo",
     "productivity",
@@ -39,15 +39,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/og-image.jpg",
-      "sizes": "1376x768",
-      "type": "image/jpeg",
-      "form_factor": "wide",
-      "label": "PicForge Toolbox Workspace"
     }
   ],
   "shortcuts": [
@@ -92,4 +83,3 @@
     }
   ]
 }
-

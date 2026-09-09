@@ -1,5 +1,7 @@
 # PicForge optical interaction system
 
+> Historical design. Superseded by the 0.16.0 [neutral/vermilion redesign](editorial-redesign.md), following the latest user request. Preserve this document as reference, not as the current implementation specification.
+
 Current implementation direction after the user's visual review, 2026-09-09.
 The earlier sparse three-row Landing and CSS-only glass approximation were
 rejected. Landing remains the initial entry, followed by explicit tool selection.

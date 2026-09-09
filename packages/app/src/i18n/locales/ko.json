@@ -124,12 +124,12 @@
     "missingFeatures": "누락된 기능: {{features}}"
   },
   "pwa": {
-    "updateReady": "새 버전을 사용할 수 있습니다",
+    "updateReady": "업데이트가 준비되었습니다. 결과를 다운로드한 후 새로고침하세요.",
     "refresh": "새로고침"
   },
   "errorBoundary": {
     "title": "문제가 발생했습니다",
-    "copy": "예상치 못한 오류가 발생했습니다. 파일은 현재 페이지에 유지됩니다.",
+    "copy": "도구 실행 중 오류가 발생했습니다. 새로고침하면 대기열이 지워지므로 파일을 다시 추가해야 합니다.",
     "reload": "페이지 새로고침"
   },
   "preview": {
@@ -154,55 +154,6 @@
     "zoomOut": "축소",
     "zoomLevel": "확대 비율",
     "fullscreen": "전체 화면 전환"
-  },
-  "landing": {
-    "eyebrow": "로컬 우선 이미지 도구 상자",
-    "heroTitleA": "이미지를 단조하다.",
-    "heroTitleB": "모든 픽셀은 기기에.",
-    "heroBody": "일괄 압축, Motion Photo 추출, Live Photo 변환 — WebAssembly 기반으로 기기에서만 실행됩니다. 업로드도, 계정도, 흔적도 없습니다.",
-    "ctaPrimary": "도구 살펴보기",
-    "ctaSecondary": "GitHub에서 보기",
-    "toolsEyebrow": "도구 상자",
-    "toolsTitle": "3가지 도구, 하나의 forge",
-    "toolsBody": "각 도구는 전용 작업 공간을 가지며 전환해도 상주합니다. 대기열은 떠난 상태 그대로 유지됩니다.",
-    "cards": {
-      "compression": {
-        "title": "이미지 압축",
-        "body": "이미지별 설정, 슬라이더 비교, ZIP 내보내기로 일괄 변환 및 리사이즈.",
-        "meta": "MozJPEG · WebP · PNG · AVIF"
-      },
-      "android": {
-        "title": "Android 모션 포토",
-        "body": "Motion Photo를 원본 JPG와 MP4로 분리 — 바이트 단위 보존, 재인코딩 없음.",
-        "meta": "무손실 추출"
-      },
-      "ios": {
-        "title": "iOS Live Photos",
-        "body": "HEIC + MOV 원본을 웹용 JPG와 H.264 MP4 쌍으로 변환합니다.",
-        "meta": "클린 애퍼처 인식"
-      }
-    },
-    "featuresEyebrow": "PicForge를 선택하는 이유",
-    "featuresTitle": "프라이버시 우선 설계, 기본으로 빠르게",
-    "features": {
-      "local": {
-        "title": "100% 로컬",
-        "body": "파일은 기기를 떠나지 않습니다. 모든 처리는 브라우저의 샌드박스 워커에서 실행됩니다."
-      },
-      "wasm": {
-        "title": "네이티브급 엔진",
-        "body": "MozJPEG, libheif, FFmpeg을 WebAssembly로 컴파일하고 첫 사용 시 지연 로드합니다."
-      },
-      "offline": {
-        "title": "오프라인 지원",
-        "body": "완전한 PWA — 캐시된 후에는 도구와 엔진이 네트워크 없이 계속 작동합니다."
-      },
-      "open": {
-        "title": "오픈 소스",
-        "body": "MIT 라이선스 앱 코드, 감사 가능한 자체 호스팅 의존성. 텔레메트리는 절대 없습니다."
-      }
-    },
-    "sponsor": "<sponsor>Riven Cloud</sponsor> 의 후원을 받습니다"
   },
   "motion": {
     "compression": "이미지 압축",
@@ -289,7 +240,7 @@
     "local": "파일은 이 기기에서만 처리됩니다",
     "completedCount": "{{done}} / {{total}} 완료",
     "cancelProcessing": "처리 취소",
-    "exportCompleted": "완료된 파일 내보내기",
+    "exportCompleted": "결과 다운로드",
     "batchProgress": "일괄 진행 상태",
     "files": "파일",
     "pairs": "파일 그룹",
@@ -315,18 +266,45 @@
     "processingFailed": "이 이미지를 처리할 수 없습니다. 다시 시도하거나 다른 원본 파일을 선택하세요.",
     "errorDetails": "자세히",
     "preferences": "환경 설정",
-    "languageAuto": "브라우저 언어 사용"
+    "languageAuto": "브라우저 언어 사용",
+    "skipToContent": "본문으로 건너뛰기",
+    "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
+    "qualityHint": "품질을 낮추면 용량이 줄어듭니다. 다운로드 전에 디테일을 비교하세요.",
+    "losslessHint": "PNG는 무손실 압축입니다. 품질 슬라이더는 적용되지 않습니다.",
+    "smaller": "{{percent}}% 작아짐",
+    "larger": "{{percent}}% 커짐"
   },
   "entry": {
-    "title": "모든 이미지를, 알맞게.",
+    "title": "용량은 가볍게.",
     "description": "이미지 압축, 모션 포토 추출, 라이브 포토 변환. 파일은 기기 안에서 처리됩니다.",
-    "compression": "파일 용량과 크기를 조절하고 필요한 디테일을 남기세요.",
-    "android": "다시 인코딩하지 않고 원본 JPG와 MP4를 추출하세요.",
-    "ios": "사진과 동영상을 널리 지원되는 형식으로 변환하세요.",
+    "compression": "파일 크기와 해상도를 세밀하게 조절하세요.",
+    "android": "원본 사진과 동영상을 그대로 추출하세요.",
+    "ios": "HEIC + MOV를 공유하기 쉬운 형식으로.",
     "home": "PicForge 홈",
-    "summary": "이미지 압축, 모션 포토 추출, 라이브 포토 변환.",
+    "summary": "이미지를 압축하고 모션 포토를 분리하고 라이브 포토를 공유하기 쉬운 형식으로 변환하세요.",
     "privacy": "파일은 기기 안에서 처리됩니다.",
-    "tagline": "이미지를 더 가볍게"
+    "tagline": "이미지를 더 가볍게",
+    "principles": {
+      "local": {
+        "title": "업로드 없이",
+        "body": "모든 처리는 브라우저에서 이루어집니다."
+      },
+      "originals": {
+        "title": "원본은 그대로",
+        "body": "새 파일을 다운로드하고 원본은 보관하세요."
+      },
+      "ready": {
+        "title": "바로 사용",
+        "body": "가입도 설치도 필요 없습니다."
+      }
+    },
+    "titleAccent": "디테일은 선명하게.",
+    "sampleAlt": "옅은 푸른 하늘 아래 고운 모래 무늬가 있는 황금빛 사구.",
+    "sampleCompare": "JPEG와 WebP 예제 비교",
+    "samplePosition": "원본 JPEG {{value}}% 표시",
+    "sampleNote": "예제 이미지 · 드래그하여 비교",
+    "trySample": "이 이미지로 사용해 보기",
+    "sampleFailed": "예제를 불러올 수 없습니다. 직접 이미지를 선택해 주세요."
   },
   "about": {
     "description": "이미지 압축, 모션 포토 추출, 라이브 포토 변환을 기기 안에서 처리합니다. 파일은 업로드되지 않습니다.",
@@ -338,5 +316,10 @@
     "back": "개요로 돌아가기",
     "loading": "라이선스 불러오는 중…",
     "unavailable": "라이선스를 불러오지 못했습니다. 다시 시도해 주세요."
+  },
+  "nav": {
+    "compression": "이미지 압축",
+    "android": "모션 포토",
+    "ios": "라이브 포토"
   }
 }

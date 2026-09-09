@@ -118,6 +118,7 @@ export function DropZone() {
           <span className="pf-drop-cta" aria-hidden="true">
             {t('motion.select')}
           </span>
+          <span className="pf-drop-format-hint">{t('workbench.formatHint')}</span>
         </div>
       </div>
 

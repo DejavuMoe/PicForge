@@ -1,6 +1,6 @@
 {
   "name": "pic-forge",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "private": true,
   "description": "Local browser image toolbox: compression, Motion Photo extraction and Live Photo conversion",
   "license": "MIT",

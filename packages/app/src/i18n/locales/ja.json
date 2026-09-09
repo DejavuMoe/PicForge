@@ -124,12 +124,12 @@
     "missingFeatures": "不足している機能：{{features}}"
   },
   "pwa": {
-    "updateReady": "新しいバージョンがあります",
+    "updateReady": "更新があります。結果を保存してから再読み込みしてください。",
     "refresh": "更新"
   },
   "errorBoundary": {
     "title": "問題が発生しました",
-    "copy": "予期しないエラーが発生しました。ファイルはこのページに保持されています。",
+    "copy": "ツールでエラーが発生しました。再読み込みするとキューが消去されるため、ファイルを追加し直してください。",
     "reload": "ページを再読み込み"
   },
   "preview": {
@@ -154,55 +154,6 @@
     "zoomOut": "縮小",
     "zoomLevel": "ズーム倍率",
     "fullscreen": "全画面表示の切り替え"
-  },
-  "landing": {
-    "eyebrow": "ローカルファースト画像ツールボックス",
-    "heroTitleA": "画像を鍛える。",
-    "heroTitleB": "ピクセルは手元に残る。",
-    "heroBody": "バッチ圧縮、Motion Photo の抽出、Live Photos の変換——WebAssembly 駆動で、すべてお使いのデバイス上で完結。アップロードもアカウントも痕跡もありません。",
-    "ctaPrimary": "ツールを見る",
-    "ctaSecondary": "GitHub で見る",
-    "toolsEyebrow": "ツールボックス",
-    "toolsTitle": "3 つのツール、1 つの forge",
-    "toolsBody": "各ツールは専用ワークスペースを持ち、切り替えても常駐します。キューは離れたときのまま保持されます。",
-    "cards": {
-      "compression": {
-        "title": "画像圧縮",
-        "body": "画像ごとの設定、スライダー比較、ZIP エクスポートで一括変換とリサイズ。",
-        "meta": "MozJPEG · WebP · PNG · AVIF"
-      },
-      "android": {
-        "title": "Android モーションフォト",
-        "body": "Motion Photo を元の JPG と MP4 に分離——バイト単位で保持、再エンコードなし。",
-        "meta": "ロスレス抽出"
-      },
-      "ios": {
-        "title": "iOS Live Photos",
-        "body": "HEIC + MOV の原本をウェブ向けの JPG と H.264 MP4 のペアに変換。",
-        "meta": "クリーンアパーチャ対応"
-      }
-    },
-    "featuresEyebrow": "PicForge を選ぶ理由",
-    "featuresTitle": "プライバシー第一、速度は標準装備",
-    "features": {
-      "local": {
-        "title": "100% ローカル",
-        "body": "ファイルはデバイスから出ません。処理はすべてブラウザー内のサンドボックス化されたワーカーで実行されます。"
-      },
-      "wasm": {
-        "title": "ネイティブ級エンジン",
-        "body": "MozJPEG、libheif、FFmpeg を WebAssembly にコンパイルし、初回利用時に遅延読み込み。"
-      },
-      "offline": {
-        "title": "オフライン対応",
-        "body": "完全な PWA——キャッシュ済みなら、ツールとエンジンはネットワークなしで動作します。"
-      },
-      "open": {
-        "title": "オープンソース",
-        "body": "アプリコードは MIT ライセンス。依存関係は監査可能で自己ホスト。テレメトリーは一切なし。"
-      }
-    },
-    "sponsor": "<sponsor>Riven Cloud</sponsor> のスポンサー提供です"
   },
   "motion": {
     "compression": "画像圧縮",
@@ -289,7 +240,7 @@
     "local": "ファイルはこの端末内で処理されます",
     "completedCount": "{{done}} / {{total}} 完了",
     "cancelProcessing": "処理を中止",
-    "exportCompleted": "完了したファイルを保存",
+    "exportCompleted": "結果をダウンロード",
     "batchProgress": "バッチの進捗",
     "files": "ファイル",
     "pairs": "ファイルグループ",
@@ -315,18 +266,45 @@
     "processingFailed": "画像を処理できませんでした。再試行するか、別の元ファイルを選んでください。",
     "errorDetails": "詳細",
     "preferences": "環境設定",
-    "languageAuto": "ブラウザーに合わせる"
+    "languageAuto": "ブラウザーに合わせる",
+    "skipToContent": "コンテンツへ移動",
+    "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
+    "qualityHint": "画質を下げると容量が小さくなります。保存前に細部を比較してください。",
+    "losslessHint": "PNG は可逆圧縮です。画質スライダーは適用されません。",
+    "smaller": "{{percent}}% 小さくなりました",
+    "larger": "{{percent}}% 大きくなりました"
   },
   "entry": {
-    "title": "一枚一枚を、ちょうどよく。",
+    "title": "画像を、軽く。",
     "description": "画像の圧縮、モーションフォトの抽出、Live Photos の変換。ファイルはお使いの端末内で処理します。",
-    "compression": "容量とサイズを調整し、必要なディテールを残します。",
-    "android": "再エンコードせず、元の JPG と MP4 を抽出。",
-    "ios": "写真と動画を、広く使える形式に変換します。",
+    "compression": "容量とサイズを、思いどおりに。",
+    "android": "元の写真と動画をそのまま抽出。",
+    "ios": "HEIC + MOV を共有しやすい形式に。",
     "home": "PicForge ホーム",
-    "summary": "画像の圧縮、モーションフォトの抽出、Live Photos の変換。",
+    "summary": "画像の圧縮、モーションフォトの分離、Live Photos の変換をひとつの場所で。",
     "privacy": "ファイルはお使いの端末内で処理します。",
-    "tagline": "画像をもっと軽やかに"
+    "tagline": "画像をもっと軽やかに",
+    "principles": {
+      "local": {
+        "title": "アップロード不要",
+        "body": "すべての処理はブラウザー内で完結。"
+      },
+      "originals": {
+        "title": "元のファイルはそのまま",
+        "body": "処理結果を別のファイルとして保存。"
+      },
+      "ready": {
+        "title": "すぐに使える",
+        "body": "登録もインストールも不要。"
+      }
+    },
+    "titleAccent": "細部は、大切に。",
+    "sampleAlt": "淡い青空と、細かな砂紋が広がる金色の砂丘。",
+    "sampleCompare": "JPEG と WebP のサンプルを比較",
+    "samplePosition": "元の JPEG を {{value}}% 表示",
+    "sampleNote": "サンプル画像 · ドラッグして比較",
+    "trySample": "この画像で試す",
+    "sampleFailed": "サンプルを読み込めません。ご自身の画像を選択してください。"
   },
   "about": {
     "description": "画像圧縮、モーションフォトの抽出、Live Photos の変換を端末内で行うツールです。ファイルはアップロードされません。",
@@ -338,5 +316,10 @@
     "back": "概要に戻る",
     "loading": "ライセンスを読み込み中…",
     "unavailable": "ライセンスを読み込めませんでした。もう一度お試しください。"
+  },
+  "nav": {
+    "compression": "画像圧縮",
+    "android": "モーションフォト",
+    "ios": "Live Photos"
   }
 }

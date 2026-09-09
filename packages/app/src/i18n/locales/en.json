@@ -124,12 +124,12 @@
     "missingFeatures": "Missing: {{features}}"
   },
   "pwa": {
-    "updateReady": "A new version is ready",
+    "updateReady": "An update is ready. Download your results before refreshing.",
     "refresh": "Refresh"
   },
   "errorBoundary": {
     "title": "Something went wrong",
-    "copy": "An unexpected error occurred. Your files have not been lost.",
+    "copy": "An error interrupted this tool. Reloading clears the current queue; you will need to add your files again.",
     "reload": "Reload page"
   },
   "preview": {
@@ -154,55 +154,6 @@
     "zoomOut": "Zoom out",
     "zoomLevel": "Zoom level",
     "fullscreen": "Toggle fullscreen"
-  },
-  "landing": {
-    "eyebrow": "Local-first image toolbox",
-    "heroTitleA": "Forge your images.",
-    "heroTitleB": "Keep every pixel.",
-    "heroBody": "Batch compression, Motion Photo extraction and Live Photo conversion — powered by WebAssembly, running entirely on your device. No uploads, no accounts, no trace.",
-    "ctaPrimary": "Explore the tools",
-    "ctaSecondary": "View on GitHub",
-    "toolsEyebrow": "Toolbox",
-    "toolsTitle": "Three tools, one forge",
-    "toolsBody": "Each tool is purpose-built and stays resident while you switch — your queue is exactly where you left it.",
-    "cards": {
-      "compression": {
-        "title": "Image compression",
-        "body": "Batch-convert and resize with per-image control, slider compare and ZIP export.",
-        "meta": "MozJPEG · WebP · PNG · AVIF"
-      },
-      "android": {
-        "title": "Android Motion Photos",
-        "body": "Split Motion Photos into the original JPG and MP4 — byte-for-byte, without re-encoding.",
-        "meta": "Lossless extraction"
-      },
-      "ios": {
-        "title": "iOS Live Photos",
-        "body": "Turn HEIC + MOV originals into web-ready JPG and H.264 MP4 pairs.",
-        "meta": "Clean-aperture aware"
-      }
-    },
-    "featuresEyebrow": "Why PicForge",
-    "featuresTitle": "Private by design, fast by default",
-    "features": {
-      "local": {
-        "title": "100% local",
-        "body": "Files never leave your device. All processing runs in sandboxed workers inside your browser."
-      },
-      "wasm": {
-        "title": "Native-speed engines",
-        "body": "MozJPEG, libheif and FFmpeg compiled to WebAssembly, loaded lazily on first use."
-      },
-      "offline": {
-        "title": "Works offline",
-        "body": "A full PWA — once cached, the toolbox and its engines keep working without a network."
-      },
-      "open": {
-        "title": "Open source",
-        "body": "MIT-licensed app code with auditable, self-hosted dependencies. No telemetry, ever."
-      }
-    },
-    "sponsor": "Sponsored by <sponsor>Riven Cloud</sponsor>"
   },
   "motion": {
     "compression": "Image compression",
@@ -289,7 +240,7 @@
     "local": "Files stay on this device",
     "completedCount": "{{done}} / {{total}} completed",
     "cancelProcessing": "Cancel processing",
-    "exportCompleted": "Export completed files",
+    "exportCompleted": "Download results",
     "batchProgress": "Batch progress",
     "files": "Files",
     "pairs": "File groups",
@@ -315,18 +266,45 @@
     "processingFailed": "This image could not be processed. Retry or choose another original.",
     "errorDetails": "Details",
     "preferences": "Preferences",
-    "languageAuto": "Browser language"
+    "languageAuto": "Browser language",
+    "skipToContent": "Skip to content",
+    "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
+    "qualityHint": "Lower quality makes smaller files. Compare before downloading.",
+    "losslessHint": "PNG is lossless. The quality control does not apply.",
+    "smaller": "{{percent}}% smaller",
+    "larger": "{{percent}}% larger"
   },
   "entry": {
-    "title": "Every image, just right.",
+    "title": "Less weight.",
     "description": "Compress images, extract Motion Photos, convert Live Photos. Your files stay on your device.",
-    "compression": "Adjust file size and dimensions, with control over the details.",
-    "android": "Extract the original JPG and MP4, without re-encoding.",
-    "ios": "Convert photos and videos into widely supported formats.",
+    "compression": "Smaller images, precise control.",
+    "android": "Extract the original photo and video.",
+    "ios": "HEIC + MOV, ready to share.",
     "home": "PicForge home",
-    "summary": "Compress images. Extract Motion Photos. Convert Live Photos.",
+    "summary": "Compress images. Unpack Motion Photos. Make Live Photos easy to share.",
     "privacy": "Your files stay on your device.",
-    "tagline": "Make room for your images"
+    "tagline": "Make room for your images",
+    "principles": {
+      "local": {
+        "title": "No uploads",
+        "body": "All processing happens in your browser."
+      },
+      "originals": {
+        "title": "Your originals, untouched",
+        "body": "Download new files; keep the source."
+      },
+      "ready": {
+        "title": "Ready when you are",
+        "body": "No account. No installation."
+      }
+    },
+    "titleAccent": "More image.",
+    "sampleAlt": "Golden dunes with fine sand ripples under a pale blue sky.",
+    "sampleCompare": "Compare the JPEG and WebP sample",
+    "samplePosition": "{{value}}% original JPEG",
+    "sampleNote": "Example image · Drag to compare",
+    "trySample": "Try this image",
+    "sampleFailed": "Example unavailable. Choose your own image to get started."
   },
   "about": {
     "description": "A local image toolbox for compression, Motion Photos and Live Photos. Your files stay on your device.",
@@ -338,5 +316,10 @@
     "back": "Back to overview",
     "loading": "Loading license…",
     "unavailable": "This license could not be loaded. Please try again."
+  },
+  "nav": {
+    "compression": "Compress",
+    "android": "Motion Photo",
+    "ios": "Live Photo"
   }
 }

@@ -61,6 +61,10 @@ try {
   await page.goto('http://127.0.0.1:4187');
   const panel = page.locator('.pf-tool-panel:not([hidden])');
   const openTool = async (name) => {
+    await page
+      .locator('.pf-entry-tools, .pf-tool-panel:not([hidden]) .pf-inspector')
+      .first()
+      .waitFor();
     const entry = page
       .locator('.pf-entry-tool')
       .filter({ has: page.getByText(name, { exact: true }) });
@@ -68,11 +72,17 @@ try {
       await entry.click();
       return;
     }
+    const labels = {
+      'Image compression': 'Compress',
+      'Android Motion Photos': 'Motion Photo',
+      'iOS Live Photos': 'Live Photo',
+    };
+    const label = labels[name] || name;
     const picker = page.locator('.pf-mobile-tool .pf-select');
     if (await picker.isVisible()) {
-      await picker.click();
-      await page.getByRole('option', { name, exact: true }).click();
-    } else await page.locator('.pf-tool-nav').getByRole('button', { name, exact: true }).click();
+      await picker.selectOption({ label });
+    } else
+      await page.locator('.pf-tool-nav').getByRole('button', { name: label, exact: true }).click();
   };
   const waitDone = () =>
     page.waitForFunction(
@@ -255,7 +265,7 @@ try {
   console.log(`${engine}: iOS pair ${Date.now() - started} ms`);
   await download(/^Download JPG/, 'ios.jpg');
   await download(/^Download MP4/, 'ios.mp4');
-  await download('Export completed files', 'ios.zip');
+  await download('Download results', 'ios.zip');
   const require = createRequire(new URL('../packages/app/package.json', import.meta.url));
   const zip = await require('jszip').loadAsync(await readFile(resolve(output, 'ios.zip')));
   assert(zip.file('picforge-manifest.json'));

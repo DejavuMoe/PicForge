@@ -1,9 +1,11 @@
 import { SelectionRail } from './SelectionRail';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FiArrowRight, FiDownload } from 'react-icons/fi';
 import type { CompressSettings, OutputFormat, ResizeMethod } from '@pic-forge/codecs';
 import { AVIF_CHROMA_SUBSAMPLE } from '@pic-forge/codecs';
 import { SelectControl } from './SelectControl';
+import { NumberControl } from './NumberControl';
 import { Inspector, SwitchControl } from './WorkbenchLayout';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -11,7 +13,7 @@ import { useFileStore } from '../stores/fileStore';
 import { PRESETS } from '../stores/presets';
 import { FORMAT_OPTIONS, type ImageFile } from '../types';
 import { cloneSettings } from '../utils/settingsUtils';
-import { formatFileSize } from '../utils/fileUtils';
+import { formatFileSize, compressionRatio } from '../utils/fileUtils';
 import { getOutputName, isResultExportable } from '../utils/exportManifest';
 import { getRangeProgressStyle } from '../utils/rangeProgress';
 
@@ -26,10 +28,6 @@ const DEFAULT_RESIZE: NonNullable<CompressSettings['resize']> = {
 interface SettingsFieldsProps {
   settings: CompressSettings;
   updateSettings: (partial: Partial<CompressSettings>) => void;
-}
-function bounded(value: string, fallback: number, min: number, max: number) {
-  const number = Number(value);
-  return Number.isFinite(number) ? Math.max(min, Math.min(max, Math.round(number))) : fallback;
 }
 
 /** One inspector for global settings and complete per-file snapshots. */
@@ -61,6 +59,7 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
     setScope('file');
   };
   const exportable = file && isResultExportable(file, global);
+  const saving = exportable ? compressionRatio(file.originalSize, file.result!.size) : 0;
   const download = async () => {
     if (!file || !isResultExportable(file, global)) return;
     const { saveAs } = await import('file-saver');
@@ -73,21 +72,40 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
         file && (
           <>
             <div className="pf-result-summary">
-              <span>{t('workbench.result')}</span>
-              <strong>
-                {exportable ? formatFileSize(file.result!.size) : t('workbench.notReady')}
-              </strong>
+              <div>
+                <span>{t('workbench.original')}</span>
+                <strong>{formatFileSize(file.originalSize)}</strong>
+              </div>
+              <FiArrowRight aria-hidden />
+              <div>
+                <span>{t('workbench.result')}</span>
+                <strong>
+                  {exportable ? formatFileSize(file.result!.size) : t('workbench.notReady')}
+                </strong>
+              </div>
             </div>
-            <button className="pf-text-button" disabled={!exportable} onClick={download}>
+            {exportable && (
+              <p className={`pf-result-saving${saving < 0 ? ' is-larger' : ''}`}>
+                {saving === 0
+                  ? t('progress.noChange')
+                  : t(saving > 0 ? 'workbench.smaller' : 'workbench.larger', {
+                      percent: Math.abs(saving),
+                    })}
+              </p>
+            )}
+            <button
+              className="pf-button pf-download-current"
+              disabled={!exportable}
+              onClick={download}
+            >
+              <FiDownload aria-hidden />
               {t('workbench.downloadCurrent')}
             </button>
           </>
         )
       }
     >
-      <span className="pf-scope-caption">{t('workbench.settingsScope')}</span>
       <SelectionRail
-        activeKey={scope}
         className="pf-scope-switch"
         role="group"
         aria-label={t('workbench.settingsScope')}
@@ -158,6 +176,7 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
 function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
   const { t } = useTranslation();
   const resize = settings.resize ?? DEFAULT_RESIZE;
+  const lossless = settings.outputFormat === 'oxipng';
   const updateResize = (partial: Partial<typeof resize>) =>
     updateSettings({ resize: { ...resize, ...partial } });
   return (
@@ -181,6 +200,7 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
         <div className="pf-range-field">
           <input
             id="pf-global-quality"
+            disabled={lossless}
             type="range"
             min={0}
             max={100}
@@ -189,18 +209,17 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
             style={getRangeProgressStyle(settings.quality, 0, 100)}
             onChange={(event) => updateSettings({ quality: Number(event.target.value) })}
           />
-          <input
+          <NumberControl
             className="pf-number-value"
-            type="number"
+            disabled={lossless}
             min={0}
             max={100}
             value={settings.quality}
             aria-label={t('workbench.qualityValue')}
-            onChange={(event) =>
-              updateSettings({ quality: bounded(event.target.value, settings.quality, 0, 100) })
-            }
+            onValueChange={(quality) => updateSettings({ quality })}
           />
         </div>
+        {lossless && <p className="pf-quality-hint">{t('workbench.losslessHint')}</p>}
       </div>
       <section className="pf-settings-section">
         <div className="pf-field-heading">
@@ -211,7 +230,11 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
             onChange={(enabled) => updateResize({ enabled })}
           />
         </div>
-        <fieldset disabled={!resize.enabled} className="pf-resize-controls">
+        <fieldset
+          hidden={!resize.enabled}
+          disabled={!resize.enabled}
+          className="pf-resize-controls"
+        >
           {resize.mode === 'absolute' ? (
             <div className="pf-dimensions pf-dimensions-inline">
               <label className="pf-field">
@@ -219,17 +242,12 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
                   {t(resize.method === 'contain' ? 'workbench.maxWidth' : 'settings.width')}
                 </span>
                 <span className="pf-unit-input">
-                  <input
-                    type="number"
+                  <NumberControl
                     min={1}
                     max={10000}
                     value={resize.maxWidth}
                     aria-label={t('settings.width')}
-                    onChange={(event) =>
-                      updateResize({
-                        maxWidth: bounded(event.target.value, resize.maxWidth, 1, 10000),
-                      })
-                    }
+                    onValueChange={(maxWidth) => updateResize({ maxWidth })}
                   />
                   <span aria-hidden="true">px</span>
                 </span>
@@ -239,17 +257,12 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
                   {t(resize.method === 'contain' ? 'workbench.maxHeight' : 'settings.height')}
                 </span>
                 <span className="pf-unit-input">
-                  <input
-                    type="number"
+                  <NumberControl
                     min={1}
                     max={10000}
                     value={resize.maxHeight}
                     aria-label={t('settings.height')}
-                    onChange={(event) =>
-                      updateResize({
-                        maxHeight: bounded(event.target.value, resize.maxHeight, 1, 10000),
-                      })
-                    }
+                    onValueChange={(maxHeight) => updateResize({ maxHeight })}
                   />
                   <span aria-hidden="true">px</span>
                 </span>
@@ -267,18 +280,13 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
                   style={getRangeProgressStyle(resize.percentage, 1, 100)}
                   onChange={(event) => updateResize({ percentage: Number(event.target.value) })}
                 />
-                <input
+                <NumberControl
                   className="pf-number-value"
-                  type="number"
                   min={1}
                   max={100}
                   value={resize.percentage}
                   aria-label={t('settings.percentageMode')}
-                  onChange={(event) =>
-                    updateResize({
-                      percentage: bounded(event.target.value, resize.percentage, 1, 100),
-                    })
-                  }
+                  onValueChange={(percentage) => updateResize({ percentage })}
                 />
               </div>
             </label>

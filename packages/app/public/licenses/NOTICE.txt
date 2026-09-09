@@ -45,5 +45,5 @@ notices are preserved. See patches/wasm-vips@0.0.18.patch and docs/phase4-valida
 
 Hyalite 0.3.0: MIT, Copyright (c) 2026 VII-Cae.
 Source: https://github.com/VII-Cae/hyalite--liquid-glass/tree/b0692b8aecdf264fcb49276f45d7d1d1f80f6dd0
-Unmodified hyalite.js and type definitions are vendored; PicForge supplies the React lifecycle adapter.
-License: Hyalite-MIT.txt. Used only for UI optics, not media processing.
+Historical UI component, removed from the runtime in 0.16.0.
+License: Hyalite-MIT.txt is retained for attribution; it was not used for media processing.

@@ -1,5 +1,4 @@
 import { BrandMark } from './BrandMark';
-import { ToolIcon } from './ToolIcon';
 import { useEffect, useRef, useState } from 'react';
 import { FiMoon, FiSun, FiMoreHorizontal } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
@@ -7,8 +6,6 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import type { ToolId } from '../types';
 import { SUPPORTED_LANGUAGES, chooseLanguage } from '../i18n';
 import { getLanguagePreference } from '../i18n/languagePreference';
-import { SelectionRail } from './SelectionRail';
-import { OpticalLayer } from './OpticalLayer';
 import { SelectControl } from './SelectControl';
 
 const TOOLS = ['compression', 'android', 'ios'] as const;
@@ -43,7 +40,6 @@ export function Header({
   }, []);
   return (
     <header className="pf-header">
-      <OpticalLayer />
       <button
         type="button"
         className="pf-brand-button"
@@ -53,17 +49,11 @@ export function Header({
         <BrandMark />
         <span className="pf-brand-copy">
           <span className="pf-brand-title">PicForge</span>
-          {tool !== 'home' && <small>{t('entry.tagline')}</small>}
         </span>
       </button>
       {tool !== 'home' && (
         <>
-          <SelectionRail
-            as="nav"
-            activeKey={tool}
-            className="pf-tool-nav"
-            aria-label={t('workbench.tools')}
-          >
+          <nav className="pf-tool-nav" aria-label={t('workbench.tools')}>
             {TOOLS.map((value) => (
               <button
                 type="button"
@@ -71,11 +61,10 @@ export function Header({
                 aria-current={tool === value ? 'page' : undefined}
                 onClick={() => onSelect(value)}
               >
-                <ToolIcon tool={value} />
-                {t(`motion.${value}`)}
+                {t(`nav.${value}`)}
               </button>
             ))}
-          </SelectionRail>
+          </nav>
           <div className="pf-mobile-tool">
             <SelectControl
               aria-label={t('workbench.tools')}
@@ -84,7 +73,7 @@ export function Header({
             >
               {TOOLS.map((value) => (
                 <option key={value} value={value}>
-                  {t(`motion.${value}`)}
+                  {t(`nav.${value}`)}
                 </option>
               ))}
             </SelectControl>
@@ -96,12 +85,6 @@ export function Header({
           <SelectControl
             aria-label={t('workbench.language')}
             value={languagePreference}
-            displayValue={
-              languagePreference === 'auto'
-                ? SUPPORTED_LANGUAGES.find((language) => language.code === i18n.resolvedLanguage)
-                    ?.label
-                : undefined
-            }
             onValueChange={selectLanguage}
           >
             <option value="auto">{t('workbench.languageAuto')}</option>
@@ -118,13 +101,7 @@ export function Header({
           aria-label={t('tooltips.toggleColorMode')}
           onClick={theme.toggleColorMode}
         >
-          <FiSun aria-hidden />
-          <span
-            className={`pf-theme-track${theme.colorMode === 'dark' ? ' is-dark' : ''}`}
-            aria-hidden
-          >
-            <span />
-          </span>
+          {theme.colorMode === 'dark' ? <FiSun aria-hidden /> : <FiMoon aria-hidden />}
         </button>
         <details
           ref={about}
@@ -145,13 +122,6 @@ export function Header({
               <SelectControl
                 aria-label={t('workbench.language')}
                 value={languagePreference}
-                displayValue={
-                  languagePreference === 'auto'
-                    ? SUPPORTED_LANGUAGES.find(
-                        (language) => language.code === i18n.resolvedLanguage,
-                      )?.label
-                    : undefined
-                }
                 onValueChange={selectLanguage}
               >
                 <option value="auto">{t('workbench.languageAuto')}</option>

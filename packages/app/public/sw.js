@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'picforge-v0.15.0';
+const CACHE_VERSION = 'picforge-v0.16.0';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-app-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -11,10 +11,6 @@ const APP_SHELL = [
   '/pwa-512.png',
   '/og-image.jpg',
   '/manifest.webmanifest',
-  '/fonts/Geist-Variable.woff2',
-  '/fonts/Geist-Italic[wght].woff2',
-  '/fonts/GeistMono-Variable.woff2',
-  '/fonts/GeistMono-Italic[wght].woff2',
   '/wasm/avif_enc.wasm',
   '/wasm/mozjpeg_enc.wasm',
   '/wasm/oxipng.wasm',

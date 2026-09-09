@@ -1,5 +1,7 @@
 # PicForge 统一视觉：影像工作台
 
+> Historical design. Superseded by the 0.16.0 [neutral/vermilion redesign](editorial-redesign.md), following the latest user request. Preserve this document as reference, not as the current implementation specification.
+
 状态：工作台信息结构基准。2026-09-09 的后续视觉审阅已更新入口、玻璃材质、粒子与动效要求；这些部分以 [interaction-redesign.md](interaction-redesign.md) 为准。
 性能、技术能力和处理效果的优化仍按独立改动推进；本次仅迁移视觉、入口和界面交互。
 

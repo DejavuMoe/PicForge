@@ -3,14 +3,27 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
-import { chromium } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
 const output = process.env.PICFORGE_QA_OUTPUT || (await mkdtemp(resolve(tmpdir(), 'picforge-ui-')));
 await mkdir(output, { recursive: true });
 const origin = process.env.PICFORGE_UI_URL || 'http://127.0.0.1:5173';
 const groups = new Set((process.env.PICFORGE_UI_GROUPS || 'layout,interaction').split(','));
 const run = (group) => groups.has(group) || groups.has('all');
-const browser = await chromium.launch();
-const report = { browser: browser.version(), groups: [...groups], layouts: [], interactions: [] };
+const engines = { chromium, firefox, webkit };
+const engine = process.env.PICFORGE_UI_BROWSER || 'chromium';
+assert(engines[engine], `Unknown browser: ${engine}`);
+const browser = await engines[engine].launch({
+  ...(process.env.PICFORGE_UI_EXECUTABLE
+    ? { executablePath: process.env.PICFORGE_UI_EXECUTABLE }
+    : {}),
+});
+const report = {
+  engine,
+  browser: browser.version(),
+  groups: [...groups],
+  layouts: [],
+  interactions: [],
+};
 try {
   const page = await browser.newPage({
     reducedMotion: 'reduce',
@@ -24,8 +37,7 @@ try {
   const openTool = async (name) => {
     const picker = page.locator('.pf-mobile-tool .pf-select');
     if (await picker.isVisible()) {
-      await picker.click();
-      await page.getByRole('option', { name, exact: true }).click();
+      await picker.selectOption({ label: name });
     } else await page.locator('.pf-tool-nav').getByRole('button', { name, exact: true }).click();
   };
   const capture = async (name) => {
@@ -35,7 +47,7 @@ try {
       () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
     );
     const issues = await page.evaluate(() =>
-      [...document.querySelectorAll('button,input,[role=combobox],summary,h1,h2')]
+      [...document.querySelectorAll('button,input,select,[role=combobox],summary,h1,h2')]
         .filter((e) => {
           const r = e.getBoundingClientRect();
           return r.width && r.height && (r.left < -1 || r.right > innerWidth + 1);
@@ -65,7 +77,10 @@ try {
     assert.equal(await page.locator('.pf-tool-panel').count(), 0);
     for (const lang of ['en', 'zh-CN', 'zh-TW', 'ja', 'ko']) {
       await page.goto(`${origin}/?lng=${lang}`);
-      await page.locator('.pf-hero-art img.is-active').evaluate((image) => image.decode());
+      await page
+        .locator('.pf-demo-image img')
+        .first()
+        .evaluate((image) => image.decode());
       for (const [width, height] of [
         [1440, 718],
         [856, 718],
@@ -177,7 +192,7 @@ try {
         .evaluate((e) => e === document.activeElement),
     );
     const downloaded = page.waitForEvent('download');
-    await active().getByRole('button', { name: 'Export completed files', exact: true }).click();
+    await active().getByRole('button', { name: 'Download results', exact: true }).click();
     await (await downloaded).saveAs(resolve(output, 'ui-compression.zip'));
     report.interactions.push('dialog focus/Escape and ZIP download');
     await page.setViewportSize({ width: 390, height: 844 });
@@ -194,7 +209,7 @@ try {
       '51',
     );
     await capture('loaded-compression-mobile');
-    await openTool('Android Motion Photos');
+    await openTool('Motion Photo');
     await active().locator('input[type=file]').waitFor({ state: 'attached' });
     // Structural MP4 is deliberate: verify extraction UI and unsupported-playback fallback,
     // without a video encoder or personal camera fixtures.
@@ -222,29 +237,143 @@ try {
     await capture('android-result-mobile');
     await page.setViewportSize({ width: 1536, height: 1024 });
     await capture('android-result-desktop');
-    await openTool('iOS Live Photos');
+    await openTool('Live Photo');
     const preset = active().getByRole('combobox').first();
     await preset.waitFor();
-    await preset.press('Enter');
-    await preset.press('End');
-    await preset.press('Enter');
-    assert((await preset.textContent()).includes('Smaller'));
-    await preset.press('Enter');
-    await preset.press('Escape');
-    assert.equal(await preset.getAttribute('aria-expanded'), 'false');
+    await preset.selectOption('compact');
+    assert.equal(await preset.inputValue(), 'compact');
     // Existing JPEG-only path passes bytes through; no HEIC/MOV/FFmpeg conversion.
     await active().locator('input[type=file]').setInputFiles(photo);
     await active().getByRole('button', { name: 'Process batch', exact: true }).click();
     await active().getByText('1 / 1 completed', { exact: true }).waitFor();
     assert(await preset.isDisabled());
     await capture('ios-jpeg-result-desktop');
-    await openTool('Image compression');
+    await openTool('Compress');
     assert.equal(await active().getByTestId('file-row').count(), 2);
-    await openTool('Android Motion Photos');
+    await openTool('Motion Photo');
     assert(await active().getByText('1 / 1 completed', { exact: true }).isVisible());
     report.interactions.push(
       'mobile comparison, three-tool queue retention, Android playback fallback and iOS JPEG-only UI',
     );
+  }
+  if (run('usability')) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`${origin}/?lng=en`);
+    await page.evaluate(() => localStorage.setItem('picforge-color-mode', 'light'));
+    await page.reload();
+    const sampleSlider = page.getByRole('slider', { name: 'Compare the JPEG and WebP sample' });
+    await sampleSlider.press('ArrowRight');
+    assert.equal(await sampleSlider.inputValue(), '51');
+    await page.getByRole('button', { name: 'Try this image', exact: true }).click();
+    await active().getByText('1 / 1 completed', { exact: true }).waitFor();
+    assert.equal(
+      await active().getByRole('button', { name: 'dune-sample.jpg', exact: true }).count(),
+      1,
+    );
+    const format = active().getByRole('combobox', { name: 'Format', exact: true });
+    await format.selectOption('webp');
+    await active().getByText('1 / 1 completed', { exact: true }).waitFor();
+    const quality = active().getByRole('spinbutton', { name: 'Quality value', exact: true });
+    await quality.fill('');
+    assert.equal(await quality.inputValue(), '', 'numeric drafts can be cleared');
+    await quality.press('Tab');
+    assert.equal(await quality.inputValue(), '75', 'empty draft restores prior value');
+    await quality.fill('92');
+    await quality.press('Escape');
+    assert.equal(await quality.inputValue(), '75', 'Escape cancels numeric draft');
+    await active().getByRole('switch', { name: 'Resize', exact: true }).click();
+    const width = active().getByRole('spinbutton', { name: 'Width', exact: true });
+    await width.fill('9');
+    await width.pressSequentially('60');
+    assert.equal(await width.inputValue(), '960');
+    await width.press('Enter');
+    await active().getByText('1 / 1 completed', { exact: true }).waitFor();
+    assert((await active().locator('.pf-preview-file-facts').innerText()).includes('960×640'));
+    await format.selectOption('oxipng');
+    assert(await quality.isDisabled(), 'lossless PNG has no ineffective quality input');
+    await format.selectOption('webp');
+    await active().getByText('1 / 1 completed', { exact: true }).waitFor();
+    await active().getByRole('button', { name: 'Slider compare', exact: true }).click();
+    const full = active().getByRole('button', { name: 'Toggle fullscreen', exact: true });
+    if (await full.isEnabled()) {
+      await full.click();
+      await page.waitForFunction(() =>
+        document.fullscreenElement?.classList.contains('pf-preview'),
+      );
+      assert(await active().getByRole('combobox', { name: 'Zoom level' }).isVisible());
+      await active().getByRole('combobox', { name: 'Zoom level' }).selectOption('2');
+      assert.equal(
+        await active().locator('.pf-preview-viewport').getAttribute('data-zoomed'),
+        'true',
+      );
+      await full.click();
+      await page.waitForFunction(() => !document.fullscreenElement);
+      await active().getByRole('combobox', { name: 'Zoom level' }).selectOption('1');
+    }
+    await capture('delivery-compression-light-desktop');
+    await page.getByRole('button', { name: 'Toggle color mode', exact: true }).click();
+    await capture('delivery-compression-dark-desktop');
+    for (const size of [320, 390]) {
+      await page.setViewportSize({ width: size, height: 844 });
+      await capture(`delivery-compression-mobile-${size}`);
+      const controls = await active()
+        .locator('.pf-preview-controls button, .pf-preview-controls select')
+        .evaluateAll((elements) =>
+          elements.map((element) => {
+            const r = element.getBoundingClientRect();
+            return { width: r.width, height: r.height };
+          }),
+        );
+      assert(
+        controls.every((r) => r.width >= 44 && r.height >= 44),
+        'mobile preview targets are at least 44px',
+      );
+    }
+    await page.getByRole('button', { name: 'PicForge home', exact: true }).click();
+    await page.locator('.pf-entry-tool').first().waitFor();
+    const bounds = await page.locator('.pf-entry-tools').boundingBox();
+    assert(bounds.y + bounds.height < 844, 'all mobile tool entries are in the first viewport');
+    await capture('delivery-home-mobile');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await capture('delivery-home-dark-desktop');
+    await page.getByRole('button', { name: 'Toggle color mode', exact: true }).click();
+    await capture('delivery-home-light-desktop');
+    assert.equal(await page.locator('.pf-optical-layer, canvas').count(), 0);
+    report.interactions.push(
+      'sample to real compression, numeric drafts/Enter/Escape, resize geometry, PNG guidance, fullscreen controls, 320px touch targets',
+    );
+
+    const restricted = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      locale: 'ja-JP',
+      colorScheme: 'dark',
+    });
+    await restricted.addInitScript(() =>
+      Object.defineProperty(window, 'localStorage', {
+        get() {
+          throw new DOMException('Storage blocked', 'SecurityError');
+        },
+      }),
+    );
+    const restrictedPage = await restricted.newPage();
+    const restrictedErrors = [];
+    restrictedPage.on('pageerror', (error) => restrictedErrors.push(error.message));
+    await restrictedPage.goto(origin);
+    await restrictedPage.locator('.pf-entry-tool').first().waitFor();
+    assert.equal(await restrictedPage.locator('html').getAttribute('lang'), 'ja');
+    const initialScheme = await restrictedPage.evaluate(() =>
+      matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+    );
+    assert.equal(await restrictedPage.locator('html').getAttribute('data-pf-theme'), initialScheme);
+    await restrictedPage.emulateMedia({ colorScheme: 'dark' });
+    await restrictedPage.waitForFunction(() => document.documentElement.dataset.pfTheme === 'dark');
+    await restrictedPage.emulateMedia({ colorScheme: 'light' });
+    await restrictedPage.waitForFunction(
+      () => document.documentElement.dataset.pfTheme === 'light',
+    );
+    assert.deepEqual(restrictedErrors, []);
+    await restricted.close();
+    report.interactions.push('blocked storage remains usable; automatic language and system theme');
   }
   assert.deepEqual(errors, []);
   report.errors = errors;

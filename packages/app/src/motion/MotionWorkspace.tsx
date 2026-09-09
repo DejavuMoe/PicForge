@@ -1,6 +1,6 @@
-import { OpticalLayer } from '../components/OpticalLayer';
 import { ProjectInfo } from '../components/ProjectInfo';
 import { SelectControl } from '../components/SelectControl';
+import { NumberControl } from '../components/NumberControl';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WorkbenchLayout, Inspector, SwitchControl } from '../components/WorkbenchLayout';
@@ -372,7 +372,7 @@ export default function MotionWorkspace({
       >
         <div className="pf-drop-content">
           <div>
-            <h1 className="pf-drop-main-text">{t('motion.drop')}</h1>
+            <h2 className="pf-drop-main-text">{t('motion.drop')}</h2>
             <p className="pf-drop-secondary-text">
               {t(android ? 'workbench.androidImportHint' : 'workbench.iosImportHint')}
             </p>
@@ -397,7 +397,7 @@ export default function MotionWorkspace({
           >
             <FiArrowLeft aria-hidden />
           </button>
-          <h1 className="pf-preview-filename">{selected.name}</h1>
+          <span className="pf-preview-filename">{selected.name}</span>
         </div>
       </header>
       {selectedJob?.output ? (
@@ -437,8 +437,7 @@ export default function MotionWorkspace({
           )}
         </div>
       )}
-      <div className="pf-viewer-footer pf-motion-glass-footer">
-        <OpticalLayer />
+      <div className="pf-viewer-footer">
         <span className="pf-viewer-metadata">
           {selectedIndex + 1} / {items.length}
         </span>
@@ -507,6 +506,7 @@ export default function MotionWorkspace({
               <span>{t('motion.preset')}</span>
               <SelectControl
                 value={settings.preset}
+                aria-label={t('motion.preset')}
                 disabled={locked}
                 onValueChange={(value) =>
                   setSettings({ ...settings, preset: value as MotionSettings['preset'] })
@@ -523,6 +523,7 @@ export default function MotionWorkspace({
               <span>{t('motion.fps')}</span>
               <SelectControl
                 value={settings.fps}
+                aria-label={t('motion.fps')}
                 disabled={locked}
                 onValueChange={(value) =>
                   setSettings({ ...settings, fps: value as MotionSettings['fps'] })
@@ -545,21 +546,13 @@ export default function MotionWorkspace({
                     setSettings({ ...settings, quality: Number(event.target.value) })
                   }
                 />
-                <input
+                <NumberControl
                   className="pf-number-value"
-                  type="number"
                   min={60}
                   max={95}
                   value={settings.quality}
                   aria-label={t('workbench.qualityValue')}
-                  onChange={(event) => {
-                    const quality = Number(event.target.value);
-                    if (Number.isFinite(quality))
-                      setSettings({
-                        ...settings,
-                        quality: Math.max(60, Math.min(95, Math.round(quality))),
-                      });
-                  }}
+                  onValueChange={(quality) => setSettings({ ...settings, quality })}
                 />
               </div>
             </label>

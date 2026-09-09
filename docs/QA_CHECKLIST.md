@@ -18,7 +18,11 @@ This checklist captures the main manual and browser-based checks for each releas
 - Side-by-side labels, toolbar, metadata badges, and divider do not scale with image zoom.
 - Press-and-hold zoom focuses the clicked image point, dragging pans while pressed, and release returns to fit.
 - Resized images show original and output dimensions clearly without floating mini-image overlays.
-- Mobile preview has reachable back, previous, next, mode, and zoom controls.
+- Mobile preview has reachable back, previous, next, mode, and zoom controls with 44px targets.
+- Fullscreen keeps the preview controls available; zoom does not scale UI labels.
+- Preview tools do not obscure image pixels; no decorative filter reaches media.
+- PNG disables the ineffective quality control and explains lossless output.
+- Result summaries use actual sizes and distinguish larger files from savings.
 
 ## Export
 
@@ -35,7 +39,12 @@ This checklist captures the main manual and browser-based checks for each releas
 
 ## Responsive And Accessibility
 
-- Layout is usable at 375x667, 390x844, 768x1024, 1280x720, and 1440x900.
+- Layout is usable at 320x844, 375x667, 390x844, 768x1024, 1280x720, and 1440x900.
+- On phones, all three home tool entries are reachable before the sample comparison.
+- Native language/tool/format selects support platform keyboard and touch pickers.
+- Numeric fields accept empty drafts, commit on blur/Enter, and restore on Escape.
+- System theme changes and disabled local storage do not break the page.
+- File selection and row actions are separate buttons; keyboard focus remains visible.
 - Keyboard can focus the drop zone, file rows, toolbar controls, preview controls, and download actions.
 - Status updates are announced through a polite live region.
 - Text does not overflow buttons, rows, panels, or the status bar in English, Simplified Chinese, Traditional Chinese, Japanese, and Korean.
@@ -46,7 +55,7 @@ This checklist captures the main manual and browser-based checks for each releas
 - Production build registers `/sw.js`.
 - App installs with the PicForge name and icon.
 - After the first online load, refresh works offline.
-- Font, WASM, and built assets are served from cache when offline.
+- WASM and built assets are served from cache when offline; no unused fonts are precached.
 - A service worker version change removes old PicForge caches.
 - A service worker version change shows the in-app new-version refresh prompt.
 
@@ -54,7 +63,7 @@ This checklist captures the main manual and browser-based checks for each releas
 
 - With reduced motion enabled, skeletons, spinners, progress stripes, and transitions do not animate continuously.
 
-## Toolbox (0.15)
+## Toolbox
 
 - Run `pnpm test` and `pnpm test:browser` (when test media is supplied).
 - Android exports reconstruct source bytes; no HEIC/FFmpeg engine loads for extraction.
@@ -65,3 +74,9 @@ This checklist captures the main manual and browser-based checks for each releas
 - Offline reload after successful engine caching can process media again.
 - Recheck original image compression and both narrow/wide viewport layouts.
 - See `SAMPLE_VALIDATION.md` for measured results and unverified platforms.
+
+## Current UI automation
+
+Run `PICFORGE_UI_GROUPS=entry,layout,interaction,usability node scripts/ui-check.mjs` against the dev server. Select `PICFORGE_UI_BROWSER=chromium|firefox|webkit`; browser binaries must match the pinned Playwright version. Reuse a built app with `PICFORGE_UI_URL` when appropriate. Screenshots and exports go to a temporary directory by default.
+
+Record exact engines, dimensions and limitations. A structural invalid MP4 deliberately tests native-playback fallback in the interaction group. If a native browser process aborts, record that failure separately; do not call the full media path qualified just because the other groups pass. See [current validation](UI_DESIGN.md) for the Linux WebKit limit and the unchanged historical camera evidence.

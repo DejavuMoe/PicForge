@@ -1,7 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './app-shell.css';
-import './materials.css';
 import './i18n';
 import App from './App';
 import { registerServiceWorker } from './registerServiceWorker';

@@ -41,3 +41,5 @@ The standalone sample was generated through the built-in ImageGen tool with this
 The result was resized/encoded with ImageMagick to `packages/app/src/assets/dune-sample.jpg` (1200×800, JPEG quality 85, stripped metadata, 147,972 bytes). The comparison derivative is `packages/app/src/assets/dune-preview.webp` (same dimensions, WebP quality 68, stripped metadata, 55,092 bytes). This offline-prepared comparison is an example, not a live performance measurement. The Try this image action imports the JPEG into the production Compat path and displays actual resulting bytes.
 
 The P mark, favicon, install icons and [social card](social-card.svg) are code-native vector artwork. The social JPEG and install PNGs are raster exports of those local SVG sources. No private camera sample was used in an external service. The final implementation and verification record is [UI_DESIGN.md](../UI_DESIGN.md).
+
+Install icons are rendered from the SVG at its 512px intrinsic size before creating the 192px variant, then written as stripped 8-bit PNGs (1,107 and 2,191 bytes). This avoids enlarging a 32px raster and keeps the installed icon sharp without a large download.

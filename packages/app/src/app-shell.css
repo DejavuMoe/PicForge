@@ -3,6 +3,10 @@
   box-sizing: border-box;
 }
 :root {
+  --pf-cjk-font: 'Noto Sans CJK SC';
+  --pf-font-family:
+    system-ui, -apple-system, 'Segoe UI', var(--pf-cjk-font), 'PingFang SC', 'Microsoft YaHei',
+    sans-serif;
   --pf-control-height: 38px;
   --pf-header-height: 64px;
   --pf-queue-width: 240px;
@@ -39,6 +43,15 @@
   --pf-focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px #b8422d;
   --pf-shadow-raised: none;
   --pf-shadow-popover: 0 8px 28px rgb(0 0 0 / 12%);
+}
+html:lang(zh-TW) {
+  --pf-cjk-font: 'Noto Sans CJK TC';
+}
+html:lang(ja) {
+  --pf-cjk-font: 'Noto Sans CJK JP';
+}
+html:lang(ko) {
+  --pf-cjk-font: 'Noto Sans CJK KR';
 }
 html[data-pf-theme='dark'] {
   --pf-page-bg: #181818;
@@ -81,13 +94,7 @@ body {
   overflow: hidden;
   background: var(--pf-page-bg, #fff);
   color: var(--pf-text-primary, #202322);
-  font:
-    14px/1.5 system-ui,
-    -apple-system,
-    'Segoe UI',
-    'PingFang SC',
-    'Microsoft YaHei',
-    sans-serif;
+  font: 14px/1.5 var(--pf-font-family);
   -webkit-font-smoothing: antialiased;
 }
 button,

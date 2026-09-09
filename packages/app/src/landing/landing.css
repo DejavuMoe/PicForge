@@ -336,3 +336,7 @@ html:lang(ko) .pf-landing-intro h1 {
     padding-top: 0;
   }
 }
+
+.pf-demo figcaption > .pf-text-button {
+  font-family: var(--pf-font-family);
+}

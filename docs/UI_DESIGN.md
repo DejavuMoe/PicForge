@@ -14,7 +14,7 @@ Previously visited workspaces stay mounted. Tool switches, home and browser Back
 
 ## Visual system
 
-White and graphite surfaces, neutral image mats, system typography and one restrained vermilion accent replace tinted glass. Headers, panes and file rows are flat. Preview controls sit below the image, with previous/next beside the filename. Fullscreen includes the complete preview and its controls. Images and exported media never inherit a filter.
+White and graphite surfaces, neutral image mats, system typography and one restrained vermilion accent replace tinted glass. CJK fallback explicitly prefers the appropriate local Noto Sans CJK SC/TC/JP/KR family before platform alternatives, preventing decorative font substitutions without downloading fonts. Headers, panes and file rows are flat. Preview controls sit below the image, with previous/next beside the filename. Fullscreen includes the complete preview and its controls. Images and exported media never inherit a filter.
 
 The header contains a code-native P mark, navigation, native language select and theme toggle. Phones use a native tool select and a compact preferences disclosure. The Landing footer retains centered copyright/GitHub and a separate sponsorship line. The workbench gives space to task actions on mobile; no About or raw license link has been introduced.
 
@@ -48,7 +48,7 @@ Same host, Node 24.21.0, pnpm 11.8.0, Vite 8.2.2. Baseline is `58b797db38ede4779
 | Artifact | Before | After | Change |
 | --- | ---: | ---: | ---: |
 | Main `index` JavaScript chunk | 211.00 kB | 126.15 kB | −40.2% |
-| All emitted CSS | 64.23 kB | 47.13 kB | −26.6% |
+| All emitted CSS | 64.23 kB | 47.38 kB | −26.2% |
 | Home photographs, combined | 268.27 kB | 203.06 kB | −24.3% |
 
 The shared React vendor chunk remains 189.71 kB. Compression now has a separate 47.40 kB chunk, and Landing a 4.09 kB chunk. These are build-size measurements, not page-load latency, memory/RSS, codec speed, or image-quality benchmarks. Historical media baselines remain independent.
@@ -68,6 +68,8 @@ Checks ran against the final interface on Linux x86_64. Generated sample photogr
 | Playwright WebKit 26.0 UI subset | 43 layout captures, 3 interaction groups pass: entry, layout, usability |
 | Production Chromium | Static compression, downloaded dimensions, mobile width, offline reload and re-encoding pass |
 | In-app browser | Homepage, real sample import, format change and rendered preview inspected |
+
+After the final font-only refinement, the entry/layout subset passed again in all three engines (36 captures and one interaction group each). Prior interaction and media evidence is retained because those implementations did not change.
 
 The UI matrix covers all five locales, both themes, desktop, tablet, 390px phones and a focused 320px preview. Checks include no horizontal overflow/framework overlay/runtime errors, keyboard entry/history, global/custom settings, dialog focus/Escape, file/ZIP downloads, sample-to-real-processing, numeric drafts, resize output geometry, lossless guidance, fullscreen controls, 44px preview targets, blocked storage and system-theme changes.
 
@@ -94,4 +96,4 @@ pnpm test:browser
 
 Use `PICFORGE_UI_EXECUTABLE` only when a test environment needs an explicit browser executable/wrapper. The normal path uses the project's pinned Playwright browser. `PICFORGE_UI_IMAGE`, `PICFORGE_UI_URL` and `PICFORGE_QA_OUTPUT` select the fixture, origin and temporary evidence directory.
 
-Local evidence for this run: `/tmp/picforge-ui-final`, `/tmp/picforge-ui-firefox`, `/tmp/picforge-ui-webkit-safe`, and `/tmp/picforge-production-check.log`. These are temporary, reproducible evidence, not committed product assets. Real HEIC/MOV camera conversion was not repeated: the processing implementation, dependencies, worker policy and encoder arguments did not change. Existing camera and engine qualifications retain their original source revisions.
+Local evidence for this run: `/tmp/picforge-type-chromium`, `/tmp/picforge-type-firefox`, `/tmp/picforge-type-webkit`, `/tmp/picforge-ui-final`, `/tmp/picforge-ui-firefox`, `/tmp/picforge-ui-webkit-safe`, and `/tmp/picforge-production-check.log`. These are temporary, reproducible evidence, not committed product assets. Real HEIC/MOV camera conversion was not repeated: the processing implementation, dependencies, worker policy and encoder arguments did not change. Existing camera and engine qualifications retain their original source revisions.

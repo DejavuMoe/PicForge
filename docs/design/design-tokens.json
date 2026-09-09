@@ -33,7 +33,7 @@
     }
   },
   "typography": {
-    "family": "system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+    "family": "system-ui, -apple-system, 'Segoe UI', locale-specific 'Noto Sans CJK', 'PingFang SC', 'Microsoft YaHei', sans-serif",
     "body": 14,
     "metadata": 12,
     "section": 16,

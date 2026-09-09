@@ -11,7 +11,7 @@ rejected. Landing remains the initial entry, followed by explicit tool selection
 | Repeated/double underlines                  | Selection inset shadows plus borders; entry separators plus hover outline | One moving selection thumb per control group; no underlines; no entry-row separators                                 |
 | Empty page without a focal point            | Whitespace and a headline were doing all the visual work                  | One interactive particle/photo scene balanced against the introduction, with three direct tool entries below         |
 | Homepage footer folded despite free space   | Workbench's 1100px breakpoint was reused for Landing                      | Separate footer variants; centered complete Landing links with natural wrapping                                      |
-| Raw NOTICE.txt in the primary footer        | Implementation/legal artifact exposed as primary navigation               | About dialog with readable overview, component licenses and optional in-app full texts                               |
+| Raw NOTICE.txt in the primary footer        | Implementation/legal artifact exposed as primary navigation               | Footer About removed by the later annotation; complete license files remain in the distribution                      |
 | Preview language became the default         | Detector cached query/browser results like a manual preference            | Canonical browser locales, English fallback, transient URL previews, explicit-only preference storage                |
 | Glass indistinguishable from blur           | No displacement filter; material absent from the editor                   | Actual local Hyalite SVG refraction on selected navigation and the image control dock                                |
 | Abrupt interaction changes                  | Instant state swaps without shared motion/feedback                        | Sliding selection, responsive pointer light, subtle press feedback, menu/dialog entry and exit, disclosure expansion |
@@ -50,7 +50,8 @@ entries. A generated local mountain photograph provides the image subject; a
 procedural point ribbon supplies motion/depth. The image and glass frame tilt
 slightly with a fine pointer; tool links reveal a local light response and arrow
 movement. Mobile stacks the hero and entries and scrolls naturally. The footer
-always shows copyright, GitHub, About and sponsorship without icons or dividers.
+shows copyright and GitHub, with sponsorship on its own line. The later user
+annotation explicitly removes About; there is no replacement footer menu.
 
 The editor preserves the existing queue/viewer/inspector hierarchy. Selected
 navigation, comparison and settings-scope controls each have one moving glass
@@ -59,10 +60,8 @@ above the preview, with real background refraction; on mobile it moves below the
 image to avoid covering a large share of the photo. Photo pixels themselves,
 zoom/pan math, settings snapshots and export eligibility remain unchanged.
 
-The About dialog groups project links and open-source notices. Full texts load
-only when requested and appear inside the dialog; pending fetches are aborted
-when leaving the document or closing. Native dialog semantics, Escape, Tab
-containment, animated dismissal and focus restoration are retained.
+All local license files are retained. The user removed the About footer entry;
+its earlier dialog implementation is no longer mounted by the application.
 
 Automatic locale selection maps English/Chinese script-region/Japanese/Korean
 variants to the actual resource bundles. Unsupported preferences fall back to
@@ -107,12 +106,43 @@ centered plain-text footer. The editor study retains queue/preview/inspector,
 uses one glass selection thumb and a floating preview dock, and prohibits
 filtering image results or inventing editor capabilities.
 
-The standalone `src/assets/alpine-lake.jpg` is a generated decorative photograph,
-not personal media or a conversion result. Its brief was an Alpine lake/evergreen
-forest/peaks with silver daylight and a natural emerald palette, without text,
-frames or particles. Those surroundings are rendered in code.
+The earlier standalone Alpine photograph was replaced by the prototype-matched
+light/dark optical hero artwork described below. No personal media is used.
 
 The generated Landing photograph is included in the build precache manifest, so
 offline presentation does not depend on the temporary HTTP cache. WASM remains
 outside this eager UI-asset rule. Preview-dock tint and foreground colors also
 provide readable controls over both white and black image content.
+
+## Prototype fidelity follow-up
+
+The supplied Landing and workbench images are the active visual references,
+subject to the user's explicit removal of About from the footer. This pass adds
+the folded green P mark, matching platform silhouettes, independent beveled
+queue/viewer/inspector panes, brighter raised selection controls, horizontal
+width/height rows with px suffixes, and a floating magnifier/zoom/fullscreen dock.
+Percentage sizing remains functional under Advanced settings. Zoom menus mount
+inside the fullscreen element so they remain usable in fullscreen preview.
+
+The prior simplified photo/ribbon composition is replaced by separate light and
+dark `optical-hero-*.webp` artwork, generated from the accepted Landing reference.
+The graphic contains the detailed slab, photograph, particle forms and caustics;
+parallax, pointer response and a subtle live particle overlay remain code-driven.
+These decorative assets do not stand in for the application's actual controls
+or preview results. The two WebP assets total about 268 KB and are precached.
+The first attempted transparent extraction produced a checkerboard image and
+was rejected, never included in the application.
+
+Desktop footer: copyright and GitHub on one centered line, sponsorship beneath.
+Mobile: the same reading order, natural wrapping, no disclosure. Tool status
+bars preserve room for progress/export; the compact mobile link is GitHub.
+
+Verified: 40 responsive/localized captures and four interaction groups; percentage
+resize still exports a 768px-wide derivative from the 1536px fixture; fullscreen
+zoom selection; Android/iOS generated-fixture results in both themes; lint,
+185 unit tests, typecheck and build; production static export/offline checks.
+Actual screenshots for this pass are in `/tmp/picforge-prototype`.
+
+Latest focused checks also confirm identical panel/control rectangles across
+light and dark, and align preview labels to the displayed image while keeping
+original/result dimensions, sizes and output format in the preview header.

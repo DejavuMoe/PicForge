@@ -149,7 +149,11 @@
     },
     "zoom": {
       "fit": "适应"
-    }
+    },
+    "zoomIn": "放大",
+    "zoomOut": "缩小",
+    "zoomLevel": "缩放比例",
+    "fullscreen": "切换全屏"
   },
   "landing": {
     "eyebrow": "本地优先的图片工具箱",
@@ -268,7 +272,7 @@
     "licenses": "许可证",
     "sponsor": "由 Riven Cloud 提供赞助",
     "outputSettings": "输出设置",
-    "settingsScope": "设置作用范围",
+    "settingsScope": "应用范围",
     "allImages": "全部图片",
     "thisImage": "仅此图片",
     "globalHint": "使用单独设置的图片不受此处修改影响。",
@@ -321,7 +325,8 @@
     "ios": "将照片与视频，转换为通用格式。",
     "home": "PicForge 首页",
     "summary": "压缩图片，拆分动态照片，转换实况照片。",
-    "privacy": "文件始终留在你的设备上。"
+    "privacy": "文件始终留在你的设备上。",
+    "tagline": "让图像更轻盈"
   },
   "about": {
     "description": "在本机完成图片压缩、动态照片提取与实况照片转换。文件始终留在你的设备上。",

@@ -1,21 +1,21 @@
+import { ToolIcon } from '../components/ToolIcon';
 import { useRef, type PointerEvent } from 'react';
-import { FiArrowRight, FiCopy, FiImage, FiPlayCircle } from 'react-icons/fi';
+import { FiArrowRight } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { ProjectInfo } from '../components/ProjectInfo';
 import { OpticalLayer } from '../components/OpticalLayer';
 import { ParticleRibbon } from './ParticleRibbon';
-import alpineLake from '../assets/alpine-lake.jpg';
+import heroLight from '../assets/optical-hero-light.webp';
+import heroDark from '../assets/optical-hero-dark.webp';
+import { useThemeColors } from '../hooks/useThemeColors';
 import type { ToolId } from '../types';
 import './landing.css';
 
-const TOOLS = [
-  { id: 'compression', Icon: FiImage },
-  { id: 'android', Icon: FiPlayCircle },
-  { id: 'ios', Icon: FiCopy },
-] as const;
+const TOOLS = [{ id: 'compression' }, { id: 'android' }, { id: 'ios' }] as const;
 
 export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void }) {
   const { t } = useTranslation();
+  const { colorMode } = useThemeColors();
   const cursor = useRef<HTMLSpanElement>(null);
   const move = (event: PointerEvent<HTMLDivElement>) => {
     if (
@@ -66,16 +66,28 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
           </div>
           <div className="pf-optical-scene" aria-hidden="true">
             <ParticleRibbon />
-            <div className="pf-scene-photo">
-              <img src={alpineLake} alt="" width="720" height="900" draggable="false" />
-              <span className="pf-photo-lens">
-                <OpticalLayer strong />
-              </span>
+            <div className="pf-hero-art">
+              <img
+                className={colorMode === 'light' ? 'is-active' : ''}
+                src={heroLight}
+                alt=""
+                width="1200"
+                height="800"
+                draggable="false"
+              />
+              <img
+                className={colorMode === 'dark' ? 'is-active' : ''}
+                src={heroDark}
+                alt=""
+                width="1200"
+                height="800"
+                draggable="false"
+              />
             </div>
           </div>
         </section>
         <nav className="pf-entry-tools" aria-label={t('workbench.tools')}>
-          {TOOLS.map(({ id, Icon }) => {
+          {TOOLS.map(({ id }) => {
             const url = new URL(window.location.href);
             url.searchParams.set('tool', id);
             return (
@@ -98,7 +110,7 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
               >
                 <OpticalLayer />
                 <span className="pf-entry-top">
-                  <Icon className="pf-entry-icon" aria-hidden />
+                  <ToolIcon tool={id} className="pf-entry-icon" />
                   <strong>{t(`motion.${id}`)}</strong>
                   <FiArrowRight className="pf-entry-arrow" aria-hidden />
                 </span>

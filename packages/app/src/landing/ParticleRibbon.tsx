@@ -101,6 +101,7 @@ export function ParticleRibbon() {
     observer.observe(parent);
     const intersection = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
+      parent.dataset.sceneVisible = String(visible);
       start();
     });
     intersection.observe(parent);

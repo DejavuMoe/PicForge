@@ -149,7 +149,11 @@
     },
     "zoom": {
       "fit": "フィット"
-    }
+    },
+    "zoomIn": "拡大",
+    "zoomOut": "縮小",
+    "zoomLevel": "ズーム倍率",
+    "fullscreen": "全画面表示の切り替え"
   },
   "landing": {
     "eyebrow": "ローカルファースト画像ツールボックス",
@@ -268,7 +272,7 @@
     "licenses": "ライセンス",
     "sponsor": "Riven Cloud の支援",
     "outputSettings": "出力設定",
-    "settingsScope": "設定の適用範囲",
+    "settingsScope": "適用範囲",
     "allImages": "すべての画像",
     "thisImage": "この画像のみ",
     "globalHint": "個別設定の画像には、この変更は適用されません。",
@@ -321,7 +325,8 @@
     "ios": "写真と動画を、広く使える形式に変換します。",
     "home": "PicForge ホーム",
     "summary": "画像の圧縮、モーションフォトの抽出、Live Photos の変換。",
-    "privacy": "ファイルはお使いの端末内で処理します。"
+    "privacy": "ファイルはお使いの端末内で処理します。",
+    "tagline": "画像をもっと軽やかに"
   },
   "about": {
     "description": "画像圧縮、モーションフォトの抽出、Live Photos の変換を端末内で行うツールです。ファイルはアップロードされません。",

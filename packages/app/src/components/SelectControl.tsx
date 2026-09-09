@@ -15,6 +15,7 @@ interface Props {
   onValueChange: (value: string) => void;
   children: ReactNode;
   className?: string;
+  displayValue?: ReactNode;
   disabled?: boolean;
   title?: string;
   'aria-label'?: string;
@@ -25,6 +26,7 @@ export function SelectControl({
   value,
   onValueChange,
   children,
+  displayValue,
   className = '',
   disabled,
   title,
@@ -153,7 +155,7 @@ export function SelectControl({
           }
         }}
       >
-        <span>{options[selected]?.props.children}</span>
+        <span>{displayValue ?? options[selected]?.props.children}</span>
         <FiChevronDown aria-hidden="true" />
       </button>
       {popup &&
@@ -186,7 +188,7 @@ export function SelectControl({
               </div>
             ))}
           </div>,
-          document.body,
+          document.fullscreenElement ?? document.body,
         )}
     </>
   );

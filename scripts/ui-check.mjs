@@ -65,7 +65,7 @@ try {
     assert.equal(await page.locator('.pf-tool-panel').count(), 0);
     for (const lang of ['en', 'zh-CN', 'zh-TW', 'ja', 'ko']) {
       await page.goto(`${origin}/?lng=${lang}`);
-      await page.locator('.pf-scene-photo img').evaluate((image) => image.decode());
+      await page.locator('.pf-hero-art img.is-active').evaluate((image) => image.decode());
       for (const [width, height] of [
         [1440, 718],
         [856, 718],
@@ -74,23 +74,22 @@ try {
         await page.setViewportSize({ width, height });
         const footer = page.locator('.pf-landing-footer');
         assert.equal(await footer.locator('details, a[href$=".txt"]').count(), 0);
-        assert.equal(await footer.locator('.pf-project-links > *').count(), 3);
+        assert.equal(await footer.locator('.pf-project-links > *').count(), 2);
         await capture(`entry-${lang}-${width}`);
       }
     }
     await page.goto(`${origin}/?lng=en`);
-    await page.getByRole('button', { name: 'About PicForge', exact: true }).click();
-    await page.getByRole('dialog').waitFor();
-    await page.keyboard.press('Escape');
-    await page.getByRole('dialog').waitFor({ state: 'hidden' });
-    assert.equal(await page.evaluate(() => document.activeElement.textContent), 'About PicForge');
+    assert.equal(
+      await page.getByRole('button', { name: 'About PicForge', exact: true }).count(),
+      0,
+    );
     await page.locator('.pf-entry-tool').first().focus();
     await page.keyboard.press('Enter');
     await active().locator('.pf-inspector').waitFor();
     await page.goBack();
     await page.locator('.pf-landing').waitFor();
     report.interactions.push(
-      'browser language, centered expanded footer, About focus, keyboard entry and history',
+      'browser language, centered footer without About, keyboard entry and history',
     );
   }
   if (run('layout')) {

@@ -149,7 +149,11 @@
     },
     "zoom": {
       "fit": "맞춤"
-    }
+    },
+    "zoomIn": "확대",
+    "zoomOut": "축소",
+    "zoomLevel": "확대 비율",
+    "fullscreen": "전체 화면 전환"
   },
   "landing": {
     "eyebrow": "로컬 우선 이미지 도구 상자",
@@ -268,7 +272,7 @@
     "licenses": "라이선스",
     "sponsor": "Riven Cloud 후원",
     "outputSettings": "출력 설정",
-    "settingsScope": "설정 적용 범위",
+    "settingsScope": "적용 범위",
     "allImages": "모든 이미지",
     "thisImage": "이 이미지만",
     "globalHint": "개별 설정을 사용하는 이미지는 이 변경의 영향을 받지 않습니다.",
@@ -321,7 +325,8 @@
     "ios": "사진과 동영상을 널리 지원되는 형식으로 변환하세요.",
     "home": "PicForge 홈",
     "summary": "이미지 압축, 모션 포토 추출, 라이브 포토 변환.",
-    "privacy": "파일은 기기 안에서 처리됩니다."
+    "privacy": "파일은 기기 안에서 처리됩니다.",
+    "tagline": "이미지를 더 가볍게"
   },
   "about": {
     "description": "이미지 압축, 모션 포토 추출, 라이브 포토 변환을 기기 안에서 처리합니다. 파일은 업로드되지 않습니다.",

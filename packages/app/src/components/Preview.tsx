@@ -1,3 +1,4 @@
+import { SelectControl } from './SelectControl';
 import { SelectionRail } from './SelectionRail';
 import { OpticalLayer } from './OpticalLayer';
 /**
@@ -14,6 +15,8 @@ import {
   FiChevronRight,
   FiColumns,
   FiMaximize,
+  FiZoomIn,
+  FiZoomOut,
   FiSliders,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
@@ -519,6 +522,20 @@ export function Preview({
         <CompareModeSwitch mode={activeCompareMode} onChange={setCompareMode} />
       )}
       <ZoomControls zoom={viewport.zoom} onSetZoom={setZoomLevel} onResetZoom={resetViewport} />
+      {!isMobile && (
+        <IconControl
+          label={t('preview.fullscreen')}
+          disabled={!document.fullscreenEnabled}
+          icon={<FiMaximize aria-hidden />}
+          onClick={() => {
+            const action = document.fullscreenElement
+              ? document.exitFullscreen()
+              : containerRef.current?.requestFullscreen();
+            void action?.catch(() => undefined);
+          }}
+        />
+      )}
+
       <IconControl
         label={t('preview.previous')}
         onClick={onPrev}
@@ -548,9 +565,33 @@ export function Preview({
               icon={<FiArrowLeft aria-hidden />}
             />
           )}
-          <span className="pf-preview-filename" title={file.file.name}>
-            {file.file.name}
-          </span>
+          <div className="pf-preview-file-heading">
+            <span className="pf-preview-filename" title={file.file.name}>
+              {file.file.name}
+            </span>
+            <span className="pf-preview-file-facts">
+              <span>
+                {originalMeta.dimensions}
+                {hasResult && outputMeta?.dimensions !== originalMeta.dimensions && (
+                  <> → {outputMeta?.dimensions}</>
+                )}
+              </span>
+              <span>
+                {originalMeta.size}
+                {hasResult && outputMeta && <> → {outputMeta.size}</>}
+              </span>
+              {hasResult && (
+                <span>
+                  {
+                    FORMAT_OPTIONS.find(
+                      (option) =>
+                        option.value === getEffectiveSettings(file, globalSettings).outputFormat,
+                    )?.label
+                  }
+                </span>
+              )}
+            </span>
+          </div>
         </div>
         <SelectionRail
           activeKey={hasResult ? view : 'original'}
@@ -599,11 +640,24 @@ export function Preview({
         ref={containerRef}
         data-testid={PREVIEW_TEST_IDS.viewport}
         className="pf-preview-viewport"
-        style={{
-          ...previewViewportStyle,
-          cursor: getPreviewCursor(activeCompareMode, viewport.zoom, hasResult),
-          touchAction: viewport.zoom > 1 ? 'none' : 'pan-y',
-        }}
+        data-zoomed={viewport.zoom > 1}
+        style={
+          {
+            ...previewViewportStyle,
+            '--pf-source-width': `${(hasResult && view === 'result' ? file.outputMeta?.outputWidth : file.outputMeta?.originalWidth) ?? 100000}px`,
+            '--pf-source-aspect': file.outputMeta
+              ? hasResult && view === 'result'
+                ? file.outputMeta.outputWidth / Math.max(1, file.outputMeta.outputHeight)
+                : file.outputMeta.originalWidth / Math.max(1, file.outputMeta.originalHeight)
+              : 1.5,
+            '--pf-result-width': `${file.outputMeta?.outputWidth ?? file.outputMeta?.originalWidth ?? 100000}px`,
+            '--pf-result-aspect': file.outputMeta
+              ? file.outputMeta.outputWidth / Math.max(1, file.outputMeta.outputHeight)
+              : 1.5,
+            cursor: getPreviewCursor(activeCompareMode, viewport.zoom, hasResult),
+            touchAction: viewport.zoom > 1 ? 'none' : 'pan-y',
+          } as CSSProperties
+        }
       >
         {view === 'compare' && activeCompareMode === 'sideBySide' && outputMeta ? (
           <SideBySideCompareView
@@ -732,32 +786,33 @@ function ZoomControls({
 }) {
   const { t } = useTranslation();
 
+  const levels = [...new Set([1, 1.5, 2, 3, 4, zoom])].sort((a, b) => a - b);
   return (
     <div className="pf-zoom-controls">
-      <button
-        type="button"
-        className={`pf-preview-zoom-button${zoom === 1 ? ' is-active' : ''}`}
-        aria-pressed={zoom === 1}
-        onClick={() => onSetZoom(1)}
+      <IconControl
+        label={t('preview.zoomOut')}
+        disabled={zoom <= 1}
+        icon={<FiZoomOut aria-hidden />}
+        onClick={() => onSetZoom(Math.max(1, zoom / 1.5))}
+      />
+      <SelectControl
+        className="pf-zoom-select"
+        aria-label={t('preview.zoomLevel')}
+        value={zoom}
+        onValueChange={(value) => (Number(value) === 1 ? onResetZoom() : onSetZoom(Number(value)))}
       >
-        {t('preview.zoom.fit')}
-      </button>
-      <button
-        type="button"
-        className={`pf-preview-zoom-button${zoom === 2 ? ' is-active' : ''}`}
-        aria-pressed={zoom === 2}
-        onClick={() => onSetZoom(2)}
-      >
-        2x
-      </button>
-      {zoom > 1 && (
-        <IconControl
-          label={t('preview.zoomReset')}
-          onClick={onResetZoom}
-          icon={<FiMaximize aria-hidden="true" />}
-        />
-      )}
-      <span className="pf-preview-zoom-value">{Math.round(zoom * 100)}%</span>
+        {levels.map((level) => (
+          <option key={level} value={level}>
+            {level === 1 ? t('preview.zoom.fit') : `${Math.round(level * 100)}%`}
+          </option>
+        ))}
+      </SelectControl>
+      <IconControl
+        label={t('preview.zoomIn')}
+        disabled={zoom >= 4}
+        icon={<FiZoomIn aria-hidden />}
+        onClick={() => onSetZoom(Math.min(4, zoom * 1.5))}
+      />
     </div>
   );
 }
@@ -867,8 +922,18 @@ function SliderCompareView({
           <FiChevronLeft aria-hidden />
           <FiChevronRight aria-hidden />
         </button>
-        <PreviewLabel text={original.label} top left isInteracting={isPanning} />
-        <PreviewLabel text={output.label} top right isInteracting={isPanning} />
+        <PreviewLabel
+          text={`${original.label} (${original.size})`}
+          top
+          left
+          isInteracting={isPanning}
+        />
+        <PreviewLabel
+          text={`${output.label} (${output.size})`}
+          top
+          right
+          isInteracting={isPanning}
+        />
         <CompareSummary
           originalSize={original.size}
           outputSize={output.size}

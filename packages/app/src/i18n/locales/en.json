@@ -149,7 +149,11 @@
     },
     "zoom": {
       "fit": "Fit"
-    }
+    },
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomLevel": "Zoom level",
+    "fullscreen": "Toggle fullscreen"
   },
   "landing": {
     "eyebrow": "Local-first image toolbox",
@@ -268,7 +272,7 @@
     "licenses": "Licenses",
     "sponsor": "Supported by Riven Cloud",
     "outputSettings": "Output settings",
-    "settingsScope": "Settings scope",
+    "settingsScope": "Apply to",
     "allImages": "All images",
     "thisImage": "This image",
     "globalHint": "Images with custom settings keep their own values.",
@@ -321,7 +325,8 @@
     "ios": "Convert photos and videos into widely supported formats.",
     "home": "PicForge home",
     "summary": "Compress images. Extract Motion Photos. Convert Live Photos.",
-    "privacy": "Your files stay on your device."
+    "privacy": "Your files stay on your device.",
+    "tagline": "Make room for your images"
   },
   "about": {
     "description": "A local image toolbox for compression, Motion Photos and Live Photos. Your files stay on your device.",

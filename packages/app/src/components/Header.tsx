@@ -1,3 +1,5 @@
+import { BrandMark } from './BrandMark';
+import { ToolIcon } from './ToolIcon';
 import { useEffect, useRef, useState } from 'react';
 import { FiMoon, FiSun, FiMoreHorizontal } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
@@ -48,10 +50,11 @@ export function Header({
         onClick={onHome}
         aria-label={t('entry.home')}
       >
-        <span className="pf-logo" aria-hidden="true">
-          P
+        <BrandMark />
+        <span className="pf-brand-copy">
+          <span className="pf-brand-title">PicForge</span>
+          {tool !== 'home' && <small>{t('entry.tagline')}</small>}
         </span>
-        <span className="pf-brand-title">PicForge</span>
       </button>
       {tool !== 'home' && (
         <>
@@ -68,6 +71,7 @@ export function Header({
                 aria-current={tool === value ? 'page' : undefined}
                 onClick={() => onSelect(value)}
               >
+                <ToolIcon tool={value} />
                 {t(`motion.${value}`)}
               </button>
             ))}
@@ -92,6 +96,12 @@ export function Header({
           <SelectControl
             aria-label={t('workbench.language')}
             value={languagePreference}
+            displayValue={
+              languagePreference === 'auto'
+                ? SUPPORTED_LANGUAGES.find((language) => language.code === i18n.resolvedLanguage)
+                    ?.label
+                : undefined
+            }
             onValueChange={selectLanguage}
           >
             <option value="auto">{t('workbench.languageAuto')}</option>
@@ -108,7 +118,13 @@ export function Header({
           aria-label={t('tooltips.toggleColorMode')}
           onClick={theme.toggleColorMode}
         >
-          {theme.colorMode === 'light' ? <FiMoon aria-hidden /> : <FiSun aria-hidden />}
+          <FiSun aria-hidden />
+          <span
+            className={`pf-theme-track${theme.colorMode === 'dark' ? ' is-dark' : ''}`}
+            aria-hidden
+          >
+            <span />
+          </span>
         </button>
         <details
           ref={about}
@@ -129,6 +145,13 @@ export function Header({
               <SelectControl
                 aria-label={t('workbench.language')}
                 value={languagePreference}
+                displayValue={
+                  languagePreference === 'auto'
+                    ? SUPPORTED_LANGUAGES.find(
+                        (language) => language.code === i18n.resolvedLanguage,
+                      )?.label
+                    : undefined
+                }
                 onValueChange={selectLanguage}
               >
                 <option value="auto">{t('workbench.languageAuto')}</option>

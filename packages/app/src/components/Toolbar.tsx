@@ -85,6 +85,7 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
         )
       }
     >
+      <span className="pf-scope-caption">{t('workbench.settingsScope')}</span>
       <SelectionRail
         activeKey={scope}
         className="pf-scope-switch"
@@ -211,55 +212,47 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
           />
         </div>
         <fieldset disabled={!resize.enabled} className="pf-resize-controls">
-          <div className="pf-segmented" role="group" aria-label={t('settings.resizeSettings')}>
-            <button
-              aria-pressed={resize.mode === 'absolute'}
-              onClick={() => updateResize({ mode: 'absolute' })}
-            >
-              {t('settings.absoluteMode')}
-            </button>
-            <button
-              aria-pressed={resize.mode === 'percentage'}
-              onClick={() => updateResize({ mode: 'percentage' })}
-            >
-              {t('settings.percentageMode')}
-            </button>
-          </div>
           {resize.mode === 'absolute' ? (
-            <div className="pf-dimensions">
+            <div className="pf-dimensions pf-dimensions-inline">
               <label className="pf-field">
                 <span>
                   {t(resize.method === 'contain' ? 'workbench.maxWidth' : 'settings.width')}
                 </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={10000}
-                  value={resize.maxWidth}
-                  aria-label={t('settings.width')}
-                  onChange={(event) =>
-                    updateResize({
-                      maxWidth: bounded(event.target.value, resize.maxWidth, 1, 10000),
-                    })
-                  }
-                />
+                <span className="pf-unit-input">
+                  <input
+                    type="number"
+                    min={1}
+                    max={10000}
+                    value={resize.maxWidth}
+                    aria-label={t('settings.width')}
+                    onChange={(event) =>
+                      updateResize({
+                        maxWidth: bounded(event.target.value, resize.maxWidth, 1, 10000),
+                      })
+                    }
+                  />
+                  <span aria-hidden="true">px</span>
+                </span>
               </label>
               <label className="pf-field">
                 <span>
                   {t(resize.method === 'contain' ? 'workbench.maxHeight' : 'settings.height')}
                 </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={10000}
-                  value={resize.maxHeight}
-                  aria-label={t('settings.height')}
-                  onChange={(event) =>
-                    updateResize({
-                      maxHeight: bounded(event.target.value, resize.maxHeight, 1, 10000),
-                    })
-                  }
-                />
+                <span className="pf-unit-input">
+                  <input
+                    type="number"
+                    min={1}
+                    max={10000}
+                    value={resize.maxHeight}
+                    aria-label={t('settings.height')}
+                    onChange={(event) =>
+                      updateResize({
+                        maxHeight: bounded(event.target.value, resize.maxHeight, 1, 10000),
+                      })
+                    }
+                  />
+                  <span aria-hidden="true">px</span>
+                </span>
               </label>
             </div>
           ) : (
@@ -290,7 +283,7 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
               </div>
             </label>
           )}
-          <label className="pf-field">
+          <label className="pf-field pf-field-inline">
             <span>{t('settings.fitMethod')}</span>
             <SelectControl
               disabled={!resize.enabled}
@@ -312,6 +305,23 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
       </section>
       <details className="pf-settings-extra">
         <summary>{t('settings.advancedTitle')}</summary>
+        <fieldset disabled={!resize.enabled} className="pf-resize-mode-setting">
+          <legend>{t('settings.resizeSettings')}</legend>
+          <div className="pf-segmented" role="group" aria-label={t('settings.resizeSettings')}>
+            <button
+              aria-pressed={resize.mode === 'absolute'}
+              onClick={() => updateResize({ mode: 'absolute' })}
+            >
+              {t('settings.absoluteMode')}
+            </button>
+            <button
+              aria-pressed={resize.mode === 'percentage'}
+              onClick={() => updateResize({ mode: 'percentage' })}
+            >
+              {t('settings.percentageMode')}
+            </button>
+          </div>
+        </fieldset>
         <AdvancedControls settings={settings} updateSettings={updateSettings} />
       </details>
     </div>

@@ -149,7 +149,11 @@
     },
     "zoom": {
       "fit": "適應"
-    }
+    },
+    "zoomIn": "放大",
+    "zoomOut": "縮小",
+    "zoomLevel": "縮放比例",
+    "fullscreen": "切換全螢幕"
   },
   "landing": {
     "eyebrow": "本機優先的圖片工具箱",
@@ -268,7 +272,7 @@
     "licenses": "授權條款",
     "sponsor": "由 Riven Cloud 提供贊助",
     "outputSettings": "輸出設定",
-    "settingsScope": "設定作用範圍",
+    "settingsScope": "套用範圍",
     "allImages": "全部圖片",
     "thisImage": "僅此圖片",
     "globalHint": "使用個別設定的圖片不受此處修改影響。",
@@ -321,7 +325,8 @@
     "ios": "將照片與影片，轉換為通用格式。",
     "home": "PicForge 首頁",
     "summary": "壓縮圖片，拆分動態照片，轉換原況照片。",
-    "privacy": "檔案始終留在你的裝置上。"
+    "privacy": "檔案始終留在你的裝置上。",
+    "tagline": "讓影像更輕盈"
   },
   "about": {
     "description": "在本機完成圖片壓縮、動態照片擷取與原況照片轉換。檔案始終留在你的裝置上。",

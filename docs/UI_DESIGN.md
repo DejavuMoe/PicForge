@@ -16,13 +16,13 @@ mounted, including when returning home and using Back/Forward. See the latest
 `WorkbenchLayout` provides shared queue, viewer and inspector regions.
 `Inspector`, `SwitchControl`, `SelectControl` and `ConfirmDialog` provide consistent
 controls and focus behavior. `Header` contains tool navigation, language, theme
-and a mobile preferences menu. `ProjectInfo` now has separate Landing and workbench
-variants: the Landing footer stays expanded, centered and wraps naturally; tool
-footers retain a compact About entry beside batch actions. `AboutDialog` presents
-project and open-source information in-app, with optional complete license texts.
+and a mobile preferences menu. `ProjectInfo` has separate Landing and workbench variants. The user removed the
+About entry: Landing shows copyright/GitHub and a separate sponsorship line,
+centered and naturally wrapping. Tool footers retain GitHub beside batch actions.
+License files remain available in the distribution.
 
-Desktop uses a 60px optical header with a 12px outer inset, 256px queue and 304px
-inspector around a flexible neutral preview. Navigation, preview tabs and settings
+Desktop uses an 80px optical header with an 18px outer inset, proportional
+queue/inspector widths around a flexible preview, and separate beveled panes. Navigation, preview tabs and settings
 scope share one moving glass selection thumb, without underline indicators. The
 preview control dock refracts the image beneath it; source/result pixels and all
 exported data remain unchanged. The inspector scrolls its settings independently
@@ -137,3 +137,5 @@ focusing modal triggers; this was fixed and rechecked. Their optical fallback
 was retained. Production static-image export and offline reload/re-encode passed;
 real camera samples were omitted. An actual interaction recording and final
 screenshots are under `/tmp/picforge-v2-qa`; they are temporary QA evidence.
+
+The prototype-fidelity follow-up in [interaction-redesign.md](design/interaction-redesign.md) supersedes earlier footer/About and simplified-hero descriptions in historical validation notes. It also moves percentage mode into Advanced settings, adds a real fullscreen/zoom dock, and aligns component geometry across light/dark themes.

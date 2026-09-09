@@ -41,7 +41,7 @@ This checklist captures the main manual and browser-based checks for each releas
 
 - Layout is usable at 320x844, 375x667, 390x844, 768x1024, 1280x720, and 1440x900.
 - On phones, all three home tool entries are reachable before the sample comparison.
-- Native language/tool/format selects support platform keyboard and touch pickers.
+- Shared language/tool/format comboboxes have themed popups and support keyboard and touch input.
 - Numeric fields accept empty drafts, commit on blur/Enter, and restore on Escape.
 - System theme changes and disabled local storage do not break the page.
 - File selection and row actions are separate buttons; keyboard focus remains visible.
@@ -86,7 +86,15 @@ Record exact engines, dimensions and limitations. A structural invalid MP4 delib
 - Home number, title, description, format and arrow columns share the same x positions across rows, including different text lengths and all five locales.
 - Open/close Advanced settings and Presets at 1160×571 and 1576×828; fields retain width when a scrollbar appears. Verify the same behavior on tablet/mobile and with a selected result/download footer.
 - Closed selects show the application's chevron and deliberate hover/focus/disabled states. Number controls do not reveal browser-specific spinner buttons on hover.
-- The closed language picker shows the current language name. Explicitly choosing that same language must still leave automatic mode; returning to automatic must remove the persisted preference.
+- The language picker contains exactly five languages and no automatic option. Initial browser detection still works; explicitly choosing the current language persists that choice.
 - Enter commits and Escape cancels numeric drafts without losing focus. Tab continues to the next control.
 - Touch/non-hover inputs do not receive sticky desktop hover decoration, and keyboard focus is still visible.
 - Run `PICFORGE_UI_GROUPS=details,usability node scripts/ui-check.mjs` for these targeted regressions; results include measured column/disclosure drift.
+
+## Complete controls and footer review
+
+- Open every selector on home/compression/Android/iOS, including advanced options and fullscreen zoom. Verify actual popup colors, bounds, keyboard search/arrows/Escape/Tab and disabled behavior.
+- Click and drag the home comparison, then move away: neither the image nor its handle retains a focus frame. Keyboard arrows show focus on the handle only.
+- All pages have a single top-right GitHub icon. Copyright and Riven Cloud remain visible; desktop aligns them to opposite sides, mobile stacks and centers them.
+- No native select, title tooltip or video control UI appears in the web page. Verify app hints and synthetic-video play/pause/seek/mute/hidden-tool pause, or a clear fallback with a valid download.
+- Use `PICFORGE_UI_GROUPS=controls,video` with `PICFORGE_UI_VIDEO` pointing to a temporary synthetic MP4. Do not infer video qualification from a UI-only run.

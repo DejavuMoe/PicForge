@@ -1,5 +1,7 @@
 # PicForge: a quieter image workbench
 
+> The later controls/copy review supersedes this brief’s native-select, automatic-option, slogan and footer details. See [the current UI specification](../UI_DESIGN.md). The original concept and asset provenance below remain historical records.
+
 Status: implementation brief, 2026-09-09. The current user request supersedes the green optical prototypes and the previous particle/glass requirements. Historical design and media-validation reports remain evidence of their respective revisions, not the specification for this redesign.
 
 ## Product decisions

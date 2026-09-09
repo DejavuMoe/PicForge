@@ -16,7 +16,7 @@ No account, installation, upload or telemetry is required. The app loads its own
 
 ## Use PicForge
 
-1. Choose a tool on the home page. **Try this image** opens a generated, non-personal sample in the real compression tool.
+1. Choose a tool on the home page. **Try sample** opens a generated, non-personal sample in the real compression tool.
 2. Add files. Compression also accepts drag-and-drop and image paste. For Live Photos, import the matching photo and video together.
 3. Adjust settings. Compression starts automatically; Motion/Live Photo tools have an explicit batch action.
 4. Compare the original and result, inspect details with zoom, then download one file or all completed results. Multiple compression results and Motion/Live Photo batches include a ZIP manifest.

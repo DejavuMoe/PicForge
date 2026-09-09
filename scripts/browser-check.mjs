@@ -80,7 +80,8 @@ try {
     const label = labels[name] || name;
     const picker = page.locator('.pf-mobile-tool .pf-select');
     if (await picker.isVisible()) {
-      await picker.selectOption({ label });
+      await picker.click();
+      await page.getByRole('option', { name: label, exact: true }).click();
     } else
       await page.locator('.pf-tool-nav').getByRole('button', { name: label, exact: true }).click();
   };

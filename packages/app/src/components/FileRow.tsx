@@ -51,7 +51,7 @@ export const FileRow = memo(function FileRow({
           />
         </span>
         <span className="pf-file-row-main">
-          <span className="pf-file-name" title={file.file.name}>
+          <span className="pf-file-name" data-tooltip={file.file.name}>
             {file.file.name}
           </span>
           <span id={`file-status-${file.id}`} className={`pf-file-status-text is-${file.status}`}>
@@ -116,7 +116,7 @@ function RowAction({
       type="button"
       className="pf-row-action"
       aria-label={label}
-      title={label}
+      data-tooltip={label}
       onClick={onClick}
     >
       {children}

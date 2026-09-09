@@ -11,7 +11,7 @@
   "actions": {
     "download": "ダウンロード",
     "downloadZip": "ZIP ダウンロード ({{count}})",
-    "packing": "パック中...",
+    "packing": "ZIP を作成中…",
     "clearAll": "すべてクリア",
     "resetDefaults": "リセット",
     "confirm": "確認",
@@ -29,33 +29,33 @@
     "toggleColorMode": "ダークモード切替",
     "formatHint": "JPEG：写真向け | WebP：バランス良好 | PNG：ロスレス | AVIF：最小サイズ",
     "adv": {
-      "progressive": "プログレッシブ表示（読み込み速度が速く見える）",
-      "chromaSubsample": "4:4:4 = 完全な色 detail；4:2:0 = 小さいファイル、軽微な色損失",
-      "trellis": "圧縮を最適化（遅いがファイルが少し小さくなる）",
-      "lossless": "品質劣化なし、ただしファイルサイズは大きくなる",
-      "method": "0 = 最速、6 = 最小ファイル（0-6）",
-      "alphaCompression": "透明領域を圧縮（ファイルが小さくなる）",
-      "interlace": "プログレッシブ読み込み（圧縮は遅い、大きな画像向け）",
-      "speed": "0 = 最高品質、10 = 最速エンコード（0-10）",
-      "subsample": "4:4:4 = 完全な色；4:2:0 = 小さいファイル、軽微な色損失"
+      "progressive": "JPEG を段階的に表示します。",
+      "chromaSubsample": "4:4:4 は色の詳細を保持し、4:2:0 は通常サイズを小さくします。",
+      "trellis": "JPEG を追加で最適化します。処理時間は長くなります。",
+      "lossless": "デコード後の画素を非可逆圧縮せずに保持します。",
+      "method": "0 は速度優先、6 はサイズ優先です。",
+      "alphaCompression": "透明度チャンネルを圧縮します。",
+      "interlace": "PNG を段階的に表示します。",
+      "speed": "0 は圧縮優先、10 は速度優先です。",
+      "subsample": "4:4:4 は色の詳細を保持し、4:2:0 は通常サイズを小さくします。"
     }
   },
   "presets": {
     "balanced": {
       "label": "バランス",
-      "description": "WebP 75% — 品質と容量のバランス"
+      "description": "WebP · 画質 75"
     },
     "web-photo": {
       "label": "ウェブ写真",
-      "description": "JPEG 80% — ウェブ向け写真"
+      "description": "JPEG · 画質 80"
     },
     "lossless": {
       "label": "ロスレス",
-      "description": "PNG 100% — 品質劣化なし"
+      "description": "PNG · 可逆圧縮"
     },
     "high-compress": {
       "label": "高圧縮",
-      "description": "AVIF 50% — 最小容量"
+      "description": "AVIF · 画質 50"
     }
   },
   "fileQueue": {
@@ -73,7 +73,7 @@
     "processing": "{{count}} 件処理中",
     "failed": "{{count}} 件失敗",
     "noChange": "変化なし",
-    "loadingCodec": "コーデック読み込み中..."
+    "loadingCodec": "エンコーダーを読み込み中…"
   },
   "settings": {
     "title": "プリセット",
@@ -84,11 +84,11 @@
     "customImageSettings": "画像設定",
     "width": "幅",
     "height": "高さ",
-    "absoluteMode": "絶対サイズ",
+    "absoluteMode": "ピクセル",
     "percentageMode": "パーセント",
     "fitMethod": "拡縮方法",
     "fit": {
-      "contain": "枠内に収める",
+      "contain": "指定範囲に収める",
       "cover": "中央で切り抜く",
       "stretch": "引き伸ばし"
     },
@@ -99,19 +99,19 @@
     },
     "adv": {
       "progressive": "プログレッシブ",
-      "chromaSubsample": "クロマ",
+      "chromaSubsample": "色のサンプリング",
       "trellis": "Trellis",
       "lossless": "ロスレス",
       "method": "圧縮方法",
-      "alphaCompression": "Alpha",
+      "alphaCompression": "アルファ圧縮",
       "interlace": "インターレース",
-      "speed": "速度",
-      "subsample": "サブサンプル"
+      "speed": "エンコード速度",
+      "subsample": "色のサンプリング"
     }
   },
   "dialog": {
     "clearTitle": "全てのファイルを削除しますか？",
-    "clearBody": "全てのファイルと圧縮結果が削除されます。",
+    "clearBody": "リストのファイルと結果を削除します。元のファイルは変更しません。",
     "resetTitle": "デフォルトにリセットしますか？",
     "resetBody": "全てのファイルがデフォルト設定で再圧縮されます。"
   },
@@ -120,7 +120,7 @@
   },
   "compat": {
     "unsupportedTitle": "このブラウザは対応していません",
-    "unsupportedBody": "PicForge には WebAssembly、Web Worker、Canvas、ローカルファイル機能に対応したモダンブラウザが必要です。",
+    "unsupportedBody": "必要な機能がありません。ブラウザーを更新するか別のブラウザーをお試しください。",
     "missingFeatures": "不足している機能：{{features}}"
   },
   "pwa": {
@@ -128,14 +128,14 @@
     "refresh": "更新"
   },
   "errorBoundary": {
-    "title": "問題が発生しました",
-    "copy": "ツールでエラーが発生しました。再読み込みするとキューが消去されるため、ファイルを追加し直してください。",
+    "title": "ツールを表示できません",
+    "copy": "再読み込みすると現在のリストが消去されます。ファイルを追加し直してください。",
     "reload": "ページを再読み込み"
   },
   "preview": {
     "original": "元画像",
     "compressed": "結果",
-    "compressing": "圧縮中...",
+    "compressing": "処理中…",
     "selectHint": "画像を選択してプレビュー",
     "compareMode": "比較モード",
     "backToList": "一覧に戻る",
@@ -153,20 +153,19 @@
     "zoomIn": "拡大",
     "zoomOut": "縮小",
     "zoomLevel": "ズーム倍率",
-    "fullscreen": "全画面表示の切り替え"
+    "fullscreen": "全画面表示の切り替え",
+    "videoControls": "動画の再生",
+    "play": "再生",
+    "pause": "一時停止",
+    "mute": "プレビューをミュート",
+    "unmute": "ミュート解除",
+    "seek": "再生位置"
   },
   "motion": {
     "compression": "画像圧縮",
     "android": "Android モーションフォト",
     "ios": "iOS Live Photos",
-    "local": "ローカルで処理。ウェブで活用。",
-    "androidBody": "モーションフォトを元の JPG と MP4 に一括分離。すべてブラウザー内で処理します。",
-    "iosBody": "未編集の Live Photo 原本から、同名の JPG + H.264 MP4 をウェブ用に作成します。",
-    "output": "出力設定",
     "lossless": "元の JPG + MP4 · 再エンコードなし",
-    "specImageValue": "元の画像バイト",
-    "specVideoValue": "元の動画バイト",
-    "specCodecValue": "再エンコードなし",
     "preset": "動画プリセット",
     "balanced": "バランス · 1920px",
     "quality": "高画質 · 1920px",
@@ -175,17 +174,16 @@
     "sourceFps": "元のタイムスタンプを保持",
     "jpegQuality": "JPEG 品質",
     "audio": "音声を保持",
-    "androidNote": "元の画像と動画のバイトを保持します。プレビュー再生は元のコーデックに依存します。",
-    "iosNote": "ウェブ用の派生ファイルです。HEIC のメタデータ、HDR、補助画像は保持しません。1 ファイル 100 MB、HEIC は 5000 万画素まで。",
-    "offline": "ファイルは端末に留まります。変換エンジンは初回使用時に読み込み、キャッシュ後にオフラインで利用できます。",
-    "queue": "処理キュー",
-    "drop": "原本をここにドロップ",
+    "androidNote": "元の JPG・MP4 を保持します。動画の再生可否は元のコーデックに依存します。",
+    "iosNote": "HEIC のメタデータ・HDR・補助画像は保持しません。1ファイル100 MB、HEICは5000万画素まで。",
+    "offline": "オフライン利用には変換エンジンの読み込みとキャッシュが必要です。",
+    "drop": "元ファイルを追加",
     "select": "ファイルを選択",
-    "pairing": "同名ファイルをペアにします。写真と動画を一緒に追加してください。単独ファイルも変換できます。同名の重複は先に解消してください。",
+    "pairing": "Apple 識別子ではなくファイル名で組み合わせます。写真・動画を一緒に追加できます。単体にも対応しますが、重複名は解決してください。",
     "count": "{{done}} / {{total}} 件完了",
     "clear": "キューをクリア",
-    "newBatch": "新しいバッチ",
-    "lockedHint": "結果は保持されています。追加のファイルを処理するには、新しいバッチを開始してください。現在のキューと結果は消去されます。",
+    "newBatch": "新しい一括処理",
+    "lockedHint": "追加するには結果を保存し、現在のリストをクリアしてください。",
     "cancel": "キャンセル",
     "start": "バッチ処理を開始",
     "exporting": "ZIP 作成中…",
@@ -195,7 +193,7 @@
     "pair": "Live Photo ペア",
     "still": "静止画",
     "video": "動画のみ",
-    "queued": "準備完了",
+    "queued": "処理待ち",
     "processing": "処理中…",
     "done": "完了",
     "error": "失敗",
@@ -203,7 +201,7 @@
     "errors": {
       "unsupported": "未対応のファイル形式です。",
       "ambiguous": "同名ファイルが重複しています。バッチをクリアして一意のペアを選択してください。",
-      "invalidMotion": "この JPEG には有効な付加 MP4 が見つかりません。チャットや SNS アプリ経由で保存・転送された写真はモーションデータが削除されていることがあります。カメラアプリの原本をご利用ください。",
+      "invalidMotion": "動画が見つかりません。共有したコピーではなく、カメラの元ファイルを使用してください。",
       "invalidHeic": "HEIC 画像をデコードできません。",
       "tooManyPixels": "HEIC が 5000 万画素の上限を超えています。",
       "tooLarge": "ファイルが 100 MB の上限を超えています。",
@@ -214,30 +212,28 @@
       "exportFailed": "ZIP 出力に失敗しました。個別にダウンロードするかバッチを小さくしてください。",
       "batchLimit": "1 バッチは 100 ファイル、合計 {{maxMB}} MB までです。"
     },
-    "previewUnavailable": "このブラウザーでは動画をプレビューできません。出力ファイルはダウンロードできます。"
+    "previewUnavailable": "動画をプレビューできません。ダウンロードは可能です。"
   },
   "workbench": {
     "tools": "処理ツール",
     "language": "言語",
-    "about": "PicForge について",
-    "licenses": "ライセンス",
-    "sponsor": "Riven Cloud の支援",
+    "sponsor": "スポンサー：Riven Cloud",
     "outputSettings": "出力設定",
     "settingsScope": "適用範囲",
     "allImages": "すべての画像",
     "thisImage": "この画像のみ",
-    "globalHint": "個別設定の画像には、この変更は適用されません。",
-    "customHint": "この設定は選択中の画像にのみ適用されます。",
+    "globalHint": "個別設定の画像には適用しません。",
+    "customHint": "この画像の設定は独立しています。",
     "downloadCurrent": "この画像を保存",
     "qualityValue": "画質の数値",
     "format": "形式",
     "result": "結果",
-    "notReady": "準備中",
+    "notReady": "結果なし",
     "maxWidth": "最大幅",
     "maxHeight": "最大高さ",
-    "containHint": "縦横比を維持し、元画像を拡大しません。",
-    "resetBody": "全体設定の画像を初期設定に戻します。個別設定は維持されます。",
-    "local": "ファイルはこの端末内で処理されます",
+    "containHint": "縦横比を維持。拡大しません。",
+    "resetBody": "一括設定をリセットします。個別設定は保持します。",
+    "local": "端末内で処理",
     "completedCount": "{{done}} / {{total}} 完了",
     "cancelProcessing": "処理を中止",
     "exportCompleted": "結果をダウンロード",
@@ -245,77 +241,49 @@
     "files": "ファイル",
     "pairs": "ファイルグループ",
     "add": "追加",
-    "noFiles": "画像はまだありません",
-    "emptyTitle": "画像を追加して始める",
-    "dropHint": "ファイルをドロップするか、画像を貼り付けてください。",
+    "noFiles": "ファイル未追加",
+    "emptyTitle": "画像を追加",
+    "dropHint": "画像をドロップ、または貼り付け。",
     "original": "元画像",
     "compare": "比較",
-    "updating": "設定が変更されました。新しい結果ができるまで元画像を表示します。",
+    "updating": "結果を更新中です。元画像を表示しています。",
     "photo": "写真",
     "video": "動画",
     "downloadJpg": "JPG を保存",
     "downloadMp4": "MP4 を保存",
-    "pairingHelp": "ペアと形式について",
-    "androidImportHint": "カメラの元の JPG モーションフォトから写真と動画を取り出します。",
-    "iosImportHint": "HEIC と MOV をまとめて追加。写真や動画のみでも処理できます。",
-    "retryUnfinished": "未完了の項目を再試行",
+    "pairingHelp": "形式と制限",
+    "androidImportHint": "カメラから取り出した元の JPG を追加してください。",
+    "iosImportHint": "HEIC・MOV をまとめて追加。写真・動画単体も変換できます。",
+    "retryUnfinished": "未完了のファイルを再試行",
     "outputFiles": "出力ファイル",
     "conversionSettings": "変換設定",
-    "originalBytes": "元のバイト列を保持",
+    "originalBytes": "再エンコードなし",
     "extractFiles": "未処理のファイルを抽出",
-    "processingFailed": "画像を処理できませんでした。再試行するか、別の元ファイルを選んでください。",
+    "processingFailed": "画像を処理できません。再試行するか別のファイルを追加してください。",
     "errorDetails": "詳細",
     "preferences": "環境設定",
-    "languageAuto": "自動選択",
     "skipToContent": "コンテンツへ移動",
     "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "画質を下げると容量が小さくなります。保存前に細部を比較してください。",
-    "losslessHint": "PNG は可逆圧縮です。画質スライダーは適用されません。",
+    "losslessHint": "PNG は可逆圧縮のため画質設定は不要です。",
     "smaller": "{{percent}}% 小さくなりました",
-    "larger": "{{percent}}% 大きくなりました"
+    "larger": "{{percent}}% 大きくなりました",
+    "batchActions": "一括操作"
   },
   "entry": {
-    "title": "画像を、軽く。",
-    "description": "画像の圧縮、モーションフォトの抽出、Live Photos の変換。ファイルはお使いの端末内で処理します。",
-    "compression": "容量とサイズを、思いどおりに。",
-    "android": "元の写真と動画をそのまま抽出。",
-    "ios": "HEIC + MOV を共有しやすい形式に。",
+    "title": "画像ツール",
+    "compression": "画像をまとめて圧縮・形式変換・リサイズ。",
+    "android": "元の写真と動画を分けて保存。",
+    "ios": "HEIC・MOV を JPG・MP4 に変換。",
     "home": "PicForge ホーム",
-    "summary": "画像の圧縮、モーションフォトの分離、Live Photos の変換をひとつの場所で。",
-    "privacy": "ファイルはお使いの端末内で処理します。",
-    "tagline": "画像をもっと軽やかに",
-    "principles": {
-      "local": {
-        "title": "アップロード不要",
-        "body": "すべての処理はブラウザー内で完結。"
-      },
-      "originals": {
-        "title": "元のファイルはそのまま",
-        "body": "処理結果を別のファイルとして保存。"
-      },
-      "ready": {
-        "title": "すぐに使える",
-        "body": "登録もインストールも不要。"
-      }
-    },
-    "titleAccent": "細部は、大切に。",
+    "summary": "画像の圧縮、モーションフォトの抽出、Live Photos の変換。",
+    "privacy": "ファイルは送信せず、元のファイルは変更しません。",
     "sampleAlt": "淡い青空と、細かな砂紋が広がる金色の砂丘。",
     "sampleCompare": "JPEG と WebP のサンプルを比較",
     "samplePosition": "元の JPEG を {{value}}% 表示",
-    "sampleNote": "サンプル画像 · ドラッグして比較",
-    "trySample": "この画像で試す",
-    "sampleFailed": "サンプルを読み込めません。ご自身の画像を選択してください。"
-  },
-  "about": {
-    "description": "画像圧縮、モーションフォトの抽出、Live Photos の変換を端末内で行うツールです。ファイルはアップロードされません。",
-    "openSource": "オープンソース",
-    "licenseHint": "アプリと各メディアコンポーネントには、それぞれのライセンスが適用されます。",
-    "readLicense": "ライセンスを読む",
-    "allNotices": "すべての第三者表記",
-    "close": "閉じる",
-    "back": "概要に戻る",
-    "loading": "ライセンスを読み込み中…",
-    "unavailable": "ライセンスを読み込めませんでした。もう一度お試しください。"
+    "sampleNote": "サンプル · ドラッグして比較",
+    "trySample": "サンプルを開く",
+    "sampleFailed": "サンプルを読み込めません。画像を追加してください。"
   },
   "nav": {
     "compression": "画像圧縮",

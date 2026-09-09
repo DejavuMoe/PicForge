@@ -3,7 +3,6 @@
   box-sizing: border-box;
 }
 :root {
-  --pf-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23636360' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
   --pf-cjk-font: 'Noto Sans CJK SC';
   --pf-font-family:
     system-ui, -apple-system, 'Segoe UI', var(--pf-cjk-font), 'PingFang SC', 'Microsoft YaHei',
@@ -55,7 +54,6 @@ html:lang(ko) {
   --pf-cjk-font: 'Noto Sans CJK KR';
 }
 html[data-pf-theme='dark'] {
-  --pf-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23b5b5b1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
   --pf-page-bg: #181818;
   --pf-surface-bg: #242424;
   --pf-card-bg: #202020;
@@ -84,6 +82,9 @@ html[data-pf-theme='dark'] {
   --pf-focus-ring: 0 0 0 2px #202020, 0 0 0 4px #f08b76;
   --pf-shadow-popover: 0 8px 28px rgb(0 0 0 / 30%);
 }
+*:focus {
+  outline: none;
+}
 html,
 body,
 #root {
@@ -110,7 +111,9 @@ button {
   cursor: pointer;
 }
 button,
-summary {
+summary,
+input,
+a {
   -webkit-tap-highlight-color: transparent;
 }
 button:disabled,
@@ -138,7 +141,7 @@ input,
 select {
   touch-action: manipulation;
 }
-:focus-visible {
+:where(html[data-pf-input='keyboard']) :focus {
   outline: 2px solid var(--pf-accent);
   outline-offset: 3px;
 }
@@ -448,9 +451,9 @@ html[data-pf-theme='dark'] .pf-logo {
 .pf-preview-tabs button:disabled {
   color: var(--pf-text-disabled);
 }
-.pf-scope-switch button:focus-visible,
-.pf-segmented button:focus-visible,
-.pf-preview-tabs button:focus-visible {
+:where(html[data-pf-input='keyboard']) .pf-scope-switch button:focus,
+:where(html[data-pf-input='keyboard']) .pf-segmented button:focus,
+:where(html[data-pf-input='keyboard']) .pf-preview-tabs button:focus {
   outline-offset: -3px;
 }
 .pf-scope-note,
@@ -550,7 +553,7 @@ input[type='range']::-moz-range-thumb {
   border: 0;
   background: var(--pf-accent);
 }
-input[type='range']:focus-visible {
+:where(html[data-pf-input='keyboard']) input[type='range']:focus {
   outline-offset: 0;
 }
 .pf-settings-section {
@@ -653,8 +656,8 @@ fieldset:disabled .pf-segmented button {
 .pf-settings-extra[open] > summary::after {
   transform: rotate(45deg);
 }
-.pf-settings-extra > summary:focus-visible,
-.pf-inspector-disclosure > summary:focus-visible {
+:where(html[data-pf-input='keyboard']) .pf-settings-extra > summary:focus,
+:where(html[data-pf-input='keyboard']) .pf-inspector-disclosure > summary:focus {
   outline-offset: -2px;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -686,25 +689,79 @@ fieldset:disabled .pf-segmented button {
   max-width: 130px;
 }
 .pf-select {
-  display: block;
-  appearance: none;
-  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   width: 100%;
   min-width: 0;
-  padding-inline-end: 32px;
   text-align: start;
-  text-overflow: ellipsis;
   cursor: pointer;
-  background-image: var(--pf-select-arrow);
-  background-position: right 10px center;
-  background-size: 16px 16px;
-  background-repeat: no-repeat;
+  appearance: none;
   box-shadow: none;
+  padding: 7px 10px;
 }
-.pf-select option {
-  background-color: var(--pf-card-bg);
+.pf-select > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-select > svg {
+  width: 14px;
+  height: 14px;
+  color: var(--pf-text-secondary);
+}
+.pf-select[aria-expanded='true'] {
+  border-color: var(--pf-border-hover);
+  background-color: var(--pf-hover-bg);
+}
+.pf-select[aria-expanded='true'] > svg {
+  transform: rotate(180deg);
+}
+.pf-select-menu {
+  position: fixed;
+  z-index: 3000;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  border: 1px solid var(--pf-border-default);
+  border-radius: 6px;
+  background: var(--pf-card-bg);
   color: var(--pf-text-primary);
+  box-shadow: var(--pf-shadow-popover);
 }
+.pf-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--pf-text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: start;
+}
+.pf-select-option > svg {
+  width: 15px;
+  height: 15px;
+}
+.pf-select-option[aria-selected='true'] {
+  font-weight: 600;
+}
+.pf-select-option[data-active='true'] {
+  background: var(--pf-selected-bg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-select-option:hover:enabled {
+    background: var(--pf-hover-bg);
+  }
+}
+
 input[type='number'] {
   appearance: textfield;
   box-shadow: none;
@@ -714,8 +771,8 @@ input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-.pf-select:focus-visible,
-input[type='number']:focus-visible {
+:where(html[data-pf-input='keyboard']) .pf-select:focus,
+:where(html[data-pf-input='keyboard']) input[type='number']:focus {
   border-color: var(--pf-accent);
   outline: 2px solid var(--pf-accent);
   outline-offset: -2px;
@@ -724,8 +781,8 @@ input[type='number']:focus-visible {
   background-color: var(--pf-active-bg);
 }
 @media (hover: hover) and (pointer: fine) {
-  .pf-select:hover:enabled:not(:focus-visible),
-  input[type='number']:hover:enabled:not(:focus-visible) {
+  .pf-select:hover:enabled,
+  input[type='number']:hover:enabled {
     background-color: var(--pf-hover-bg);
     border-color: var(--pf-border-hover);
   }
@@ -865,7 +922,7 @@ input[type='number']:focus-visible {
 .pf-file-row.is-selected {
   background: var(--pf-selected-bg);
 }
-.pf-file-row:focus-visible {
+:where(html[data-pf-input='keyboard']) .pf-file-row:focus {
   outline-offset: -2px;
 }
 .pf-file-row-selected-bar {
@@ -1468,7 +1525,7 @@ input[type='number']:focus-visible {
   background: var(--pf-selected-bg);
   box-shadow: inset 2px 0 var(--pf-accent);
 }
-.pf-motion-row:focus-visible {
+:where(html[data-pf-input='keyboard']) .pf-motion-row:focus {
   outline-offset: -2px;
 }
 .pf-motion-thumb {
@@ -1751,7 +1808,7 @@ input[type='number']:focus-visible {
   .pf-mobile-tool .pf-select {
     background-color: transparent;
     border-color: transparent;
-    padding: 4px 28px 4px 6px;
+    padding: 4px 6px;
     font-size: 13px;
   }
   .pf-header-actions {
@@ -2129,7 +2186,7 @@ input[type='number']:focus-visible {
 .pf-language-control .pf-select {
   max-width: 152px;
   min-width: 0;
-  padding: 6px 30px 6px 10px;
+  padding: 6px 10px;
 }
 .pf-workspace-heading {
   display: flex;
@@ -2316,7 +2373,7 @@ input[type='number']:focus-visible {
 .pf-zoom-select {
   min-width: 65px;
   width: 80px;
-  padding: 4px 24px 4px 6px;
+  padding: 4px 6px;
   font-size: 12px;
   border-color: transparent;
 }
@@ -2328,38 +2385,7 @@ input[type='number']:focus-visible {
 .pf-preview:fullscreen .pf-preview-viewport {
   flex: 1;
 }
-.pf-project-info {
-  font-size: 11px;
-  color: var(--pf-text-secondary);
-}
-.pf-project-links {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-}
-.pf-project-info a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  color: inherit;
-  text-decoration: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .pf-project-info a:hover {
-    color: var(--pf-text-primary);
-    text-decoration: underline;
-  }
-}
-.pf-project-info--landing {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  text-align: center;
-}
-.pf-project-info--landing .pf-project-links {
-  justify-content: center;
-}
+
 .pf-project-sponsor {
   color: var(--pf-text-tertiary);
 }
@@ -2556,15 +2582,6 @@ input[type='number']:focus-visible {
   .pf-viewer-footer {
     padding: 4px 10px;
   }
-  .pf-project-info--workbench {
-    display: none;
-  }
-  .pf-project-info--landing a {
-    min-height: 44px;
-  }
-  .pf-project-info--landing {
-    gap: 0;
-  }
   .pf-motion-workspace .pf-batch-status {
     flex-basis: auto;
   }
@@ -2634,7 +2651,7 @@ input[type='number']:focus-visible {
 .pf-file-select .pf-file-status-text {
   display: block;
 }
-.pf-file-select:focus-visible {
+:where(html[data-pf-input='keyboard']) .pf-file-select:focus {
   outline-offset: -3px;
 }
 .pf-file-row-actions {
@@ -2766,35 +2783,178 @@ input[type='number']:focus-visible {
 }
 
 @media (forced-colors: active) {
-  .pf-select {
-    appearance: auto;
-    background-image: none;
-    padding-inline-end: 8px;
+  .pf-select-menu {
+    border-color: ButtonText;
+  }
+  .pf-select-option[data-active='true'] {
+    background: Highlight;
+    color: HighlightText;
   }
 }
 
-.pf-language-select {
-  position: relative;
-  display: block;
-}
-.pf-language-select > .pf-select {
-  color: transparent;
-}
-.pf-language-value {
-  position: absolute;
-  inset: 0 32px 0 10px;
+.pf-site-footer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  min-height: 48px;
+  padding: 8px 24px;
+  border-top: 1px solid var(--pf-border-default);
+  background: var(--pf-card-bg);
+  color: var(--pf-text-secondary);
+  font-size: 12px;
+}
+.pf-site-footer a {
+  color: inherit;
+  text-decoration: none;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-site-footer a:hover {
+    color: var(--pf-text-primary);
+    text-decoration: underline;
+  }
+}
+.pf-github-link {
+  text-decoration: none;
+}
+.pf-status-bar {
+  min-height: 56px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.pf-tooltip {
+  position: fixed;
+  z-index: 4000;
+  max-width: min(300px, calc(100vw - 24px));
   pointer-events: none;
+  padding: 7px 10px;
+  border: 1px solid var(--pf-border-default);
+  border-radius: 4px;
+  background: var(--pf-card-bg);
+  box-shadow: var(--pf-shadow-popover);
   color: var(--pf-text-primary);
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+progress {
+  appearance: none;
+  border: 0;
+  border-radius: 3px;
+  background: var(--pf-border-default);
+  color: var(--pf-accent);
+}
+progress::-webkit-progress-bar {
+  background: var(--pf-border-default);
+  border-radius: 3px;
+}
+progress::-webkit-progress-value {
+  background: var(--pf-accent);
+  border-radius: 3px;
+}
+progress::-moz-progress-bar {
+  background: var(--pf-accent);
+  border-radius: 3px;
+}
+@media (max-width: 767px) {
+  .pf-site-footer {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+    padding: 6px 16px max(6px, env(safe-area-inset-bottom));
+  }
+  .pf-site-footer a {
+    justify-content: center;
+  }
+  .pf-header {
+    gap: 8px;
+  }
+  .pf-mobile-tool {
+    flex: 1;
+    max-width: none;
+  }
+  .pf-header-actions {
+    flex-shrink: 0;
+  }
+  .pf-select-option {
+    min-height: 44px;
+  }
+}
+@media (max-width: 359px) {
+  .pf-toolbox:not([data-active-tool='home']) .pf-brand-title {
+    display: none;
+  }
+  .pf-brand-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+.pf-video-player {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.pf-motion-media-frame .pf-video-player video {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: contain;
+}
+.pf-video-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 4px;
+  background: var(--pf-card-bg);
+  border-top: 1px solid var(--pf-border-default);
+}
+.pf-video-controls input[type='range'] {
+  min-width: 32px;
+  height: 44px;
+}
+.pf-video-time {
   white-space: nowrap;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pf-text-secondary);
+}
+.pf-video-player:fullscreen {
+  background: var(--pf-image-mat);
+}
+@media (min-width: 768px) {
+  .pf-motion-output:has(.pf-video-player) [data-kind='image'] .pf-motion-media-frame {
+    padding-bottom: 44px;
+  }
+}
+.pf-tooltip {
+  overflow-wrap: anywhere;
+}
+
+button::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+input[type='range']::-moz-focus-outer {
+  border: 0;
+}
+::selection {
+  background: var(--pf-accent-subtle);
+  color: var(--pf-text-primary);
+}
+.pf-icon-button:active:not(:disabled),
+.pf-icon-control:active:not(:disabled) {
+  background: var(--pf-active-bg);
 }
 @media (forced-colors: active) {
-  .pf-language-select > .pf-select {
-    color: CanvasText;
-  }
-  .pf-language-value {
-    display: none;
+  ::selection {
+    background: Highlight;
+    color: HighlightText;
   }
 }

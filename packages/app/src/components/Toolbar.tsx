@@ -139,7 +139,7 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
             <button
               key={preset.id}
               className="pf-button"
-              title={t(preset.descriptionKey)}
+              data-tooltip={t(preset.descriptionKey)}
               onClick={() => updateSettings(preset.settings)}
             >
               {t(preset.labelKey)}
@@ -476,7 +476,7 @@ const Chip = ({
   tooltip: string;
   children: ReactNode;
 }) => (
-  <span className="pf-toolbar-chip" title={tooltip}>
+  <span className="pf-toolbar-chip" data-tooltip={tooltip} aria-description={tooltip}>
     <span className="pf-toolbar-chip-label">{label}</span>
     {children}
   </span>

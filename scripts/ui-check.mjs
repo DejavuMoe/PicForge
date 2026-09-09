@@ -34,10 +34,18 @@ try {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   const active = () => page.locator('.pf-tool-panel:not([hidden])');
+  const choose = async (control, value) => {
+    if ((await control.getAttribute('aria-expanded')) !== 'true') await control.click();
+    const option =
+      typeof value === 'object'
+        ? page.getByRole('option', { name: value.label, exact: true })
+        : page.locator(`[role="option"][data-value="${value}"]`);
+    await option.click();
+  };
   const openTool = async (name) => {
     const picker = page.locator('.pf-mobile-tool .pf-select');
     if (await picker.isVisible()) {
-      await picker.selectOption({ label: name });
+      await choose(picker, { label: name });
     } else await page.locator('.pf-tool-nav').getByRole('button', { name, exact: true }).click();
   };
   const settleLayout = () =>
@@ -88,9 +96,9 @@ try {
         [390, 844],
       ]) {
         await page.setViewportSize({ width, height });
-        const footer = page.locator('.pf-landing-footer');
+        const footer = page.locator('.pf-site-footer');
         assert.equal(await footer.locator('details, a[href$=".txt"]').count(), 0);
-        assert.equal(await footer.locator('.pf-project-links > *').count(), 2);
+        assert.equal(await footer.locator('a').count(), 2);
         await capture(`entry-${lang}-${width}`);
       }
     }
@@ -241,8 +249,8 @@ try {
     await openTool('Live Photo');
     const preset = active().getByRole('combobox').first();
     await preset.waitFor();
-    await preset.selectOption('compact');
-    assert.equal(await preset.inputValue(), 'compact');
+    await choose(preset, 'compact');
+    assert.equal(await preset.getAttribute('data-value'), 'compact');
     // Existing JPEG-only path passes bytes through; no HEIC/MOV/FFmpeg conversion.
     await active().locator('input[type=file]').setInputFiles(photo);
     await active().getByRole('button', { name: 'Process batch', exact: true }).click();
@@ -265,14 +273,14 @@ try {
     const sampleSlider = page.getByRole('slider', { name: 'Compare the JPEG and WebP sample' });
     await sampleSlider.press('ArrowRight');
     assert.equal(await sampleSlider.inputValue(), '51');
-    await page.getByRole('button', { name: 'Try this image', exact: true }).click();
+    await page.getByRole('button', { name: 'Try sample', exact: true }).click();
     await active().getByText('1 / 1 completed', { exact: true }).waitFor();
     assert.equal(
       await active().getByRole('button', { name: 'dune-sample.jpg', exact: true }).count(),
       1,
     );
     const format = active().getByRole('combobox', { name: 'Format', exact: true });
-    await format.selectOption('webp');
+    await choose(format, 'webp');
     await active().getByText('1 / 1 completed', { exact: true }).waitFor();
     const quality = active().getByRole('spinbutton', { name: 'Quality value', exact: true });
     await quality.fill('');
@@ -298,9 +306,9 @@ try {
     );
     await active().getByText('1 / 1 completed', { exact: true }).waitFor();
     assert((await active().locator('.pf-preview-file-facts').innerText()).includes('960×640'));
-    await format.selectOption('oxipng');
+    await choose(format, 'oxipng');
     assert(await quality.isDisabled(), 'lossless PNG has no ineffective quality input');
-    await format.selectOption('webp');
+    await choose(format, 'webp');
     await active().getByText('1 / 1 completed', { exact: true }).waitFor();
     await active().getByRole('button', { name: 'Slider compare', exact: true }).click();
     const full = active().getByRole('button', { name: 'Toggle fullscreen', exact: true });
@@ -310,14 +318,14 @@ try {
         document.fullscreenElement?.classList.contains('pf-preview'),
       );
       assert(await active().getByRole('combobox', { name: 'Zoom level' }).isVisible());
-      await active().getByRole('combobox', { name: 'Zoom level' }).selectOption('2');
+      await choose(active().getByRole('combobox', { name: 'Zoom level' }), '2');
       assert.equal(
         await active().locator('.pf-preview-viewport').getAttribute('data-zoomed'),
         'true',
       );
       await full.click();
       await page.waitForFunction(() => !document.fullscreenElement);
-      await active().getByRole('combobox', { name: 'Zoom level' }).selectOption('1');
+      await choose(active().getByRole('combobox', { name: 'Zoom level' }), '1');
     }
     const fieldBounds = await format.boundingBox();
     const downloadBounds = await active().locator('.pf-download-current').boundingBox();
@@ -333,7 +341,7 @@ try {
       await page.setViewportSize({ width: size, height: 844 });
       await capture(`delivery-compression-mobile-${size}`);
       const controls = await active()
-        .locator('.pf-preview-controls button, .pf-preview-controls select')
+        .locator('.pf-preview-controls button')
         .evaluateAll((elements) =>
           elements.map((element) => {
             const r = element.getBoundingClientRect();
@@ -439,29 +447,23 @@ try {
       element.scrollTop = element.scrollHeight;
     });
     await capture('audit-home-alignment');
-    const language = page.locator('.pf-language-control select');
-    const label = page.locator('.pf-language-control .pf-language-value');
-    assert.equal(await label.innerText(), '简体中文');
-    assert.equal(await language.inputValue(), 'auto');
+    const language = page.locator('.pf-language-control .pf-select');
+    assert.equal((await language.innerText()).trim(), '简体中文');
     const headerWidth = (await language.boundingBox()).width;
-    // Auto and an explicit choice of the displayed language must have different values.
-    await language.selectOption('zh-CN');
+    await language.click();
+    assert.equal(await page.getByRole('option').count(), 5);
+    assert(!/自动|Automatic|Browser language/.test(await page.getByRole('listbox').innerText()));
+    await page.getByRole('option', { name: '简体中文', exact: true }).click();
     assert.equal(await page.evaluate(() => localStorage.getItem('picforge.language')), 'zh-CN');
-    await language.selectOption('auto');
-    await page.waitForFunction(() => document.documentElement.lang === 'en');
-    assert.equal(await label.innerText(), 'English');
-    assert.equal(await language.inputValue(), 'auto');
-    assert.equal(await page.evaluate(() => localStorage.getItem('picforge.language')), null);
-    await language.selectOption('en');
+    await choose(language, 'en');
     assert.equal(await page.evaluate(() => localStorage.getItem('picforge.language')), 'en');
-    await language.selectOption('auto');
     same([headerWidth, (await language.boundingBox()).width], 'language control width');
     await page.reload();
-    await label.waitFor();
-    assert.equal(await label.innerText(), 'English');
-    assert.equal(await language.inputValue(), 'auto');
+    await language.waitFor();
+    assert.equal((await language.innerText()).trim(), 'English');
+    assert.equal(await language.getAttribute('data-value'), 'en');
     report.interactions.push(
-      'shared home columns across five locales/four widths; current-language label preserves explicit/automatic preference semantics',
+      'shared home columns across five locales/four widths; five language choices with explicit persistence and no automatic option',
     );
 
     await page.goto(`${origin}/?tool=compression&lng=en`);
@@ -512,7 +514,7 @@ try {
       await settleLayout();
       const hover = await controlStyle();
       assert.equal(normal.appearance, 'none');
-      assert.notEqual(normal.arrow, 'none');
+      assert.equal(await format.locator('svg').count(), 1);
       if (hoverCapable)
         assert.notEqual(
           normal.background,
@@ -548,6 +550,176 @@ try {
       'advanced/preset disclosures keep width across desktop/tablet/phone; select hover geometry and numeric Enter/Escape focus',
     );
     report.detailMeasurements = { columnDrift, disclosureDrift, hoverCapable };
+  }
+  if (run('controls')) {
+    await page.goto(origin);
+    await page.evaluate(() => localStorage.removeItem('picforge.language'));
+    for (const tool of ['home', 'compression', 'android', 'ios']) {
+      for (const [width, height] of [
+        [1576, 828],
+        [1160, 571],
+        [390, 844],
+        [320, 844],
+      ]) {
+        await page.setViewportSize({ width, height });
+        await page.goto(`${origin}/?tool=${tool}&lng=zh-CN`);
+        await page
+          .locator(
+            tool === 'home' ? '.pf-entry-tool' : '.pf-tool-panel:not([hidden]) .pf-inspector',
+          )
+          .first()
+          .waitFor();
+        await settleLayout();
+        assert.equal(await page.locator('select').count(), 0, 'no system select menus');
+        assert.equal(await page.locator('[title]').count(), 0, 'no system tooltips');
+        assert.equal(await page.locator('.pf-header .pf-github-link').count(), 1);
+        assert(await page.locator('.pf-header .pf-github-link').isVisible());
+        assert.equal(await page.locator('.pf-site-footer a').count(), 2);
+        assert.equal(await page.locator('.pf-site-footer a[href*=github]').count(), 0);
+        const copyright = await page.locator('.pf-copyright').boundingBox();
+        const sponsor = await page.locator('.pf-project-sponsor').boundingBox();
+        assert(sponsor.y + sponsor.height <= height + 1, 'sponsor stays visible');
+        if (width >= 768) {
+          assert(Math.abs(copyright.y - sponsor.y) < 1);
+          assert(copyright.x <= 25 && sponsor.x + sponsor.width >= width - 25);
+        } else {
+          assert(copyright.y + copyright.height <= sponsor.y + 1);
+          assert(Math.abs(copyright.x + copyright.width / 2 - width / 2) < 1);
+          assert(Math.abs(sponsor.x + sponsor.width / 2 - width / 2) < 1);
+        }
+        for (const control of await page.locator('.pf-select').all()) {
+          if (!(await control.isVisible()) || !(await control.isEnabled())) continue;
+          await control.click();
+          const list = page.getByRole('listbox');
+          await list.waitFor();
+          const bounds = await list.boundingBox();
+          assert(
+            bounds.x >= 0 &&
+              bounds.x + bounds.width <= width + 1 &&
+              bounds.y >= 0 &&
+              bounds.y + bounds.height <= height + 1,
+            'popup stays in viewport',
+          );
+          assert(!/自动选择|自动選択|Automatic|跟随浏览器/.test(await list.innerText()));
+          assert.equal(
+            await control.evaluate((el) => getComputedStyle(el).outlineStyle),
+            'none',
+            'pointer opens without focus ring',
+          );
+          await list.getByRole('option', { selected: true }).click();
+          await page.locator('.pf-site-footer').hover();
+          await settleLayout();
+          assert.equal(await control.getAttribute('aria-expanded'), 'false');
+          assert.equal(
+            await control.evaluate((el) => getComputedStyle(el).outlineStyle),
+            'none',
+            'pointer selection leaves no ring',
+          );
+        }
+        if (width === 1576 || width === 390) await capture(`controls-${tool}-${width}`);
+      }
+    }
+    await page.setViewportSize({ width: 1160, height: 571 });
+    await page.goto(`${origin}/?tool=compression&lng=en`);
+    const format = active().getByRole('combobox', { name: 'Format', exact: true });
+    await format.press('Enter');
+    assert.equal(await page.getByRole('listbox').count(), 1);
+    await format.press('ArrowDown');
+    await format.press('Enter');
+    assert.equal(await format.getAttribute('data-value'), 'webp');
+    assert(await format.evaluate((el) => el === document.activeElement));
+    assert.equal(await format.evaluate((el) => getComputedStyle(el).outlineStyle), 'solid');
+    await format.press('Enter');
+    await format.press('Escape');
+    assert.equal(await page.getByRole('listbox').count(), 0);
+    await format.click();
+    await page.getByRole('listbox').waitFor();
+    await capture('controls-open-format-menu');
+    await page.setViewportSize({ width: 1170, height: 580 });
+    await page.getByRole('listbox').waitFor({ state: 'hidden' });
+    assert.equal(await page.getByRole('listbox').count(), 0, 'resize dismisses stale popup');
+    await page.goto(`${origin}/?lng=en`);
+    const slider = page.getByRole('slider', { name: 'Compare the JPEG and WebP sample' });
+    await slider.click();
+    await page.locator('.pf-brand-button').hover();
+    const handle = page.locator('.pf-demo-divider > span');
+    assert.equal(await handle.evaluate((el) => getComputedStyle(el).outlineStyle), 'none');
+    assert.equal(
+      await page.locator('.pf-demo-image').evaluate((el) => getComputedStyle(el).outlineStyle),
+      'none',
+    );
+    await slider.press('ArrowRight');
+    assert.equal(await handle.evaluate((el) => getComputedStyle(el).outlineStyle), 'solid');
+    assert.equal(
+      await page.locator('.pf-demo-image').evaluate((el) => getComputedStyle(el).outlineStyle),
+      'none',
+    );
+    const hoverCapable = await page.evaluate(
+      () => matchMedia('(hover: hover) and (pointer: fine)').matches,
+    );
+    if (hoverCapable) {
+      await page.getByRole('link', { name: 'GitHub', exact: true }).hover();
+      await page.getByRole('tooltip').waitFor();
+      assert.equal(await page.getByRole('tooltip').innerText(), 'GitHub');
+    }
+    report.interactions.push(
+      'all routes: themed popups, no automatic language option, header GitHub and responsive sponsor/copyright footer; pointer/keyboard focus and custom hints',
+    );
+  }
+  if (run('video')) {
+    assert(process.env.PICFORGE_UI_VIDEO, 'Set PICFORGE_UI_VIDEO to a synthetic MP4');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`${origin}/?tool=android&lng=en`);
+    await active().locator('input[type=file]').waitFor({ state: 'attached' });
+    const fixture = Buffer.concat([
+      await readFile('packages/app/src/assets/dune-sample.jpg'),
+      await readFile(process.env.PICFORGE_UI_VIDEO),
+    ]);
+    await active()
+      .locator('input[type=file]')
+      .setInputFiles({ name: 'playback.jpg', mimeType: 'image/jpeg', buffer: fixture });
+    await active().getByRole('button', { name: 'Extract pending files', exact: true }).click();
+    await active().getByText('1 / 1 completed', { exact: true }).waitFor();
+    const video = active().locator('video');
+    await video.waitFor();
+    assert.equal(await video.getAttribute('controls'), null);
+    await page.waitForFunction(
+      () =>
+        document.querySelector('video')?.duration > 0 ||
+        document.querySelector('.pf-motion-preview-note'),
+    );
+    if (await active().locator('.pf-motion-preview-note').isVisible()) {
+      const waiting = page.waitForEvent('download');
+      await active().getByRole('button', { name: 'Download MP4', exact: true }).click();
+      const destination = resolve(output, 'preview-fallback.mp4');
+      await (await waiting).saveAs(destination);
+      assert.deepEqual(await readFile(destination), await readFile(process.env.PICFORGE_UI_VIDEO));
+      await capture('controls-video-fallback');
+      report.interactions.push(
+        'synthetic video: explicit unsupported-preview fallback with byte-identical MP4 download',
+      );
+    } else {
+      await active().getByRole('button', { name: 'Play', exact: true }).click();
+      await page.waitForFunction(() => document.querySelector('video')?.currentTime > 0.1);
+      await active().getByRole('button', { name: 'Pause', exact: true }).click();
+      assert(await video.evaluate((el) => el.paused));
+      await active().getByRole('button', { name: 'Mute preview', exact: true }).click();
+      assert(await video.evaluate((el) => el.muted));
+      await active().getByRole('slider', { name: 'Playback position', exact: true }).press('End');
+      await page.waitForFunction(() => document.querySelector('video')?.currentTime >= 1.8);
+      await active().getByRole('slider', { name: 'Playback position', exact: true }).press('Home');
+      await active().getByRole('button', { name: 'Play', exact: true }).click();
+      await openTool('Compress');
+      assert(await page.locator('video').evaluate((el) => el.paused), 'hidden video pauses');
+      await openTool('Motion Photo');
+      await capture('controls-video-desktop');
+      await page.setViewportSize({ width: 390, height: 844 });
+      await active().locator('.pf-motion-row').click();
+      await capture('controls-video-mobile');
+      report.interactions.push(
+        'synthetic local video: styled play/pause, mute, seek and hidden-tool pause',
+      );
+    }
   }
   assert.deepEqual(errors, []);
   report.errors = errors;

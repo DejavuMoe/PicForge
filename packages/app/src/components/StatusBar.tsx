@@ -1,4 +1,3 @@
-import { ProjectInfo } from './ProjectInfo';
 import { useCallback, useState } from 'react';
 import { FiDownload } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
@@ -75,9 +74,14 @@ export function StatusBar({ onCancel }: { onCancel: () => void }) {
       }
     }
   };
+  if (files.length === 0) return null;
   return (
-    <footer className="pf-status-bar" data-testid="status-bar">
-      <ProjectInfo />
+    <div
+      className="pf-status-bar"
+      data-testid="status-bar"
+      role="region"
+      aria-label={t('workbench.batchActions')}
+    >
       <div className="pf-batch-status" role="status" aria-live="polite">
         {files.length > 0 && (
           <span>
@@ -115,6 +119,6 @@ export function StatusBar({ onCancel }: { onCancel: () => void }) {
           <span style={{ width: `${(finished / files.length) * 100}%` }} />
         </div>
       )}
-    </footer>
+    </div>
   );
 }

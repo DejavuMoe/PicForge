@@ -5,9 +5,9 @@
   <path d="M10 24V8h7a5 5 0 0 1 0 10h-4v6zm3-9h4a2 2 0 0 0 0-4h-4z" transform="translate(80 64) scale(1.5)" fill="#fff"/>
   <g font-family="DejaVu Sans, sans-serif" fill="#222221">
     <text x="146" y="100" font-size="36" font-weight="600" letter-spacing="-1.2">PicForge</text>
-    <text x="80" y="320" font-size="86" font-weight="700" letter-spacing="-4">Your images.</text>
-    <text x="80" y="428" font-size="86" font-weight="700" letter-spacing="-4" fill="#b8422d">Your device.</text>
-    <text x="84" y="509" font-size="26" fill="#636360">Three image tools. All in your browser.</text>
+    <text x="80" y="320" font-size="86" font-weight="700" letter-spacing="-4">Image tools</text>
+    <text x="80" y="428" font-size="70" font-weight="700" letter-spacing="-3" fill="#b8422d">In your browser.</text>
+    <text x="84" y="509" font-size="26" fill="#636360">Compress images. Extract photos and videos.</text>
     <text x="84" y="673" font-size="21">Compress images</text>
     <text x="397" y="673" font-size="21">Extract Motion Photos</text>
     <text x="768" y="673" font-size="21">Convert Live Photos</text>

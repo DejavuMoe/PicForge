@@ -1,5 +1,5 @@
-import { ProjectInfo } from '../components/ProjectInfo';
 import { SelectControl } from '../components/SelectControl';
+import { VideoPlayer } from '../components/VideoPlayer';
 import { NumberControl } from '../components/NumberControl';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -68,15 +68,11 @@ export function OutputPreview({
   const image = useBlobUrl(output.image);
   const video = useBlobUrl(output.video);
   const [previewFailed, setPreviewFailed] = useState(false);
-  const player = useRef<HTMLVideoElement>(null);
   useEffect(() => setPreviewFailed(false), [output.video]);
-  useEffect(() => {
-    if (!active) player.current?.pause();
-  }, [active]);
   return (
     <div className="pf-motion-output">
       {output.image && (
-        <figure className="pf-motion-media-pane">
+        <figure className="pf-motion-media-pane" data-kind="image">
           <figcaption>{t('workbench.photo')} · JPG</figcaption>
           <div className="pf-motion-media-frame">
             {image && <img src={image} alt={`${name} — ${t('workbench.photo')}`} />}
@@ -90,18 +86,15 @@ export function OutputPreview({
         </figure>
       )}
       {output.video && (
-        <figure className="pf-motion-media-pane">
+        <figure className="pf-motion-media-pane" data-kind="video">
           <figcaption>{t('workbench.video')} · MP4</figcaption>
           <div className="pf-motion-media-frame">
             {video && !previewFailed ? (
-              <video
-                ref={player}
+              <VideoPlayer
                 src={video}
                 poster={image}
-                controls
-                playsInline
-                preload="metadata"
-                aria-label={`${name} — ${t('workbench.video')}`}
+                label={`${name} — ${t('workbench.video')}`}
+                active={active}
                 onError={() => setPreviewFailed(true)}
               />
             ) : image ? (
@@ -601,53 +594,54 @@ export default function MotionWorkspace({
         hasFiles={items.length > 0}
         mobileView={mobileView}
       />
-      <footer className="pf-status-bar">
-        <ProjectInfo />
-        <div className="pf-batch-status" role="status" aria-live="polite">
-          {items.length > 0 && t('motion.count', { done, total: items.length })}
+      {items.length > 0 && (
+        <div className="pf-status-bar" role="region" aria-label={t('workbench.batchActions')}>
+          <div className="pf-batch-status" role="status" aria-live="polite">
+            {items.length > 0 && t('motion.count', { done, total: items.length })}
+          </div>
+          <div className="pf-motion-actions">
+            {busy ? (
+              <button className="pf-button" onClick={() => controller.current?.abort()}>
+                {t('workbench.cancelProcessing')}
+              </button>
+            ) : (
+              <>
+                {allDone && (
+                  <button
+                    className="pf-text-button"
+                    disabled={exporting}
+                    onClick={(event) => {
+                      event.currentTarget.focus();
+                      setConfirmReset(true);
+                    }}
+                  >
+                    {t('motion.newBatch')}
+                  </button>
+                )}
+                {pending > 0 && (
+                  <button
+                    className={`pf-button${hasResults ? '' : ' is-primary'}`}
+                    disabled={exporting}
+                    onClick={run}
+                  >
+                    {t(android ? 'workbench.extractFiles' : 'motion.start')}
+                  </button>
+                )}
+              </>
+            )}
+            {(hasResults || pending === 0) && (
+              <button
+                className="pf-button pf-export-button is-primary"
+                disabled={!hasResults || exporting || busy}
+                onClick={exportZip}
+              >
+                <FiDownload aria-hidden />
+                {t(exporting ? 'motion.exporting' : 'workbench.exportCompleted')}
+              </button>
+            )}
+          </div>
         </div>
-        <div className="pf-motion-actions">
-          {busy ? (
-            <button className="pf-button" onClick={() => controller.current?.abort()}>
-              {t('workbench.cancelProcessing')}
-            </button>
-          ) : (
-            <>
-              {allDone && (
-                <button
-                  className="pf-text-button"
-                  disabled={exporting}
-                  onClick={(event) => {
-                    event.currentTarget.focus();
-                    setConfirmReset(true);
-                  }}
-                >
-                  {t('motion.newBatch')}
-                </button>
-              )}
-              {pending > 0 && (
-                <button
-                  className={`pf-button${hasResults ? '' : ' is-primary'}`}
-                  disabled={exporting}
-                  onClick={run}
-                >
-                  {t(android ? 'workbench.extractFiles' : 'motion.start')}
-                </button>
-              )}
-            </>
-          )}
-          {(hasResults || pending === 0) && (
-            <button
-              className="pf-button pf-export-button is-primary"
-              disabled={!hasResults || exporting || busy}
-              onClick={exportZip}
-            >
-              <FiDownload aria-hidden />
-              {t(exporting ? 'motion.exporting' : 'workbench.exportCompleted')}
-            </button>
-          )}
-        </div>
-      </footer>
+      )}
       {confirmReset && (
         <ConfirmDialog
           danger

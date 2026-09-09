@@ -1,129 +1,76 @@
-# PicForge interface and validation
+# PicForge interface
 
-Implemented baseline: **0.16.0**, 2026-09-10. This is a working version, not a release or deployment. The user replaced the green optical direction with a neutral, restrained image utility. See the [current design brief](design/editorial-redesign.md) and [tokens](design/design-tokens.json).
+Current working version: **0.16.0**, following the 2026-09-10 browser review. This document supersedes the former native-select/automatic-option and centered-desktop-footer decisions. The [preceding report](UI_DESIGN.pre-controls-2026-09-10.md) is preserved from `54f52c4`, including its original validation evidence and build measurements. No deployment is implied.
 
-The [previous implementation report](UI_DESIGN.optical-2026-09-09.md) is preserved unchanged from revision `58b797db38ede4779654f0761f905d3fd497e898`. Its optical requirements and screenshots are historical; its unaffected media evidence is not being replaced by new performance claims.
+## Navigation and page structure
 
-## Product flow
+The header contains the P mark, tool navigation, and a right-side group with GitHub, language and theme controls. GitHub uses an icon link and is not repeated in the footer. Phones expose language/theme through the preferences menu; GitHub remains visible.
 
-Home presents three direct links: image compression, Android Motion Photos, and iOS Live Photos. A labelled JPEG/WebP sample comparison demonstrates the purpose of the product. Try this image opens a generated, non-personal JPEG in the actual compressor. The preview uses pre-encoded examples; its image sizes are not benchmarks. On mobile, all three tool entries precede the example and are visible in the first viewport.
+Language has exactly five choices: English, Simplified Chinese, Traditional Chinese, Japanese and Korean. Initial detection still uses the browser with English fallback, but no automatic-detection option or policy label is shown. Explicit choices persist locally, including explicitly selecting the language that is already displayed. URL previews remain transient.
 
-Every workspace uses a task heading, file list, image viewer, settings/output inspector, and batch action bar. Desktop has a 240px list and 300px inspector around a flexible neutral image mat. At 768–1100px, list and preview share a pane beside settings. Below 768px, selecting a file opens its preview with an explicit return action; settings follow the image in the same scroll area. Batch actions stay outside that scroll area.
+Every normal page uses one shared site footer. Desktop places copyright at the left edge and Riven Cloud sponsorship at the right edge. Mobile centers copyright above sponsorship. Batch actions are a separate region above this footer and appear when files exist. Both copyright and sponsorship remain present on home and all three tool pages.
 
-Previously visited workspaces stay mounted. Tool switches, home and browser Back/Forward preserve their queues. Reloading or closing the page clears in-memory media, and the update/error copy now says so. No files are persisted or uploaded.
+Home has a direct product heading, a short functional description, one privacy statement, a labelled sample comparison and three tool links. Repeated marketing blocks and the two-line slogan have been removed. The JPEG/WebP sample remains illustrative, and Try sample imports the JPEG into the real compressor.
 
-## Visual system
+The workbench keeps its file/viewer/inspector structure, independent tool queues, explicit global/per-image settings and stable scrollbar gutters. On phones, settings follow the preview in one scroll area. File/result media stay in memory until reload/close; the UI does not imply persistent storage.
 
-White and graphite surfaces, neutral image mats, system typography and one restrained vermilion accent replace tinted glass. CJK fallback explicitly prefers the appropriate local Noto Sans CJK SC/TC/JP/KR family before platform alternatives, preventing decorative font substitutions without downloading fonts. Headers, panes and file rows are flat. Preview controls sit below the image, with previous/next beside the filename. Fullscreen includes the complete preview and its controls. Images and exported media never inherit a filter.
+## One control system
 
-The header contains a code-native P mark, navigation, native language select and theme toggle. Phones use a native tool select and a compact preferences disclosure. The Landing footer retains centered copyright/GitHub and a separate sponsorship line. The workbench gives space to task actions on mobile; no About or raw license link has been introduced.
+`SelectControl` renders both the closed field and an application-styled listbox. There are no native `<select>` menus on the page. All language, tool, format, resize, preset, frame-rate, advanced-codec and zoom choices use this component.
 
-Global/per-image and original/result/compare selections use CSS states. Focus is visible, touch controls are at least 44px on phone layouts, and reduced-motion removes transitions/continuous spinner motion. Layout uses progressive CSS enhancement for aligned Motion Photo media; unsupported subgrid falls back to the original flex layout.
+The popup supports arrows, Home/End, typing to search, Enter, Escape and Tab. Focus stays on the combobox, with `aria-activedescendant` identifying the active option. Disabled choices/fields cannot apply values. Popups stay inside the viewport, escape clipped panels through a portal, and dismiss on outside input, scrolling, resize, history, visibility or fullscreen changes. Fullscreen popups are attached inside the fullscreen element.
 
-## Interaction changes
+Focus decoration follows input mode rather than browser-specific `:focus-visible` heuristics. Pointer/touch input does not leave keyboard focus frames behind. Keyboard navigation keeps a visible indicator. The sample range highlights its handle for keyboard interaction; clicking or dragging it does not outline the whole photograph. Hover decoration is restricted to an exposed fine pointer with hover support.
 
-- Native selects replace the custom popup/portal implementation, providing platform keyboard navigation and touch pickers.
-- File selection and download/retry/cancel/remove are independent native buttons. The hidden right-click-only settings menu is removed; the inspector remains the visible route to per-image customization. Offscreen file thumbnails load lazily.
-- Number inputs allow an empty or partial draft. Blur/Enter clamps and commits once; Escape restores the original value. This prevents intermediate dimensions from triggering a series of recompressions while typing.
-- Disabled resize fields are collapsed. Percentage sizing stays in Advanced settings. PNG clearly identifies its lossless behavior and disables the ineffective quality control.
-- Selected results show actual original/output bytes and the percentage increase or decrease. A larger result is labelled as larger, not presented as a saving.
-- Global settings preserve complete per-file snapshots, and reconnecting a file to global settings remains explicit.
-- Android exposes extraction and downloads without encoder settings. iOS keeps filename-pairing guidance, settings locks, cancellation and retry. Hidden tools pause video. Unsupported native playback still has its static/download fallback.
-- Language follows the browser, with English fallback and explicit-only persistence. Theme follows the browser's exposed system preference until explicitly chosen. Blocked local storage does not break either feature.
+Number fields retain the previous draft behavior: Enter commits, Escape restores, blur commits, and Enter/Escape retain focus. Native spinner, tap-highlight and inner-focus decorations are reset. Buttons, disclosures, progress bars and selection colors use the same tokens. Forced-colors mode retains visible system-color boundaries and selection.
 
-## Runtime and dependencies
+`TooltipLayer` supplies themed, bounded hints from `data-tooltip`; HTML `title` attributes are not used for visible interface hints. It is non-interactive, delayed for pointer hover, and dismisses on input or scrolling.
 
-The refactor removes Hyalite, its adapter/observers, the particle renderer, cursor effects, two old hero assets, unused font files/precache entries, and the unused language-detector package. Their applicable license notices remain. No animation library was added.
+`VideoPlayer` uses the browser's media APIs with application-styled play/pause, seek, preview mute and fullscreen controls. Native video controls are not displayed. Seeking and playback do not modify exports. Leaving the tool pauses playback. Unsupported decoding still presents a static preview and a download message; the original extracted video can still be saved.
 
-Landing and compression now have separate lazy entry points. Motion remains lazy. JSZip and FileSaver are retained for their established export behavior. Existing React, Vite, Zustand, i18next, `@jsquash/*`, FFmpeg and libheif versions are preserved. The production engine is still Compat; wasm-vips registration, pthread limits, source Blob ownership, clean-aperture handling and media guards are unchanged.
+File selection continues to use the operating system's file picker. The web interface does not imitate or replace the OS filesystem dialog.
 
-Native [select controls](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/select) and CSS [feature queries](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@supports) provide the relevant platform behavior without a new compatibility library.
+## Copy rules
 
-The root/app version and service-worker cache version are synchronized at 0.16.0. Codec preparation, generated precache manifest and cache algorithms remain intact. App modules may still be fetched by the service worker for offline availability; lazy rendering is not a claim that the service worker never downloads them.
+Labels name the action, object or result. Helper text describes a concrete behavior or a limit. Format descriptions and errors avoid generic promises about quality, speed, universality or readiness. Preset hints show their actual format/quality settings. PNG is identified as lossless without pretending its quality slider changes output.
 
-### Build comparison
+Examples of the final Chinese copy:
 
-Same host, Node 24.21.0, pnpm 11.8.0, Vite 8.2.2. Baseline is `58b797db38ede4779654f0761f905d3fd497e898`; comparison is the initial 0.16.0 redesign at `c915b5d`, before the detail audit below. Decimal kB, uncompressed emitted assets:
-
-| Artifact | Before | After | Change |
-| --- | ---: | ---: | ---: |
-| Main `index` JavaScript chunk | 211.00 kB | 126.15 kB | −40.2% |
-| All emitted CSS | 64.23 kB | 47.38 kB | −26.2% |
-| Home photographs, combined | 268.27 kB | 203.06 kB | −24.3% |
-
-The shared React vendor chunk remains 189.71 kB. Compression now has a separate 47.40 kB chunk, and Landing a 4.09 kB chunk. These are build-size measurements, not page-load latency, memory/RSS, codec speed, or image-quality benchmarks. Historical media baselines remain independent.
-
-## Verification
-
-Checks ran against the final interface on Linux x86_64. Generated sample photography and synthetic files were used; no private camera fixtures were uploaded or committed.
-
-| Check | Result |
+| Surface | Copy |
 | --- | --- |
-| ESLint | Pass |
-| App/worker/codec TypeScript | Pass |
-| Vitest | 189 tests, 22 files pass, including four locale-contract cases |
-| Production build | Pass |
-| Chromium 145.0.7632.6 UI | 47 layout captures, 6 interaction groups pass |
-| Firefox 146.0.1 UI | 47 layout captures, 6 interaction groups pass |
-| Playwright WebKit 26.0 UI subset | 43 layout captures, 3 interaction groups pass: entry, layout, usability |
-| Production Chromium | Static compression, downloaded dimensions, mobile width, offline reload and re-encoding pass |
-| In-app browser | Homepage, real sample import, format change and rendered preview inspected |
+| Home heading | 图片工具箱 |
+| Home description | 压缩图片、提取动态照片、转换实况照片。 |
+| Privacy | 文件不上传，原文件不改动。 |
+| Import | 添加图片 / 拖入或粘贴图片。 |
+| Sample action | 使用示例 |
+| Video fallback | 无法预览视频，仍可下载文件。 |
+| Sponsor | Riven Cloud 赞助 |
 
-After the final font-only refinement, the entry/layout subset passed again in all three engines (36 captures and one interaction group each). Prior interaction and media evidence is retained because those implementations did not change.
+The approach was informed by [Squoosh's task-first import flow](https://squoosh.app/), [Excalidraw's concrete action labels](https://raw.githubusercontent.com/excalidraw/excalidraw/master/packages/excalidraw/locales/en.json), and [LocalSend's concise statement of purpose](https://localsend.org/). These are references for editorial decisions, not copied design assets or borrowed product claims. All five locale resources keep the same keys and interpolation parameters.
 
-The UI matrix covers all five locales, both themes, desktop, tablet, 390px phones and a focused 320px preview. Checks include no horizontal overflow/framework overlay/runtime errors, keyboard entry/history, global/custom settings, dialog focus/Escape, file/ZIP downloads, sample-to-real-processing, numeric drafts, resize output geometry, lossless guidance, fullscreen controls, 44px preview targets, blocked storage and system-theme changes.
+## Validation and scope
 
-The production test's tool helper now waits for the lazy first screen before choosing its navigation path. The Firefox theme test compares against the browser's actual exposed preference before explicitly emulating changes; it does not assume a context option has already changed `matchMedia`.
+The UI script now opens the actual listboxes and inspects their options, instead of testing only closed native fields. The `controls` group checks home and all three workspaces at 1576×828, 1160×571, 390×844 and 320×844. It verifies five language choices, no native selects or title tooltips, no pointer-focus residue, keyboard selection/focus, popup bounds/dismissal, header GitHub, and desktop/mobile footer ordering.
 
-### WebKit limitation
-
-The pinned Linux WebKit bundle required Ubuntu compatibility libraries absent from this Arch-based host. The missing ICU 74, libxml2 and Flite packages were downloaded from official Ubuntu package mirrors, verified against their published SHA-256 values and extracted under a temporary directory. No system libraries or settings were changed.
-
-The full interaction run reached the Android invalid-MP4 preview and the native `WPEWebProcess` aborted (SIGABRT). The system core trace places the abort in `libWPEWebKit`; most native frames have no symbols. No OOM kill was recorded, and approximately 20 GiB was available when inspected. This identifies a native runtime failure, but does not prove its exact cause or establish whether it is specific to the host's mixed runtime libraries. No private media was involved.
-
-The independent entry/layout/usability subset, including real JPEG/WebP compression, passed. The Linux WebKit invalid-video/playback path remains unqualified. No production user-agent deny rule, codec fallback change or assertion deletion was introduced to hide this result. Real Safari and physical iPhone/iPad testing are still required for a Safari qualification; Playwright WebKit is not a substitute.
-
-### Reproduction and evidence
-
-With `pnpm dev` running:
+`details` retains the five-locale shared-column and disclosure-width regressions. `usability` exercises real sample compression, number drafts, resize dimensions, lossless guidance, fullscreen and storage-restricted language/theme behavior. A synthetic two-second H.264/AAC fixture tests the new video controls or the explicit unsupported-preview/download fallback. It contains no personal media.
 
 ```sh
-PICFORGE_UI_GROUPS=entry,layout,interaction,usability node scripts/ui-check.mjs
-PICFORGE_UI_BROWSER=firefox PICFORGE_UI_GROUPS=entry,layout,interaction,usability node scripts/ui-check.mjs
-PICFORGE_UI_BROWSER=webkit PICFORGE_UI_GROUPS=entry,layout,usability node scripts/ui-check.mjs
-pnpm test:browser
+# With pnpm dev running
+PICFORGE_UI_GROUPS=entry,layout,interaction,usability,details,controls node scripts/ui-check.mjs
+PICFORGE_UI_GROUPS=video PICFORGE_UI_VIDEO=/path/to/synthetic.mp4 node scripts/ui-check.mjs
 ```
 
-Use `PICFORGE_UI_EXECUTABLE` only when a test environment needs an explicit browser executable/wrapper. The normal path uses the project's pinned Playwright browser. `PICFORGE_UI_IMAGE`, `PICFORGE_UI_URL` and `PICFORGE_QA_OUTPUT` select the fixture, origin and temporary evidence directory.
+Use the existing `PICFORGE_UI_BROWSER`, `PICFORGE_UI_EXECUTABLE`, `PICFORGE_UI_URL` and `PICFORGE_QA_OUTPUT` options. Fixtures, exports and screenshots stay temporary. Browser checks wait for rendered state after resize or asynchronous media events.
 
-Local evidence for this run: `/tmp/picforge-type-chromium`, `/tmp/picforge-type-firefox`, `/tmp/picforge-type-webkit`, `/tmp/picforge-ui-final`, `/tmp/picforge-ui-firefox`, `/tmp/picforge-ui-webkit-safe`, and `/tmp/picforge-production-check.log`. These are temporary, reproducible evidence, not committed product assets. Real HEIC/MOV camera conversion was not repeated: the processing implementation, dependencies, worker policy and encoder arguments did not change. Existing camera and engine qualifications retain their original source revisions.
+The processing engines, resize contracts, source-Blob retry ownership, clean-aperture adapter, frame timing, size guards and Vips policy are unchanged. Production still uses Compat. No dependency upgrade, remote media processing or browser deny rule was added. Camera conversion was not repeated for this UI pass. Existing native WebKit video and real Safari/iPhone qualification limits remain documented in the preceding report; a successful UI subset does not qualify those paths.
 
-## Detail audit after browser review — 2026-09-10
+### Results for this revision
 
-The audit starts from `c915b5d` and keeps the accepted visual direction. The user's 1160×571 and 1576×828 annotations exposed related layout and control-state defects:
+- Lint and project type checks pass; 189 unit tests in 22 files pass, including all locale contracts. The production build passes.
+- Chromium: the full entry/layout/interaction/usability/details/controls pass recorded 59 captures and nine interaction groups. The final pointer/keyboard refinement was checked again with controls/usability: 16 captures and three groups.
+- Firefox 146.0.1: controls/usability/details plus the video fallback test pass, with 20 captures and six groups. This host cannot decode the synthetic H.264/AAC fixture in Firefox; the explicit fallback is shown and the MP4 download is byte-identical to the fixture. This is not a claim that video playback passed there.
+- Playwright WebKit 26.0: controls/usability/details pass, with 19 captures and five groups. Native video qualification was not repeated in this known-limited Linux runtime.
+- Chromium synthetic video: play/pause, seeking, preview mute and pausing a hidden tool pass. No native `controls` attribute is present.
+- Production Chromium: static compression, downloaded dimensions, mobile layout, offline reload and re-encoding pass after the new components were bundled.
 
-| Finding | Cause | Correction |
-| --- | --- | --- |
-| Home descriptions/format labels did not line up | Each row sized its `auto` format column independently, redistributing the fractional columns | One shared column template with a bounded format column; the visible column origins are identical across rows |
-| Advanced settings changed the width of every field | Scrollbars consumed width only after disclosure content overflowed | Stable scrollbar gutters in the inspector, matching download footer, file list and mobile workbench |
-| Select hover and numeric spinners varied by browser | Closed fields still used native `appearance: auto` and hover spinners | Explicit closed-select appearance, local chevron, colors, disabled/focus/hover states; hide number steppers while keeping native keyboard editing |
-| Header showed the detection policy instead of the language | The automatic option's text was used as the closed-field label | Show the resolved language name; keep automatic/manual option values distinct so explicitly choosing the current language still persists a preference |
-| Numeric Enter/Escape lost keyboard focus | Committing blurred the field and changing its value remounted the input | Synchronize the native input without replacing it; Enter commits and Escape restores while retaining focus |
-| Touch interactions could retain desktop hover decoration | Hover rules were unconditional | Scope hover decoration to an exposed fine pointer with hover support; retain keyboard focus independently |
-| Disclosure indicators and focus rings were inconsistent | Native markers and external outline spacing mixed with the custom controls | Consistent end-aligned chevrons and a single inset field focus ring |
-
-Before the fix, the annotated description column differed by approximately **25px** between rows; opening Advanced settings reduced an input from **251px to 241px**. The new `details` group measures the resulting column drift and control-width drift across five locales and four viewport sizes, alongside language persistence, hover geometry and keyboard focus. The `usability` group additionally verifies that the fixed download footer shares the settings fields' edges and that numerical edits still produce the expected real compressed dimensions.
-
-The language control retains native selection and popup behavior. Its automatic option includes the current language for assistive technology, while the ordinary closed field displays the language name alone. In forced-colors mode the native label/arrow remains available. This does not replace the native popup with another JavaScript menu.
-
-Run the targeted checks with the development server available:
-
-```sh
-PICFORGE_UI_GROUPS=details,usability node scripts/ui-check.mjs
-```
-
-Use the existing browser/executable options for Firefox or WebKit. Hover assertions follow the browser's actual exposed pointer capabilities: the headless Firefox runtime on this host reports no hover/fine pointer, so it exercises the non-hover branch. Geometry checks wait for responsive media queries to reach a painted frame before comparing values.
-
-Detail-audit result: lint, all project type checks, 189 unit tests and the production build pass. Chromium 145.0.7632.6, Firefox 146.0.1 and Playwright WebKit 26.0 each passed `details,usability` (10 captures and four interaction groups per engine). Each measured **0px** home-column drift and **0px** disclosure-width drift. A further Chromium layout pass covered 21 empty-workspace captures, including all three tools and five locales. Evidence is temporary under `/tmp/picforge-detail-chromium`, `/tmp/picforge-detail-firefox`, `/tmp/picforge-detail-webkit` and `/tmp/picforge-detail-layout`.
-
-This pass changes shared UI/number-input behavior only; real HEIC/MOV conversion was not repeated. The existing WebKit native-video and real-Safari qualification limits above remain in effect. No new dependency, browser deny rule, processing-engine change or deployment is part of this audit.
+Temporary evidence: `/tmp/picforge-controls-all-chromium`, `/tmp/picforge-controls-final`, `/tmp/picforge-controls-chromium`, `/tmp/picforge-controls-firefox`, `/tmp/picforge-controls-webkit`, and `/tmp/picforge-controls-production.log`. These are test artifacts, not committed camera media. The in-app browser was also used to inspect the actual open five-language menu and shared footer.

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { FiArrowRight, FiChevronLeft, FiChevronRight, FiLock } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
-import { ProjectInfo } from '../components/ProjectInfo';
 import sample from '../assets/dune-sample.jpg';
 import preview from '../assets/dune-preview.webp';
 import type { ToolId } from '../types';
@@ -55,10 +54,7 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
       >
         <section className="pf-landing-hero">
           <div className="pf-landing-intro">
-            <h1 id="pf-landing-title">
-              <span>{t('entry.title')}</span>
-              <span>{t('entry.titleAccent')}</span>
-            </h1>
+            <h1 id="pf-landing-title">{t('entry.title')}</h1>
             <p className="pf-landing-summary">{t('entry.summary')}</p>
             <p className="pf-landing-privacy">
               <FiLock aria-hidden />
@@ -82,12 +78,6 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
                 height="800"
                 decoding="async"
               />
-              <span className="pf-demo-divider" aria-hidden>
-                <span>
-                  <FiChevronLeft />
-                  <FiChevronRight />
-                </span>
-              </span>
               <input
                 type="range"
                 min="0"
@@ -97,6 +87,12 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
                 aria-valuetext={t('entry.samplePosition', { value: position })}
                 onChange={(event) => setPosition(Number(event.target.value))}
               />
+              <span className="pf-demo-divider" aria-hidden>
+                <span>
+                  <FiChevronLeft />
+                  <FiChevronRight />
+                </span>
+              </span>
             </div>
             <figcaption>
               <span>JPEG</span>
@@ -144,18 +140,7 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
             );
           })}
         </nav>
-        <div className="pf-landing-principles">
-          {(['local', 'originals', 'ready'] as const).map((key) => (
-            <div key={key}>
-              <h2>{t(`entry.principles.${key}.title`)}</h2>
-              <p>{t(`entry.principles.${key}.body`)}</p>
-            </div>
-          ))}
-        </div>
       </main>
-      <footer className="pf-landing-footer">
-        <ProjectInfo variant="landing" />
-      </footer>
     </div>
   );
 }

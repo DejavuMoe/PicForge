@@ -11,7 +11,7 @@
   "actions": {
     "download": "下载",
     "downloadZip": "下载 ZIP ({{count}})",
-    "packing": "打包中...",
+    "packing": "正在打包…",
     "clearAll": "清空全部",
     "resetDefaults": "重置",
     "confirm": "确定",
@@ -29,33 +29,33 @@
     "toggleColorMode": "切换明暗模式",
     "formatHint": "JPEG：适合照片 | WebP：体积与质量兼顾 | PNG：无损压缩 | AVIF：最小体积",
     "adv": {
-      "progressive": "逐行加载，提升感知加载速度",
-      "chromaSubsample": "4:4:4 = 完整色彩细节；4:2:0 = 更小文件，轻微色彩损失",
-      "trellis": "优化压缩算法（更慢，文件略小）",
-      "lossless": "无质量损失，但文件更大",
-      "method": "0 = 最快，6 = 最小文件（0-6）",
-      "alphaCompression": "压缩透明区域（更小文件）",
-      "interlace": "逐行加载（压缩更慢，适合大图）",
-      "speed": "0 = 最佳质量，10 = 最快编码（0-10）",
-      "subsample": "4:4:4 = 完整色彩；4:2:0 = 更小文件，轻微色彩损失"
+      "progressive": "分阶段显示 JPEG。",
+      "chromaSubsample": "4:4:4 保留更多色彩细节，4:2:0 通常体积更小。",
+      "trellis": "进一步优化 JPEG，耗时更长。",
+      "lossless": "保留解码后的像素，不进行有损编码。",
+      "method": "0 优先速度，6 优先体积。",
+      "alphaCompression": "压缩透明通道。",
+      "interlace": "分阶段显示 PNG。",
+      "speed": "0 优先压缩，10 优先速度。",
+      "subsample": "4:4:4 保留更多色彩细节，4:2:0 通常体积更小。"
     }
   },
   "presets": {
     "balanced": {
       "label": "均衡",
-      "description": "WebP 75% — 质量与体积兼顾"
+      "description": "WebP · 质量 75"
     },
     "web-photo": {
       "label": "网页照片",
-      "description": "JPEG 80% — 适合网页照片"
+      "description": "JPEG · 质量 80"
     },
     "lossless": {
       "label": "无损",
-      "description": "PNG 100% — 无质量损失"
+      "description": "PNG · 无损"
     },
     "high-compress": {
       "label": "高压缩",
-      "description": "AVIF 50% — 最小体积"
+      "description": "AVIF · 质量 50"
     }
   },
   "fileQueue": {
@@ -73,7 +73,7 @@
     "processing": "{{count}} 个处理中",
     "failed": "{{count}} 个失败",
     "noChange": "无变化",
-    "loadingCodec": "加载编解码器..."
+    "loadingCodec": "正在加载编码器…"
   },
   "settings": {
     "title": "预设",
@@ -84,11 +84,11 @@
     "customImageSettings": "单图设置",
     "width": "宽度",
     "height": "高度",
-    "absoluteMode": "绝对尺寸",
+    "absoluteMode": "像素",
     "percentageMode": "百分比",
     "fitMethod": "缩放方式",
     "fit": {
-      "contain": "适应边界",
+      "contain": "适应尺寸",
       "cover": "居中裁切",
       "stretch": "拉伸"
     },
@@ -99,19 +99,19 @@
     },
     "adv": {
       "progressive": "渐进式",
-      "chromaSubsample": "色度采样",
+      "chromaSubsample": "色彩采样",
       "trellis": "Trellis",
       "lossless": "无损",
       "method": "压缩方法",
-      "alphaCompression": "Alpha",
+      "alphaCompression": "透明通道压缩",
       "interlace": "隔行扫描",
-      "speed": "速度",
-      "subsample": "子采样"
+      "speed": "编码速度",
+      "subsample": "色彩采样"
     }
   },
   "dialog": {
     "clearTitle": "清空所有文件？",
-    "clearBody": "这将移除所有文件及其压缩结果。",
+    "clearBody": "移除列表中的文件与结果，原文件不受影响。",
     "resetTitle": "重置为默认设置？",
     "resetBody": "所有文件将使用默认设置重新压缩。"
   },
@@ -120,7 +120,7 @@
   },
   "compat": {
     "unsupportedTitle": "当前浏览器不受支持",
-    "unsupportedBody": "PicForge 需要支持 WebAssembly、Web Worker、Canvas 与本地文件能力的现代浏览器。",
+    "unsupportedBody": "当前浏览器缺少必要功能，请更新或更换浏览器。",
     "missingFeatures": "缺少能力：{{features}}"
   },
   "pwa": {
@@ -128,14 +128,14 @@
     "refresh": "刷新"
   },
   "errorBoundary": {
-    "title": "出现了一些问题",
-    "copy": "工具运行出现错误。刷新会清除当前队列，之后需要重新添加文件。",
+    "title": "无法显示工具",
+    "copy": "请刷新后重新添加文件，刷新会清除当前列表。",
     "reload": "重新加载页面"
   },
   "preview": {
     "original": "原图",
     "compressed": "结果",
-    "compressing": "压缩中...",
+    "compressing": "正在处理…",
     "selectHint": "选择图片即可预览",
     "compareMode": "对比模式",
     "backToList": "返回列表",
@@ -153,20 +153,19 @@
     "zoomIn": "放大",
     "zoomOut": "缩小",
     "zoomLevel": "缩放比例",
-    "fullscreen": "切换全屏"
+    "fullscreen": "切换全屏",
+    "videoControls": "视频播放",
+    "play": "播放",
+    "pause": "暂停",
+    "mute": "预览静音",
+    "unmute": "开启预览声音",
+    "seek": "播放进度"
   },
   "motion": {
     "compression": "图片压缩",
     "android": "Android 动态照片",
     "ios": "iOS 实况照片",
-    "local": "本地处理，为网页准备。",
-    "androidBody": "批量将 Motion Photos 拆分为原始 JPG 和 MP4，所有处理都在浏览器内完成。",
-    "iosBody": "将导出的未修改实况原片转换为同名 JPG + H.264 MP4，方便用于网页。",
-    "output": "导出设置",
     "lossless": "原始 JPG + MP4 · 不重新编码",
-    "specImageValue": "原始图片字节",
-    "specVideoValue": "原始视频字节",
-    "specCodecValue": "不重新编码",
     "preset": "视频预设",
     "balanced": "均衡 · 1920px",
     "quality": "画质优先 · 1920px",
@@ -175,17 +174,16 @@
     "sourceFps": "保留原始时间戳",
     "jpegQuality": "JPEG 质量",
     "audio": "保留声音",
-    "androidNote": "保留原始图片和视频字节。预览播放能力取决于原视频编码。",
-    "iosNote": "导出的是网页用衍生文件。不会保留 HEIC 元数据、HDR 和辅助图像。每个文件最多 100 MB，HEIC 最多 5000 万像素。",
-    "offline": "文件始终留在本机。转换引擎首次使用时加载，缓存后才可离线使用。",
-    "queue": "处理队列",
-    "drop": "将原片拖放到这里",
+    "androidNote": "保留原始 JPG 和 MP4。视频能否播放取决于原始编码。",
+    "iosNote": "输出不保留 HEIC 元数据、HDR 和辅助图像。每个文件上限 100 MB，HEIC 上限 5000 万像素。",
+    "offline": "转换引擎加载并缓存后，才能离线使用。",
+    "drop": "添加原片",
     "select": "选择文件",
-    "pairing": "按同名文件配对，请一起导入照片和视频。单独的图片或视频也可转换；重名冲突需要先解决。",
+    "pairing": "按文件名配对，不验证 Apple 标识。可一起添加照片与视频，也可单独转换；请先处理重名文件。",
     "count": "已完成 {{done}} / {{total}} 项",
     "clear": "清空队列",
-    "newBatch": "开始新一批",
-    "lockedHint": "结果已保留。处理更多文件前请新建批次，这会清除当前队列与结果。",
+    "newBatch": "新建批次",
+    "lockedHint": "添加新文件前，请先下载结果并清空列表。",
     "cancel": "取消",
     "start": "开始批量处理",
     "exporting": "正在打包…",
@@ -195,7 +193,7 @@
     "pair": "实况照片配对",
     "still": "静态图片",
     "video": "独立视频",
-    "queued": "准备就绪",
+    "queued": "待处理",
     "processing": "正在处理…",
     "done": "已完成",
     "error": "失败",
@@ -203,7 +201,7 @@
     "errors": {
       "unsupported": "不支持此文件类型。",
       "ambiguous": "存在多个同名文件，请清空批次并选择唯一配对。",
-      "invalidMotion": "此 JPEG 中未找到有效的附加 MP4。经微信等应用保存或转发的照片通常会丢失动态数据，请使用相机应用中的原始文件。",
+      "invalidMotion": "未找到动态视频。请使用相机原片，转发或保存的副本可能已丢失视频。",
       "invalidHeic": "无法解码此 HEIC 图片。",
       "tooManyPixels": "HEIC 超过 5000 万像素的安全上限。",
       "tooLarge": "源文件超过 100 MB 上限。",
@@ -214,30 +212,28 @@
       "exportFailed": "ZIP 导出失败，请逐项下载或缩小批次。",
       "batchLimit": "每批最多 100 个文件，源文件总计不超过 {{maxMB}} MB。"
     },
-    "previewUnavailable": "当前浏览器无法预览此视频编码，仍可下载导出的文件。"
+    "previewUnavailable": "无法预览视频，仍可下载文件。"
   },
   "workbench": {
     "tools": "处理工具",
     "language": "语言",
-    "about": "关于 PicForge",
-    "licenses": "许可证",
-    "sponsor": "由 Riven Cloud 提供赞助",
+    "sponsor": "Riven Cloud 赞助",
     "outputSettings": "输出设置",
     "settingsScope": "应用范围",
     "allImages": "全部图片",
     "thisImage": "仅此图片",
-    "globalHint": "使用单独设置的图片不受此处修改影响。",
-    "customHint": "这些设置仅作用于当前图片。",
+    "globalHint": "已单独设置的图片不受影响。",
+    "customHint": "当前图片使用独立设置。",
     "downloadCurrent": "下载此图",
     "qualityValue": "质量数值",
     "format": "格式",
     "result": "结果",
-    "notReady": "尚未就绪",
+    "notReady": "暂无结果",
     "maxWidth": "最大宽度",
     "maxHeight": "最大高度",
-    "containHint": "保持比例，不放大原图。",
-    "resetBody": "恢复跟随全局设置的图片所用的默认值，单图设置保持不变。",
-    "local": "文件仅在本机处理",
+    "containHint": "保持比例，不放大。",
+    "resetBody": "重置批量设置，保留单图设置。",
+    "local": "本地处理",
     "completedCount": "{{done}} / {{total}} 已完成",
     "cancelProcessing": "取消处理",
     "exportCompleted": "下载结果",
@@ -245,77 +241,49 @@
     "files": "文件",
     "pairs": "文件组",
     "add": "添加",
-    "noFiles": "尚未添加图片",
-    "emptyTitle": "添加图片，开始处理",
-    "dropHint": "拖放文件到这里，或直接粘贴图片。",
+    "noFiles": "尚未添加文件",
+    "emptyTitle": "添加图片",
+    "dropHint": "拖入或粘贴图片。",
     "original": "原图",
     "compare": "对比",
-    "updating": "设置已变化，新结果就绪前显示原图。",
+    "updating": "正在更新结果，暂时显示原图。",
     "photo": "照片",
     "video": "视频",
     "downloadJpg": "下载 JPG",
     "downloadMp4": "下载 MP4",
-    "pairingHelp": "配对与格式",
-    "androidImportHint": "导入相机原始 JPG 动态照片，提取照片与视频。",
-    "iosImportHint": "一起导入 HEIC + MOV 原片，也可单独处理照片或视频。",
-    "retryUnfinished": "重试未完成项",
+    "pairingHelp": "格式与限制",
+    "androidImportHint": "请使用相机导出的原始 JPG 动态照片。",
+    "iosImportHint": "一起添加 HEIC 和 MOV，也可单独转换照片或视频。",
+    "retryUnfinished": "重试未完成文件",
     "outputFiles": "输出文件",
     "conversionSettings": "转换设置",
-    "originalBytes": "保留原始字节",
+    "originalBytes": "不重新编码",
     "extractFiles": "提取待处理文件",
-    "processingFailed": "无法处理此图片，请重试或选择另一份原始文件。",
+    "processingFailed": "图片处理失败，请重试或换一个文件。",
     "errorDetails": "详细信息",
     "preferences": "偏好设置",
-    "languageAuto": "自动选择",
     "skipToContent": "跳转到内容",
     "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "降低质量可缩小体积，下载前建议对比细节。",
-    "losslessHint": "PNG 使用无损压缩，不受质量滑块影响。",
+    "losslessHint": "PNG 为无损压缩，无需设置质量。",
     "smaller": "体积减小 {{percent}}%",
-    "larger": "体积增大 {{percent}}%"
+    "larger": "体积增大 {{percent}}%",
+    "batchActions": "批量操作"
   },
   "entry": {
-    "title": "减小体积。",
-    "description": "压缩图片，拆分动态照片，转换实况照片。文件始终留在你的设备上。",
-    "compression": "调整体积与尺寸，细节由你决定。",
-    "android": "提取原始照片与视频，无需重新编码。",
-    "ios": "将 HEIC + MOV 转成通用格式。",
+    "title": "图片工具箱",
+    "compression": "批量压缩、转换格式与调整尺寸。",
+    "android": "从动态照片中拆出原始照片和视频。",
+    "ios": "将 HEIC 和 MOV 转为 JPG 和 MP4。",
     "home": "PicForge 首页",
-    "summary": "压缩图片，拆分动态照片，把实况照片转成随处可用的格式。",
-    "privacy": "文件始终留在你的设备上。",
-    "tagline": "让图像更轻盈",
-    "principles": {
-      "local": {
-        "title": "无需上传",
-        "body": "处理过程全部在浏览器中完成。"
-      },
-      "originals": {
-        "title": "原文件保持不变",
-        "body": "下载处理结果，保留原始文件。"
-      },
-      "ready": {
-        "title": "打开就能用",
-        "body": "不注册，不安装。"
-      }
-    },
-    "titleAccent": "留住细节。",
+    "summary": "压缩图片、提取动态照片、转换实况照片。",
+    "privacy": "文件不上传，原文件不改动。",
     "sampleAlt": "浅蓝天空下的金色沙丘，沙纹清晰可见。",
     "sampleCompare": "对比 JPEG 与 WebP 示例图",
     "samplePosition": "显示 {{value}}% 的原始 JPEG",
-    "sampleNote": "示例图片 · 拖动对比",
-    "trySample": "试试这张图片",
-    "sampleFailed": "示例暂不可用，请选择自己的图片开始。"
-  },
-  "about": {
-    "description": "在本机完成图片压缩、动态照片提取与实况照片转换。文件始终留在你的设备上。",
-    "openSource": "开源软件",
-    "licenseHint": "应用与媒体组件分别采用各自的开源许可证。",
-    "readLicense": "查看许可",
-    "allNotices": "完整第三方声明",
-    "close": "关闭",
-    "back": "返回概览",
-    "loading": "正在加载许可…",
-    "unavailable": "未能加载此许可，请重试。"
+    "sampleNote": "示例图 · 拖动对比",
+    "trySample": "使用示例",
+    "sampleFailed": "示例加载失败，请添加图片。"
   },
   "nav": {
     "compression": "图片压缩",

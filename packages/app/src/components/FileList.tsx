@@ -35,7 +35,7 @@ export function FileList({
           <button
             className="pf-icon-button"
             aria-label={t('actions.clearAll')}
-            title={t('actions.clearAll')}
+            data-tooltip={t('actions.clearAll')}
             onClick={(event) => {
               event.currentTarget.focus();
               setIsClearOpen(true);

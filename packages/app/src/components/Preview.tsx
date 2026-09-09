@@ -553,7 +553,7 @@ export function Preview({
             />
           )}
           <div className="pf-preview-file-heading">
-            <span className="pf-preview-filename" title={file.file.name}>
+            <span className="pf-preview-filename" data-tooltip={file.file.name}>
               {file.file.name}
             </span>
             <span className="pf-preview-file-facts">
@@ -714,7 +714,7 @@ function IconControl({
       type="button"
       className={`pf-icon-control ${className}`}
       aria-label={label}
-      title={label}
+      data-tooltip={label}
       disabled={disabled}
       onClick={onClick}
     >
@@ -749,7 +749,7 @@ function CompareModeSwitch({
           className={`pf-compare-mode-button${mode === option.mode ? ' is-active' : ''}`}
           aria-label={option.label}
           aria-pressed={mode === option.mode}
-          title={option.label}
+          data-tooltip={option.label}
           onClick={() => onChange(option.mode)}
         >
           {option.icon}

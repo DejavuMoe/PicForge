@@ -1,5 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TooltipLayer } from './components/TooltipLayer';
+import { ProjectInfo } from './components/ProjectInfo';
 import { Header } from './components/Header';
 import { FiLock } from 'react-icons/fi';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -18,6 +20,37 @@ const Landing = lazy(() => import('./landing/Landing'));
 export default function App() {
   const { t } = useTranslation();
   const [updateReady, setUpdateReady] = useState(false);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.pfInput = 'pointer';
+    const pointer = () => {
+      root.dataset.pfInput = 'pointer';
+    };
+    const keyboard = (event: KeyboardEvent) => {
+      if (
+        [
+          'Tab',
+          'Enter',
+          ' ',
+          'ArrowLeft',
+          'ArrowRight',
+          'ArrowUp',
+          'ArrowDown',
+          'Home',
+          'End',
+          'PageUp',
+          'PageDown',
+        ].includes(event.key)
+      )
+        root.dataset.pfInput = 'keyboard';
+    };
+    document.addEventListener('pointerdown', pointer, true);
+    document.addEventListener('keydown', keyboard, true);
+    return () => {
+      document.removeEventListener('pointerdown', pointer, true);
+      document.removeEventListener('keydown', keyboard, true);
+    };
+  }, []);
 
   useEffect(() => {
     const ready = () => setUpdateReady(true);
@@ -57,9 +90,7 @@ export default function App() {
 
   useEffect(() => {
     document.title =
-      tool === 'home'
-        ? 'PicForge — Your images, on your device'
-        : `${t(`motion.${tool}`)} · PicForge`;
+      tool === 'home' ? `PicForge · ${t('entry.title')}` : `${t(`motion.${tool}`)} · PicForge`;
   }, [tool, t]);
 
   return (
@@ -112,6 +143,9 @@ export default function App() {
             </Suspense>
           </div>
         ))}
+
+        <ProjectInfo />
+        <TooltipLayer />
 
         {updateReady && (
           <div className="pf-update-toast" role="status">

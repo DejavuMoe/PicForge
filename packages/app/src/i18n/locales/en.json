@@ -11,7 +11,7 @@
   "actions": {
     "download": "Download",
     "downloadZip": "Download ZIP ({{count}})",
-    "packing": "Packing...",
+    "packing": "Creating ZIP…",
     "clearAll": "Clear all",
     "resetDefaults": "Reset",
     "confirm": "Confirm",
@@ -29,33 +29,33 @@
     "toggleColorMode": "Toggle color mode",
     "formatHint": "JPEG: best for photos | WebP: good balance | PNG: lossless | AVIF: smallest size",
     "adv": {
-      "progressive": "Load image progressively (better perceived loading speed)",
-      "chromaSubsample": "4:4:4 = full color detail; 4:2:0 = smaller file, slight color loss",
-      "trellis": "Optimize compression (slower, slightly smaller file)",
-      "lossless": "No quality loss, but larger file size",
-      "method": "0 = fastest, 6 = smallest file (0-6)",
-      "alphaCompression": "Compress transparent areas (smaller file)",
-      "interlace": "Progressive loading (slower compression, better for large images)",
-      "speed": "0 = best quality, 10 = fastest encoding (0-10)",
-      "subsample": "4:4:4 = full color; 4:2:0 = smaller file, slight color loss"
+      "progressive": "Display JPEG in successive passes.",
+      "chromaSubsample": "4:4:4 retains more color detail; 4:2:0 usually produces smaller files.",
+      "trellis": "Additional JPEG optimization; takes longer.",
+      "lossless": "Preserve decoded pixels without lossy encoding.",
+      "method": "0 prioritizes speed; 6 prioritizes file size.",
+      "alphaCompression": "Compress the transparency channel.",
+      "interlace": "Display PNG in successive passes.",
+      "speed": "0 prioritizes compression; 10 prioritizes speed.",
+      "subsample": "4:4:4 retains more color detail; 4:2:0 usually produces smaller files."
     }
   },
   "presets": {
     "balanced": {
       "label": "Balanced",
-      "description": "WebP 75% — good quality, small size"
+      "description": "WebP · Quality 75"
     },
     "web-photo": {
       "label": "Web Photo",
-      "description": "JPEG 80% — photos for web"
+      "description": "JPEG · Quality 80"
     },
     "lossless": {
       "label": "Lossless",
-      "description": "PNG 100% — no quality loss"
+      "description": "PNG · Lossless"
     },
     "high-compress": {
       "label": "High Compression",
-      "description": "AVIF 50% — smallest size"
+      "description": "AVIF · Quality 50"
     }
   },
   "fileQueue": {
@@ -73,7 +73,7 @@
     "processing": "{{count}} processing",
     "failed": "{{count}} failed",
     "noChange": "No change",
-    "loadingCodec": "Loading codec..."
+    "loadingCodec": "Loading encoder…"
   },
   "settings": {
     "title": "Presets",
@@ -84,7 +84,7 @@
     "customImageSettings": "Image settings",
     "width": "Width",
     "height": "Height",
-    "absoluteMode": "Absolute",
+    "absoluteMode": "Pixels",
     "percentageMode": "Percentage",
     "fitMethod": "Resize method",
     "fit": {
@@ -99,19 +99,19 @@
     },
     "adv": {
       "progressive": "Progressive",
-      "chromaSubsample": "Chroma",
+      "chromaSubsample": "Color sampling",
       "trellis": "Trellis",
       "lossless": "Lossless",
       "method": "Method",
-      "alphaCompression": "Alpha",
+      "alphaCompression": "Alpha compression",
       "interlace": "Interlace",
-      "speed": "Speed",
-      "subsample": "Subsample"
+      "speed": "Encoding speed",
+      "subsample": "Color sampling"
     }
   },
   "dialog": {
     "clearTitle": "Clear all files?",
-    "clearBody": "This will remove all files and their results.",
+    "clearBody": "Remove all files and results from this list. Original files are unchanged.",
     "resetTitle": "Reset to defaults?",
     "resetBody": "All files will be re-compressed with default settings."
   },
@@ -120,7 +120,7 @@
   },
   "compat": {
     "unsupportedTitle": "Browser not supported",
-    "unsupportedBody": "PicForge needs a modern browser with WebAssembly, Web Worker, Canvas, and local file support.",
+    "unsupportedBody": "This browser is missing required features. Update it or try another browser.",
     "missingFeatures": "Missing: {{features}}"
   },
   "pwa": {
@@ -128,14 +128,14 @@
     "refresh": "Refresh"
   },
   "errorBoundary": {
-    "title": "Something went wrong",
-    "copy": "An error interrupted this tool. Reloading clears the current queue; you will need to add your files again.",
+    "title": "Unable to display this tool",
+    "copy": "Reload and add the files again. Reloading clears this session.",
     "reload": "Reload page"
   },
   "preview": {
     "original": "Original",
     "compressed": "Result",
-    "compressing": "Compressing...",
+    "compressing": "Processing…",
     "selectHint": "Select an image to preview",
     "compareMode": "Compare mode",
     "backToList": "Back to files",
@@ -153,20 +153,19 @@
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "zoomLevel": "Zoom level",
-    "fullscreen": "Toggle fullscreen"
+    "fullscreen": "Toggle fullscreen",
+    "videoControls": "Video playback",
+    "play": "Play",
+    "pause": "Pause",
+    "mute": "Mute preview",
+    "unmute": "Unmute preview",
+    "seek": "Playback position"
   },
   "motion": {
     "compression": "Image compression",
     "android": "Android Motion Photos",
     "ios": "iOS Live Photos",
-    "local": "LOCAL FILES. READY FOR THE WEB.",
-    "androidBody": "Unpack Motion Photos into the original JPG and MP4. Batch processing, entirely in your browser.",
-    "iosBody": "Turn unmodified Live Photo originals into matching JPG + H.264 MP4 assets for the web.",
-    "output": "Output settings",
     "lossless": "Original JPG + MP4 · no re-encoding",
-    "specImageValue": "Original image bytes",
-    "specVideoValue": "Original video bytes",
-    "specCodecValue": "Untouched · no re-encode",
     "preset": "Video preset",
     "balanced": "Balanced · 1920px",
     "quality": "Higher quality · 1920px",
@@ -175,17 +174,16 @@
     "sourceFps": "Preserve source timing",
     "jpegQuality": "JPEG quality",
     "audio": "Keep audio",
-    "androidNote": "The original image and video bytes are preserved. Playback depends on the embedded codec.",
-    "iosNote": "Web derivatives, not Apple Live Photo archives. HEIC metadata, HDR and auxiliary images are not preserved. Max 100 MB per file / 50 MP per HEIC.",
-    "offline": "Files stay on this device. Conversion engines load on first use; offline use requires that they have been cached.",
-    "queue": "Processing queue",
-    "drop": "Drop your originals here",
+    "androidNote": "Original JPG and MP4 bytes are preserved. Video playback depends on the source codec.",
+    "iosNote": "Output does not preserve HEIC metadata, HDR or auxiliary images. Limit: 100 MB per file and 50 MP per HEIC.",
+    "offline": "Conversion engines must load and cache before offline use.",
+    "drop": "Add original files",
     "select": "Choose files",
-    "pairing": "Pairing uses matching filenames. Import both files together. Unmatched images or videos can be converted separately; duplicate names need to be resolved before processing.",
+    "pairing": "Pairing uses matching filenames, not Apple identifiers. Add the photo and video together. Single files are supported; duplicate names must be resolved.",
     "count": "{{done}} / {{total}} completed",
     "clear": "Clear queue",
     "newBatch": "New batch",
-    "lockedHint": "Results are kept. Start a new batch to process more files; this clears the current queue and results.",
+    "lockedHint": "Download your results before clearing this batch to add more files.",
     "cancel": "Cancel",
     "start": "Process batch",
     "exporting": "Packing…",
@@ -195,7 +193,7 @@
     "pair": "Live Photo pair",
     "still": "Still image",
     "video": "Video only",
-    "queued": "Ready",
+    "queued": "Queued",
     "processing": "Processing…",
     "done": "Completed",
     "error": "Failed",
@@ -203,7 +201,7 @@
     "errors": {
       "unsupported": "Unsupported file type.",
       "ambiguous": "Multiple files share this name. Clear the batch and choose one matching pair.",
-      "invalidMotion": "No valid appended MP4 was found in this JPEG. Photos saved or forwarded through chat or social apps usually have their motion data stripped — use the original file from the camera app.",
+      "invalidMotion": "No embedded video found. Use the original camera file; shared copies may have lost the video.",
       "invalidHeic": "Unable to decode this HEIC image.",
       "tooManyPixels": "HEIC exceeds the 50 megapixel safety limit.",
       "tooLarge": "A source file exceeds the 100 MB limit.",
@@ -214,30 +212,28 @@
       "exportFailed": "ZIP export failed. Try individual downloads or a smaller batch.",
       "batchLimit": "Use at most 100 files and {{maxMB}} MB of sources per batch."
     },
-    "previewUnavailable": "This browser cannot preview this video codec. The exported file is available to download."
+    "previewUnavailable": "Video preview is unavailable. You can still download the file."
   },
   "workbench": {
     "tools": "Tools",
     "language": "Language",
-    "about": "About PicForge",
-    "licenses": "Licenses",
-    "sponsor": "Supported by Riven Cloud",
+    "sponsor": "Sponsored by Riven Cloud",
     "outputSettings": "Output settings",
     "settingsScope": "Apply to",
     "allImages": "All images",
     "thisImage": "This image",
-    "globalHint": "Images with custom settings keep their own values.",
-    "customHint": "These settings apply only to this image.",
+    "globalHint": "Images with separate settings are excluded.",
+    "customHint": "This image has separate settings.",
     "downloadCurrent": "Download this image",
     "qualityValue": "Quality value",
     "format": "Format",
     "result": "Result",
-    "notReady": "Not ready",
+    "notReady": "No result yet",
     "maxWidth": "Max width",
     "maxHeight": "Max height",
-    "containHint": "Keep proportions. Never enlarge the original.",
-    "resetBody": "Restore defaults for images using global settings. Custom image settings are kept.",
-    "local": "Files stay on this device",
+    "containHint": "Keep proportions. Do not enlarge.",
+    "resetBody": "Reset batch settings. Separate image settings are kept.",
+    "local": "Local processing",
     "completedCount": "{{done}} / {{total}} completed",
     "cancelProcessing": "Cancel processing",
     "exportCompleted": "Download results",
@@ -245,77 +241,49 @@
     "files": "Files",
     "pairs": "File groups",
     "add": "Add",
-    "noFiles": "No images added yet",
-    "emptyTitle": "Add images to get started",
-    "dropHint": "Drop files here, or paste images directly.",
+    "noFiles": "No files added",
+    "emptyTitle": "Add images",
+    "dropHint": "Drop or paste images here.",
     "original": "Original",
     "compare": "Compare",
-    "updating": "Settings changed. Showing the original until the new result is ready.",
+    "updating": "Updating result. The original is shown until it is ready.",
     "photo": "Photo",
     "video": "Video",
     "downloadJpg": "Download JPG",
     "downloadMp4": "Download MP4",
-    "pairingHelp": "Pairing and formats",
-    "androidImportHint": "Import original JPG Motion Photos to extract the photo and video.",
-    "iosImportHint": "Import HEIC + MOV originals together, or process a photo or video on its own.",
-    "retryUnfinished": "Retry unfinished items",
+    "pairingHelp": "Formats and limits",
+    "androidImportHint": "Use the original JPG from your camera.",
+    "iosImportHint": "Add HEIC and MOV together, or convert a single photo or video.",
+    "retryUnfinished": "Retry remaining files",
     "outputFiles": "Output files",
     "conversionSettings": "Conversion settings",
-    "originalBytes": "Original bytes preserved",
+    "originalBytes": "No re-encoding",
     "extractFiles": "Extract pending files",
-    "processingFailed": "This image could not be processed. Retry or choose another original.",
+    "processingFailed": "Could not process this image. Retry or add another file.",
     "errorDetails": "Details",
     "preferences": "Preferences",
-    "languageAuto": "Automatic",
     "skipToContent": "Skip to content",
     "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "Lower quality makes smaller files. Compare before downloading.",
-    "losslessHint": "PNG is lossless. The quality control does not apply.",
+    "losslessHint": "PNG is lossless; quality does not apply.",
     "smaller": "{{percent}}% smaller",
-    "larger": "{{percent}}% larger"
+    "larger": "{{percent}}% larger",
+    "batchActions": "Batch actions"
   },
   "entry": {
-    "title": "Less weight.",
-    "description": "Compress images, extract Motion Photos, convert Live Photos. Your files stay on your device.",
-    "compression": "Smaller images, precise control.",
-    "android": "Extract the original photo and video.",
-    "ios": "HEIC + MOV, ready to share.",
+    "title": "Image tools",
+    "compression": "Batch compression, format conversion and resizing.",
+    "android": "Separate the original photo and video.",
+    "ios": "Convert HEIC and MOV to JPG and MP4.",
     "home": "PicForge home",
-    "summary": "Compress images. Unpack Motion Photos. Make Live Photos easy to share.",
-    "privacy": "Your files stay on your device.",
-    "tagline": "Make room for your images",
-    "principles": {
-      "local": {
-        "title": "No uploads",
-        "body": "All processing happens in your browser."
-      },
-      "originals": {
-        "title": "Your originals, untouched",
-        "body": "Download new files; keep the source."
-      },
-      "ready": {
-        "title": "Ready when you are",
-        "body": "No account. No installation."
-      }
-    },
-    "titleAccent": "More image.",
+    "summary": "Compress images, extract Motion Photos and convert Live Photos.",
+    "privacy": "Files stay on this device. Originals are unchanged.",
     "sampleAlt": "Golden dunes with fine sand ripples under a pale blue sky.",
     "sampleCompare": "Compare the JPEG and WebP sample",
     "samplePosition": "{{value}}% original JPEG",
-    "sampleNote": "Example image · Drag to compare",
-    "trySample": "Try this image",
-    "sampleFailed": "Example unavailable. Choose your own image to get started."
-  },
-  "about": {
-    "description": "A local image toolbox for compression, Motion Photos and Live Photos. Your files stay on your device.",
-    "openSource": "Open-source software",
-    "licenseHint": "The app and its media components have separate licenses.",
-    "readLicense": "Read license",
-    "allNotices": "All third-party notices",
-    "close": "Close",
-    "back": "Back to overview",
-    "loading": "Loading license…",
-    "unavailable": "This license could not be loaded. Please try again."
+    "sampleNote": "Sample · Drag to compare",
+    "trySample": "Try sample",
+    "sampleFailed": "Sample could not load. Add an image instead."
   },
   "nav": {
     "compression": "Compress",

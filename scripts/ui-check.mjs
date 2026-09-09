@@ -40,12 +40,13 @@ try {
       await picker.selectOption({ label: name });
     } else await page.locator('.pf-tool-nav').getByRole('button', { name, exact: true }).click();
   };
-  const capture = async (name) => {
-    // Synchronize CSS media queries and React's matchMedia state with a paint,
-    // instead of measuring immediately after device-metric emulation changes.
-    await page.evaluate(
+  const settleLayout = () =>
+    page.evaluate(
       () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
     );
+  const capture = async (name) => {
+    // Wait for responsive media queries to reach the next painted layout.
+    await settleLayout();
     const issues = await page.evaluate(() =>
       [...document.querySelectorAll('button,input,select,[role=combobox],summary,h1,h2')]
         .filter((e) => {
@@ -281,12 +282,20 @@ try {
     await quality.fill('92');
     await quality.press('Escape');
     assert.equal(await quality.inputValue(), '75', 'Escape cancels numeric draft');
+    assert(
+      await quality.evaluate((input) => input === document.activeElement),
+      'Escape retains input focus',
+    );
     await active().getByRole('switch', { name: 'Resize', exact: true }).click();
     const width = active().getByRole('spinbutton', { name: 'Width', exact: true });
     await width.fill('9');
     await width.pressSequentially('60');
     assert.equal(await width.inputValue(), '960');
     await width.press('Enter');
+    assert(
+      await width.evaluate((input) => input === document.activeElement),
+      'Enter retains input focus',
+    );
     await active().getByText('1 / 1 completed', { exact: true }).waitFor();
     assert((await active().locator('.pf-preview-file-facts').innerText()).includes('960×640'));
     await format.selectOption('oxipng');
@@ -310,6 +319,13 @@ try {
       await page.waitForFunction(() => !document.fullscreenElement);
       await active().getByRole('combobox', { name: 'Zoom level' }).selectOption('1');
     }
+    const fieldBounds = await format.boundingBox();
+    const downloadBounds = await active().locator('.pf-download-current').boundingBox();
+    assert(
+      Math.abs(fieldBounds.x - downloadBounds.x) < 0.5 &&
+        Math.abs(fieldBounds.width - downloadBounds.width) < 0.5,
+      'inspector fields and fixed download footer share edges',
+    );
     await capture('delivery-compression-light-desktop');
     await page.getByRole('button', { name: 'Toggle color mode', exact: true }).click();
     await capture('delivery-compression-dark-desktop');
@@ -374,6 +390,164 @@ try {
     assert.deepEqual(restrictedErrors, []);
     await restricted.close();
     report.interactions.push('blocked storage remains usable; automatic language and system theme');
+  }
+  if (run('details')) {
+    let columnDrift = 0;
+    let disclosureDrift = 0;
+    const same = (values, name) => {
+      const drift = Math.max(...values) - Math.min(...values);
+      assert(drift < 0.5, `${name}: ${drift}px drift (${values.join(', ')})`);
+      return drift;
+    };
+    await page.goto(origin);
+    await page.evaluate(() => localStorage.removeItem('picforge.language'));
+    for (const lang of ['en', 'zh-CN', 'zh-TW', 'ja', 'ko']) {
+      await page.goto(`${origin}/?lng=${lang}`);
+      await page.locator('.pf-entry-tool').first().waitFor();
+      for (const [width, height] of [
+        [1160, 571],
+        [1576, 828],
+        [856, 718],
+        [390, 844],
+      ]) {
+        await page.setViewportSize({ width, height });
+        await settleLayout();
+        const rows = await page.locator('.pf-entry-tool').evaluateAll((elements) =>
+          elements.map((row) =>
+            [...row.children].map((child) => {
+              const r = child.getBoundingClientRect();
+              return { x: r.x, width: r.width };
+            }),
+          ),
+        );
+        for (let column = 0; column < 5; column++) {
+          const visible = rows.map((row) => row[column]).filter((rect) => rect.width > 0);
+          if (visible.length)
+            columnDrift = Math.max(
+              columnDrift,
+              same(
+                visible.map((rect) => rect.x),
+                `${lang}/${width} home column ${column}`,
+              ),
+            );
+        }
+      }
+    }
+    await page.setViewportSize({ width: 1160, height: 571 });
+    await page.goto(`${origin}/?lng=zh-CN`);
+    await page.locator('.pf-landing').evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await capture('audit-home-alignment');
+    const language = page.locator('.pf-language-control select');
+    const label = page.locator('.pf-language-control .pf-language-value');
+    assert.equal(await label.innerText(), '简体中文');
+    assert.equal(await language.inputValue(), 'auto');
+    const headerWidth = (await language.boundingBox()).width;
+    // Auto and an explicit choice of the displayed language must have different values.
+    await language.selectOption('zh-CN');
+    assert.equal(await page.evaluate(() => localStorage.getItem('picforge.language')), 'zh-CN');
+    await language.selectOption('auto');
+    await page.waitForFunction(() => document.documentElement.lang === 'en');
+    assert.equal(await label.innerText(), 'English');
+    assert.equal(await language.inputValue(), 'auto');
+    assert.equal(await page.evaluate(() => localStorage.getItem('picforge.language')), null);
+    await language.selectOption('en');
+    assert.equal(await page.evaluate(() => localStorage.getItem('picforge.language')), 'en');
+    await language.selectOption('auto');
+    same([headerWidth, (await language.boundingBox()).width], 'language control width');
+    await page.reload();
+    await label.waitFor();
+    assert.equal(await label.innerText(), 'English');
+    assert.equal(await language.inputValue(), 'auto');
+    report.interactions.push(
+      'shared home columns across five locales/four widths; current-language label preserves explicit/automatic preference semantics',
+    );
+
+    await page.goto(`${origin}/?tool=compression&lng=en`);
+    await active().locator('.pf-inspector').waitFor();
+    const format = active().getByRole('combobox', { name: 'Format', exact: true });
+    const disclosure = active().locator('.pf-settings-fields > details > summary');
+    const presets = active().locator('.pf-inspector-body > details > summary');
+    for (const [width, height] of [
+      [1160, 571],
+      [1576, 828],
+      [856, 718],
+      [390, 844],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await settleLayout();
+      const widths = [];
+      for (let toggle = 0; toggle < 4; toggle++) {
+        widths.push((await format.boundingBox()).width);
+        await disclosure.click();
+        await presets.click();
+      }
+      disclosureDrift = Math.max(disclosureDrift, same(widths, `${width} inspector toggle width`));
+    }
+    await page.setViewportSize({ width: 1576, height: 828 });
+    const controlStyle = () =>
+      format.evaluate((element) => {
+        const style = getComputedStyle(element),
+          r = element.getBoundingClientRect();
+        return {
+          x: r.x,
+          width: r.width,
+          height: r.height,
+          background: style.backgroundColor,
+          appearance: style.appearance,
+          arrow: style.backgroundImage,
+        };
+      });
+    const hoverCapable = await page.evaluate(
+      () => matchMedia('(hover: hover) and (pointer: fine)').matches,
+    );
+    for (const mode of ['light', 'dark']) {
+      if ((await page.locator('html').getAttribute('data-pf-theme')) !== mode)
+        await page.getByRole('button', { name: 'Toggle color mode', exact: true }).click();
+      await page.locator('.pf-brand-button').hover();
+      await settleLayout();
+      const normal = await controlStyle();
+      await format.hover();
+      await settleLayout();
+      const hover = await controlStyle();
+      assert.equal(normal.appearance, 'none');
+      assert.notEqual(normal.arrow, 'none');
+      if (hoverCapable)
+        assert.notEqual(
+          normal.background,
+          hover.background,
+          'pointer select has a deliberate hover surface',
+        );
+      else
+        assert.equal(
+          normal.background,
+          hover.background,
+          'non-hover input avoids sticky hover decoration',
+        );
+      same([normal.width, hover.width], 'select hover width');
+      same([normal.height, hover.height], 'select hover height');
+      await format.press('Tab');
+      await page.keyboard.press('Tab');
+      const quality = active().getByRole('spinbutton', { name: 'Quality value', exact: true });
+      assert(await quality.evaluate((input) => input === document.activeElement));
+      assert.equal(
+        await quality.evaluate((input) => getComputedStyle(input).outlineStyle),
+        'solid',
+      );
+      await quality.fill('83');
+      await quality.press('Enter');
+      assert(await quality.evaluate((input) => input === document.activeElement));
+      await quality.fill('91');
+      await quality.press('Escape');
+      assert.equal(await quality.inputValue(), '83');
+      assert(await quality.evaluate((input) => input === document.activeElement));
+      await capture(`audit-controls-${mode}`);
+    }
+    report.interactions.push(
+      'advanced/preset disclosures keep width across desktop/tablet/phone; select hover geometry and numeric Enter/Escape focus',
+    );
+    report.detailMeasurements = { columnDrift, disclosureDrift, hoverCapable };
   }
   assert.deepEqual(errors, []);
   report.errors = errors;

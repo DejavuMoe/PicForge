@@ -266,7 +266,7 @@
     "processingFailed": "이 이미지를 처리할 수 없습니다. 다시 시도하거나 다른 원본 파일을 선택하세요.",
     "errorDetails": "자세히",
     "preferences": "환경 설정",
-    "languageAuto": "브라우저 언어 사용",
+    "languageAuto": "자동 선택",
     "skipToContent": "본문으로 건너뛰기",
     "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "품질을 낮추면 용량이 줄어듭니다. 다운로드 전에 디테일을 비교하세요.",

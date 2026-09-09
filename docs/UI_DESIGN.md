@@ -43,7 +43,7 @@ The root/app version and service-worker cache version are synchronized at 0.16.0
 
 ### Build comparison
 
-Same host, Node 24.21.0, pnpm 11.8.0, Vite 8.2.2. Baseline is `58b797db38ede4779654f0761f905d3fd497e898`; comparison is the 0.16.0 working tree. Decimal kB, uncompressed emitted assets:
+Same host, Node 24.21.0, pnpm 11.8.0, Vite 8.2.2. Baseline is `58b797db38ede4779654f0761f905d3fd497e898`; comparison is the initial 0.16.0 redesign at `c915b5d`, before the detail audit below. Decimal kB, uncompressed emitted assets:
 
 | Artifact | Before | After | Change |
 | --- | ---: | ---: | ---: |
@@ -97,3 +97,33 @@ pnpm test:browser
 Use `PICFORGE_UI_EXECUTABLE` only when a test environment needs an explicit browser executable/wrapper. The normal path uses the project's pinned Playwright browser. `PICFORGE_UI_IMAGE`, `PICFORGE_UI_URL` and `PICFORGE_QA_OUTPUT` select the fixture, origin and temporary evidence directory.
 
 Local evidence for this run: `/tmp/picforge-type-chromium`, `/tmp/picforge-type-firefox`, `/tmp/picforge-type-webkit`, `/tmp/picforge-ui-final`, `/tmp/picforge-ui-firefox`, `/tmp/picforge-ui-webkit-safe`, and `/tmp/picforge-production-check.log`. These are temporary, reproducible evidence, not committed product assets. Real HEIC/MOV camera conversion was not repeated: the processing implementation, dependencies, worker policy and encoder arguments did not change. Existing camera and engine qualifications retain their original source revisions.
+
+## Detail audit after browser review — 2026-09-10
+
+The audit starts from `c915b5d` and keeps the accepted visual direction. The user's 1160×571 and 1576×828 annotations exposed related layout and control-state defects:
+
+| Finding | Cause | Correction |
+| --- | --- | --- |
+| Home descriptions/format labels did not line up | Each row sized its `auto` format column independently, redistributing the fractional columns | One shared column template with a bounded format column; the visible column origins are identical across rows |
+| Advanced settings changed the width of every field | Scrollbars consumed width only after disclosure content overflowed | Stable scrollbar gutters in the inspector, matching download footer, file list and mobile workbench |
+| Select hover and numeric spinners varied by browser | Closed fields still used native `appearance: auto` and hover spinners | Explicit closed-select appearance, local chevron, colors, disabled/focus/hover states; hide number steppers while keeping native keyboard editing |
+| Header showed the detection policy instead of the language | The automatic option's text was used as the closed-field label | Show the resolved language name; keep automatic/manual option values distinct so explicitly choosing the current language still persists a preference |
+| Numeric Enter/Escape lost keyboard focus | Committing blurred the field and changing its value remounted the input | Synchronize the native input without replacing it; Enter commits and Escape restores while retaining focus |
+| Touch interactions could retain desktop hover decoration | Hover rules were unconditional | Scope hover decoration to an exposed fine pointer with hover support; retain keyboard focus independently |
+| Disclosure indicators and focus rings were inconsistent | Native markers and external outline spacing mixed with the custom controls | Consistent end-aligned chevrons and a single inset field focus ring |
+
+Before the fix, the annotated description column differed by approximately **25px** between rows; opening Advanced settings reduced an input from **251px to 241px**. The new `details` group measures the resulting column drift and control-width drift across five locales and four viewport sizes, alongside language persistence, hover geometry and keyboard focus. The `usability` group additionally verifies that the fixed download footer shares the settings fields' edges and that numerical edits still produce the expected real compressed dimensions.
+
+The language control retains native selection and popup behavior. Its automatic option includes the current language for assistive technology, while the ordinary closed field displays the language name alone. In forced-colors mode the native label/arrow remains available. This does not replace the native popup with another JavaScript menu.
+
+Run the targeted checks with the development server available:
+
+```sh
+PICFORGE_UI_GROUPS=details,usability node scripts/ui-check.mjs
+```
+
+Use the existing browser/executable options for Firefox or WebKit. Hover assertions follow the browser's actual exposed pointer capabilities: the headless Firefox runtime on this host reports no hover/fine pointer, so it exercises the non-hover branch. Geometry checks wait for responsive media queries to reach a painted frame before comparing values.
+
+Detail-audit result: lint, all project type checks, 189 unit tests and the production build pass. Chromium 145.0.7632.6, Firefox 146.0.1 and Playwright WebKit 26.0 each passed `details,usability` (10 captures and four interaction groups per engine). Each measured **0px** home-column drift and **0px** disclosure-width drift. A further Chromium layout pass covered 21 empty-workspace captures, including all three tools and five locales. Evidence is temporary under `/tmp/picforge-detail-chromium`, `/tmp/picforge-detail-firefox`, `/tmp/picforge-detail-webkit` and `/tmp/picforge-detail-layout`.
+
+This pass changes shared UI/number-input behavior only; real HEIC/MOV conversion was not repeated. The existing WebKit native-video and real-Safari qualification limits above remain in effect. No new dependency, browser deny rule, processing-engine change or deployment is part of this audit.

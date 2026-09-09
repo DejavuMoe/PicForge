@@ -266,7 +266,7 @@
     "processingFailed": "无法处理此图片，请重试或选择另一份原始文件。",
     "errorDetails": "详细信息",
     "preferences": "偏好设置",
-    "languageAuto": "跟随浏览器",
+    "languageAuto": "自动选择",
     "skipToContent": "跳转到内容",
     "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "降低质量可缩小体积，下载前建议对比细节。",

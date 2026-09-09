@@ -266,7 +266,7 @@
     "processingFailed": "画像を処理できませんでした。再試行するか、別の元ファイルを選んでください。",
     "errorDetails": "詳細",
     "preferences": "環境設定",
-    "languageAuto": "ブラウザーに合わせる",
+    "languageAuto": "自動選択",
     "skipToContent": "コンテンツへ移動",
     "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "画質を下げると容量が小さくなります。保存前に細部を比較してください。",

@@ -136,10 +136,11 @@
 }
 .pf-entry-tools {
   border-top: 1px solid var(--pf-border-default);
+  --pf-entry-columns: 36px minmax(210px, 1fr) minmax(200px, 1.3fr) 24ch 20px;
 }
 .pf-entry-tool {
   display: grid;
-  grid-template-columns: 36px minmax(210px, 1fr) minmax(200px, 1.3fr) auto 20px;
+  grid-template-columns: var(--pf-entry-columns);
   gap: 24px;
   align-items: center;
   padding: 24px 4px;
@@ -149,12 +150,15 @@
   text-decoration: none;
   transition: background-color 150ms;
 }
-.pf-entry-tool:hover {
-  background: var(--pf-hover-bg);
+@media (hover: hover) and (pointer: fine) {
+  .pf-entry-tool:hover {
+    background: var(--pf-hover-bg);
+  }
 }
-.pf-entry-tool:hover .pf-entry-arrow {
-  color: var(--pf-accent);
-  transform: translateX(3px);
+@media (hover: hover) and (pointer: fine) {
+  .pf-entry-tool:hover .pf-entry-arrow {
+    color: var(--pf-accent);
+  }
 }
 .pf-entry-tool strong {
   font-size: 19px;
@@ -178,7 +182,7 @@
 .pf-entry-arrow {
   width: 20px;
   height: 20px;
-  transition: transform 150ms;
+  transition: color 150ms;
 }
 .pf-landing-principles {
   display: grid;
@@ -214,8 +218,10 @@ html:lang(ko) .pf-landing-intro h1 {
   .pf-landing-hero {
     gap: 32px;
   }
+  .pf-entry-tools {
+    --pf-entry-columns: 24px minmax(170px, 1fr) minmax(200px, 1.4fr) 20px;
+  }
   .pf-entry-tool {
-    grid-template-columns: 24px minmax(170px, 1fr) minmax(200px, 1.4fr) 20px;
     gap: 18px;
   }
   .pf-entry-formats {
@@ -255,8 +261,10 @@ html:lang(ko) .pf-landing-intro h1 {
   .pf-demo figcaption {
     min-height: 46px;
   }
+  .pf-entry-tools {
+    --pf-entry-columns: 20px minmax(0, 1fr) 20px;
+  }
   .pf-entry-tool {
-    grid-template-columns: 20px minmax(0, 1fr) 20px;
     gap: 8px 12px;
     padding: 20px 0;
   }

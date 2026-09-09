@@ -80,3 +80,13 @@ This checklist captures the main manual and browser-based checks for each releas
 Run `PICFORGE_UI_GROUPS=entry,layout,interaction,usability node scripts/ui-check.mjs` against the dev server. Select `PICFORGE_UI_BROWSER=chromium|firefox|webkit`; browser binaries must match the pinned Playwright version. Reuse a built app with `PICFORGE_UI_URL` when appropriate. Screenshots and exports go to a temporary directory by default.
 
 Record exact engines, dimensions and limitations. A structural invalid MP4 deliberately tests native-playback fallback in the interaction group. If a native browser process aborts, record that failure separately; do not call the full media path qualified just because the other groups pass. See [current validation](UI_DESIGN.md) for the Linux WebKit limit and the unchanged historical camera evidence.
+
+## Detail regression checks
+
+- Home number, title, description, format and arrow columns share the same x positions across rows, including different text lengths and all five locales.
+- Open/close Advanced settings and Presets at 1160×571 and 1576×828; fields retain width when a scrollbar appears. Verify the same behavior on tablet/mobile and with a selected result/download footer.
+- Closed selects show the application's chevron and deliberate hover/focus/disabled states. Number controls do not reveal browser-specific spinner buttons on hover.
+- The closed language picker shows the current language name. Explicitly choosing that same language must still leave automatic mode; returning to automatic must remove the persisted preference.
+- Enter commits and Escape cancels numeric drafts without losing focus. Tab continues to the next control.
+- Touch/non-hover inputs do not receive sticky desktop hover decoration, and keyboard focus is still visible.
+- Run `PICFORGE_UI_GROUPS=details,usability node scripts/ui-check.mjs` for these targeted regressions; results include measured column/disclosure drift.

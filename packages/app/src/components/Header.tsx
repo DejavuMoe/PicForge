@@ -21,19 +21,21 @@ export function Header({
   const { t, i18n } = useTranslation();
   const theme = useThemeColors();
   const [languagePreference, setLanguagePreference] = useState<string>(getLanguagePreference);
+  const currentLanguage =
+    SUPPORTED_LANGUAGES.find((language) => language.code === i18n.resolvedLanguage)?.label ??
+    'English';
   const selectLanguage = (value: string) => {
     setLanguagePreference(value);
     void chooseLanguage(value);
   };
-  const about = useRef<HTMLDetailsElement>(null);
+  const preferences = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
   useEffect(() => {
     const outside = (event: PointerEvent) => {
-      if (event.target instanceof Element && event.target.closest('.pf-select-menu')) return;
-      if (about.current?.open && !about.current.contains(event.target as Node))
-        about.current.open = false;
+      if (preferences.current?.open && !preferences.current.contains(event.target as Node))
+        preferences.current.open = false;
     };
     window.addEventListener('pointerdown', outside);
     return () => window.removeEventListener('pointerdown', outside);
@@ -82,18 +84,11 @@ export function Header({
       )}
       <div className="pf-header-actions">
         <div className="pf-language-control">
-          <SelectControl
-            aria-label={t('workbench.language')}
-            value={languagePreference}
-            onValueChange={selectLanguage}
-          >
-            <option value="auto">{t('workbench.languageAuto')}</option>
-            {SUPPORTED_LANGUAGES.map((language) => (
-              <option key={language.code} value={language.code}>
-                {language.label}
-              </option>
-            ))}
-          </SelectControl>
+          <LanguageSelect
+            preference={languagePreference}
+            language={currentLanguage}
+            onSelect={selectLanguage}
+          />
         </div>
         <button
           type="button"
@@ -104,7 +99,7 @@ export function Header({
           {theme.colorMode === 'dark' ? <FiSun aria-hidden /> : <FiMoon aria-hidden />}
         </button>
         <details
-          ref={about}
+          ref={preferences}
           className="pf-about"
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
@@ -119,18 +114,11 @@ export function Header({
           <div className="pf-about-menu">
             <strong>{t('workbench.preferences')}</strong>
             <div className="pf-mobile-preferences">
-              <SelectControl
-                aria-label={t('workbench.language')}
-                value={languagePreference}
-                onValueChange={selectLanguage}
-              >
-                <option value="auto">{t('workbench.languageAuto')}</option>
-                {SUPPORTED_LANGUAGES.map((language) => (
-                  <option key={language.code} value={language.code}>
-                    {language.label}
-                  </option>
-                ))}
-              </SelectControl>
+              <LanguageSelect
+                preference={languagePreference}
+                language={currentLanguage}
+                onSelect={selectLanguage}
+              />
               <button className="pf-text-button" onClick={theme.toggleColorMode}>
                 {theme.colorMode === 'light' ? <FiMoon aria-hidden /> : <FiSun aria-hidden />}
                 {t('tooltips.toggleColorMode')}
@@ -140,5 +128,41 @@ export function Header({
         </details>
       </div>
     </header>
+  );
+}
+
+/** Keep native option values: choosing the current language must still turn auto-detection off. */
+function LanguageSelect({
+  preference,
+  language,
+  onSelect,
+}: {
+  preference: string;
+  language: string;
+  onSelect: (value: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <span className="pf-language-select">
+      <SelectControl
+        aria-label={t('workbench.language')}
+        value={preference}
+        onValueChange={onSelect}
+      >
+        {SUPPORTED_LANGUAGES.map(({ code, label }) => (
+          <option key={code} value={code}>
+            {label}
+          </option>
+        ))}
+        <option value="auto">
+          {preference === 'auto'
+            ? `${language} · ${t('workbench.languageAuto')}`
+            : t('workbench.languageAuto')}
+        </option>
+      </SelectControl>
+      <span className="pf-language-value" aria-hidden="true">
+        {language}
+      </span>
+    </span>
   );
 }

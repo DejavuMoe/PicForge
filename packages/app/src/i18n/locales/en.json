@@ -266,7 +266,7 @@
     "processingFailed": "This image could not be processed. Retry or choose another original.",
     "errorDetails": "Details",
     "preferences": "Preferences",
-    "languageAuto": "Browser language",
+    "languageAuto": "Automatic",
     "skipToContent": "Skip to content",
     "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "Lower quality makes smaller files. Compare before downloading.",

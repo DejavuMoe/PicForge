@@ -3,6 +3,7 @@
   box-sizing: border-box;
 }
 :root {
+  --pf-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23636360' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
   --pf-cjk-font: 'Noto Sans CJK SC';
   --pf-font-family:
     system-ui, -apple-system, 'Segoe UI', var(--pf-cjk-font), 'PingFang SC', 'Microsoft YaHei',
@@ -54,6 +55,7 @@ html:lang(ko) {
   --pf-cjk-font: 'Noto Sans CJK KR';
 }
 html[data-pf-theme='dark'] {
+  --pf-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23b5b5b1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
   --pf-page-bg: #181818;
   --pf-surface-bg: #242424;
   --pf-card-bg: #202020;
@@ -104,6 +106,7 @@ textarea {
   font: inherit;
 }
 button {
+  appearance: none;
   cursor: pointer;
 }
 button,
@@ -112,6 +115,7 @@ summary {
 }
 button:disabled,
 input:disabled,
+select:disabled,
 fieldset:disabled {
   cursor: default;
 }
@@ -130,7 +134,8 @@ a {
 button,
 summary,
 a,
-input {
+input,
+select {
   touch-action: manipulation;
 }
 :focus-visible {
@@ -271,9 +276,9 @@ html[data-pf-theme='dark'] .pf-logo {
 }
 .pf-language-control .pf-select {
   border: 0;
-  background: transparent;
-  width: auto;
-  min-width: 115px;
+  background-color: transparent;
+  width: 112px;
+  min-width: 112px;
   font-size: 13px;
 }
 .pf-icon-button,
@@ -295,10 +300,12 @@ html[data-pf-theme='dark'] .pf-logo {
   width: 17px;
   height: 17px;
 }
-.pf-icon-button:hover:not(:disabled),
-.pf-icon-control:hover:not(:disabled) {
-  background: var(--pf-hover-bg);
-  color: var(--pf-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .pf-icon-button:hover:not(:disabled),
+  .pf-icon-control:hover:not(:disabled) {
+    background: var(--pf-hover-bg);
+    color: var(--pf-text-primary);
+  }
 }
 .pf-about {
   position: relative;
@@ -485,7 +492,7 @@ input[type='number'],
   height: var(--pf-control-height);
   border: 1px solid var(--pf-control-border);
   border-radius: 4px;
-  background: var(--pf-card-bg);
+  background-color: var(--pf-card-bg);
   color: var(--pf-text-primary);
   padding: 7px 10px;
   font-size: 14px;
@@ -494,7 +501,7 @@ input[type='number'],
 input[type='number']:disabled,
 fieldset:disabled input,
 fieldset:disabled .pf-select {
-  background: var(--pf-surface-bg);
+  background-color: var(--pf-surface-bg);
   color: var(--pf-text-disabled);
   border-color: var(--pf-border-default);
 }
@@ -619,14 +626,42 @@ fieldset:disabled .pf-segmented button {
   margin-top: 4px;
 }
 .pf-settings-extra > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   cursor: pointer;
-  list-style-position: inside;
+  list-style: none;
   font-size: 13px;
-  padding: 6px 0;
+  min-height: 38px;
+  padding: 8px 0;
 }
-.pf-settings-extra > summary::marker {
+.pf-settings-extra > summary::-webkit-details-marker {
+  display: none;
+}
+.pf-settings-extra > summary::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
   color: var(--pf-text-secondary);
-  font-size: 10px;
+  transform: rotate(-45deg);
+  margin-right: 3px;
+}
+.pf-settings-extra[open] > summary::after {
+  transform: rotate(45deg);
+}
+.pf-settings-extra > summary:focus-visible,
+.pf-inspector-disclosure > summary:focus-visible {
+  outline-offset: -2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-settings-extra > summary:hover,
+  .pf-inspector-disclosure > summary:hover {
+    color: var(--pf-accent);
+  }
 }
 .pf-preset-list {
   display: grid;
@@ -652,13 +687,50 @@ fieldset:disabled .pf-segmented button {
 }
 .pf-select {
   display: block;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  appearance: none;
+  -webkit-appearance: none;
   width: 100%;
+  min-width: 0;
+  padding-inline-end: 32px;
   text-align: start;
+  text-overflow: ellipsis;
   cursor: pointer;
+  background-image: var(--pf-select-arrow);
+  background-position: right 10px center;
+  background-size: 16px 16px;
+  background-repeat: no-repeat;
+  box-shadow: none;
 }
+.pf-select option {
+  background-color: var(--pf-card-bg);
+  color: var(--pf-text-primary);
+}
+input[type='number'] {
+  appearance: textfield;
+  box-shadow: none;
+}
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.pf-select:focus-visible,
+input[type='number']:focus-visible {
+  border-color: var(--pf-accent);
+  outline: 2px solid var(--pf-accent);
+  outline-offset: -2px;
+}
+.pf-select:active:enabled {
+  background-color: var(--pf-active-bg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-select:hover:enabled:not(:focus-visible),
+  input[type='number']:hover:enabled:not(:focus-visible) {
+    background-color: var(--pf-hover-bg);
+    border-color: var(--pf-border-hover);
+  }
+}
+
 .pf-button,
 .pf-motion-button,
 .pf-status-button {
@@ -676,9 +748,11 @@ fieldset:disabled .pf-segmented button {
   font-size: 13px;
   font-weight: 500;
 }
-.pf-button:hover:not(:disabled),
-.pf-motion-button:hover:not(:disabled) {
-  background: var(--pf-hover-bg);
+@media (hover: hover) and (pointer: fine) {
+  .pf-button:hover:not(:disabled),
+  .pf-motion-button:hover:not(:disabled) {
+    background: var(--pf-hover-bg);
+  }
 }
 .pf-button.is-primary,
 .pf-motion-button.is-primary {
@@ -687,9 +761,11 @@ fieldset:disabled .pf-segmented button {
   color: #fff;
   font-weight: 600;
 }
-.pf-button.is-primary:hover:not(:disabled),
-.pf-motion-button.is-primary:hover:not(:disabled) {
-  background: #a13625;
+@media (hover: hover) and (pointer: fine) {
+  .pf-button.is-primary:hover:not(:disabled),
+  .pf-motion-button.is-primary:hover:not(:disabled) {
+    background: #a13625;
+  }
 }
 .pf-button.is-primary:disabled,
 .pf-motion-button.is-primary:disabled {
@@ -713,9 +789,11 @@ fieldset:disabled .pf-segmented button {
   font-size: 13px;
   text-decoration: none;
 }
-.pf-text-button:hover:not(:disabled) {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+@media (hover: hover) and (pointer: fine) {
+  .pf-text-button:hover:not(:disabled) {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
 }
 .pf-text-button svg {
   width: 16px;
@@ -758,6 +836,7 @@ fieldset:disabled .pf-segmented button {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 0 6px 12px;
 }
 .pf-queue-empty {
@@ -778,8 +857,10 @@ fieldset:disabled .pf-segmented button {
   cursor: pointer;
   min-height: 103px;
 }
-.pf-file-row:hover {
-  background: var(--pf-hover-bg);
+@media (hover: hover) and (pointer: fine) {
+  .pf-file-row:hover {
+    background: var(--pf-hover-bg);
+  }
 }
 .pf-file-row.is-selected {
   background: var(--pf-selected-bg);
@@ -880,9 +961,11 @@ fieldset:disabled .pf-segmented button {
   width: 14px;
   height: 14px;
 }
-.pf-row-action:hover {
-  background: var(--pf-active-bg);
-  color: var(--pf-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .pf-row-action:hover {
+    background: var(--pf-active-bg);
+    color: var(--pf-text-primary);
+  }
 }
 .pf-file-row-progress {
   position: absolute;
@@ -1376,8 +1459,10 @@ fieldset:disabled .pf-segmented button {
   border-radius: 4px;
   background: none;
 }
-.pf-motion-row:hover {
-  background: var(--pf-hover-bg);
+@media (hover: hover) and (pointer: fine) {
+  .pf-motion-row:hover {
+    background: var(--pf-hover-bg);
+  }
 }
 .pf-motion-row.is-selected {
   background: var(--pf-selected-bg);
@@ -1664,9 +1749,9 @@ fieldset:disabled .pf-segmented button {
     max-width: 48%;
   }
   .pf-mobile-tool .pf-select {
-    background: none;
-    border: 0;
-    padding: 4px;
+    background-color: transparent;
+    border-color: transparent;
+    padding: 4px 28px 4px 6px;
     font-size: 13px;
   }
   .pf-header-actions {
@@ -1683,6 +1768,7 @@ fieldset:disabled .pf-segmented button {
   .pf-workbench {
     display: block;
     overflow-y: auto;
+    scrollbar-gutter: stable;
   }
   .pf-file-list-panel {
     min-height: 100%;
@@ -2028,8 +2114,10 @@ fieldset:disabled .pf-segmented button {
   border-radius: 4px;
   font-size: 13px;
 }
-.pf-tool-nav button:hover {
-  background: var(--pf-hover-bg);
+@media (hover: hover) and (pointer: fine) {
+  .pf-tool-nav button:hover {
+    background: var(--pf-hover-bg);
+  }
 }
 .pf-tool-nav button[aria-current='page'] {
   color: var(--pf-text-primary);
@@ -2041,7 +2129,7 @@ fieldset:disabled .pf-segmented button {
 .pf-language-control .pf-select {
   max-width: 152px;
   min-width: 0;
-  padding: 6px;
+  padding: 6px 30px 6px 10px;
 }
 .pf-workspace-heading {
   display: flex;
@@ -2089,6 +2177,7 @@ fieldset:disabled .pf-segmented button {
   border-color: var(--pf-border-default);
 }
 .pf-selection-rail button {
+  min-width: 0;
   border-radius: 3px;
   min-height: 32px;
 }
@@ -2227,7 +2316,7 @@ fieldset:disabled .pf-segmented button {
 .pf-zoom-select {
   min-width: 65px;
   width: 80px;
-  padding: 4px;
+  padding: 4px 24px 4px 6px;
   font-size: 12px;
   border-color: transparent;
 }
@@ -2256,9 +2345,11 @@ fieldset:disabled .pf-segmented button {
   color: inherit;
   text-decoration: none;
 }
-.pf-project-info a:hover {
-  color: var(--pf-text-primary);
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .pf-project-info a:hover {
+    color: var(--pf-text-primary);
+    text-decoration: underline;
+  }
 }
 .pf-project-info--landing {
   display: grid;
@@ -2287,9 +2378,11 @@ fieldset:disabled .pf-segmented button {
     border-color 150ms,
     background-color 150ms;
 }
-.pf-drop-surface:hover {
-  border-color: var(--pf-accent);
-  background: var(--pf-hover-bg);
+@media (hover: hover) and (pointer: fine) {
+  .pf-drop-surface:hover {
+    border-color: var(--pf-accent);
+    background: var(--pf-hover-bg);
+  }
 }
 .pf-drop-surface::before,
 .pf-drop-surface::after {
@@ -2350,9 +2443,12 @@ fieldset:disabled .pf-segmented button {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    scrollbar-gutter: stable;
   }
   .pf-inspector-footer {
     flex-shrink: 0;
+    overflow: hidden;
+    scrollbar-gutter: stable;
   }
 }
 @media (max-width: 1100px) {
@@ -2667,4 +2763,38 @@ fieldset:disabled .pf-segmented button {
   max-width: 440px;
   align-items: center;
   font-size: 13px;
+}
+
+@media (forced-colors: active) {
+  .pf-select {
+    appearance: auto;
+    background-image: none;
+    padding-inline-end: 8px;
+  }
+}
+
+.pf-language-select {
+  position: relative;
+  display: block;
+}
+.pf-language-select > .pf-select {
+  color: transparent;
+}
+.pf-language-value {
+  position: absolute;
+  inset: 0 32px 0 10px;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  color: var(--pf-text-primary);
+  font-size: 13px;
+  white-space: nowrap;
+}
+@media (forced-colors: active) {
+  .pf-language-select > .pf-select {
+    color: CanvasText;
+  }
+  .pf-language-value {
+    display: none;
+  }
 }

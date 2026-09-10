@@ -52,6 +52,22 @@ try {
     page.evaluate(
       () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
     );
+  const checkRanges = async () => {
+    for (const field of await active().locator('.pf-range-field:visible').all()) {
+      const values = await field.locator('input').evaluateAll((elements) =>
+        elements.map((el) => ({
+          box: el.getBoundingClientRect().toJSON(),
+          background: getComputedStyle(el).backgroundColor,
+          disabled: el.matches(':disabled'),
+        })),
+      );
+      assert.equal(values.length, 2);
+      assert(Math.abs(values[0].box.height - values[1].box.height) < 0.5, 'range/number height');
+      assert(Math.abs(values[0].box.y - values[1].box.y) < 0.5, 'range/number top');
+      assert.equal(values[0].disabled, values[1].disabled, 'range/number disabled state');
+      assert.equal(values[0].background, 'rgba(0, 0, 0, 0)', 'range has no input-box background');
+    }
+  };
   const capture = async (name) => {
     // Wait for responsive media queries to reach the next painted layout.
     await settleLayout();
@@ -420,6 +436,19 @@ try {
       ]) {
         await page.setViewportSize({ width, height });
         await settleLayout();
+        const insets = await page.locator('.pf-entry-tool').evaluateAll((elements) =>
+          elements.map((row) => {
+            const box = row.getBoundingClientRect();
+            return [
+              row.firstElementChild.getBoundingClientRect().left - box.left,
+              box.right - row.lastElementChild.getBoundingClientRect().right,
+            ];
+          }),
+        );
+        for (const [left, right] of insets) {
+          assert(left >= 12 && right >= 12, 'home rows have space at both ends');
+          same([left, right], 'home row left/right inset');
+        }
         const rows = await page.locator('.pf-entry-tool').evaluateAll((elements) =>
           elements.map((row) =>
             [...row.children].map((child) => {
@@ -720,6 +749,273 @@ try {
         'synthetic local video: styled play/pause, mute, seek and hidden-tool pause',
       );
     }
+  }
+  if (run('ranges')) {
+    for (const tool of ['compression', 'ios']) {
+      await page.goto(`${origin}/?tool=${tool}&lng=en`);
+      await active().locator('.pf-range-field').waitFor();
+      for (const width of [1576, 856, 390, 320]) {
+        await page.setViewportSize({ width, height: 844 });
+        await settleLayout();
+        await checkRanges();
+      }
+      await page.setViewportSize({ width: 1576, height: 828 });
+      const range = active().locator('.pf-range-field input[type=range]').first();
+      await range.press('End');
+      assert.equal(
+        await range.evaluate((el) => el.style.getPropertyValue('--pf-range-fraction')),
+        '1',
+      );
+      await range.press('Home');
+      assert.equal(
+        await range.evaluate((el) => el.style.getPropertyValue('--pf-range-fraction')),
+        '0',
+      );
+      await page.getByRole('button', { name: 'Toggle color mode', exact: true }).click();
+      await checkRanges();
+      await capture(`ranges-${tool}-enabled`);
+      if (tool === 'compression') {
+        await choose(active().getByRole('combobox', { name: 'Format', exact: true }), 'oxipng');
+        await active().getByRole('switch', { name: 'Resize', exact: true }).click();
+        await active().locator('.pf-settings-fields > details > summary').click();
+        await active().getByRole('button', { name: 'Percentage', exact: true }).click();
+        for (const width of [1576, 390, 320]) {
+          await page.setViewportSize({ width, height: 844 });
+          await settleLayout();
+          await checkRanges();
+        }
+        await active().locator('.pf-range-field').last().scrollIntoViewIfNeeded();
+        await capture('ranges-compression-disabled-and-percentage');
+      }
+    }
+    report.interactions.push(
+      'quality/percentage ranges: shared height, transparent background, enabled/disabled states, endpoints and both themes',
+    );
+  }
+  if (run('player')) {
+    assert(
+      process.env.PICFORGE_PLAYER_FIXTURES,
+      'Set PICFORGE_PLAYER_FIXTURES to the generated fixture prefix',
+    );
+    const measurements = [];
+    const near = (a, b, label) => assert(Math.abs(a - b) <= 1, `${label}: ${a} != ${b}`);
+    for (const shape of ['portrait', 'landscape']) {
+      const jpg = await readFile(`${process.env.PICFORGE_PLAYER_FIXTURES}-${shape}.jpg`);
+      const mp4 = await readFile(`${process.env.PICFORGE_PLAYER_FIXTURES}-${shape}.mp4`);
+      for (const tool of ['android', 'ios']) {
+        await page.setViewportSize({ width: 1576, height: 828 });
+        await page.goto(`${origin}/?tool=${tool}&lng=en`);
+        await active().locator('input[type=file]').waitFor({ state: 'attached' });
+        await active()
+          .locator('input[type=file]')
+          .setInputFiles(
+            tool === 'android'
+              ? { name: `${shape}.jpg`, mimeType: 'image/jpeg', buffer: Buffer.concat([jpg, mp4]) }
+              : [
+                  { name: `${shape}.jpg`, mimeType: 'image/jpeg', buffer: jpg },
+                  { name: `${shape}.mp4`, mimeType: 'video/mp4', buffer: mp4 },
+                ],
+          );
+        await active()
+          .getByRole('button', {
+            name: tool === 'android' ? 'Extract pending files' : 'Process batch',
+            exact: true,
+          })
+          .click();
+        await active().getByText('1 / 1 completed', { exact: true }).waitFor({ timeout: 120000 });
+        await active().locator('.pf-motion-row').click();
+        await page.waitForFunction(
+          () =>
+            document.querySelector('.pf-tool-panel:not([hidden]) video')?.duration > 0 ||
+            document.querySelector('.pf-motion-preview-note'),
+        );
+        if (await active().locator('.pf-motion-preview-note').isVisible()) {
+          report.interactions.push(
+            `${tool}/${shape}: native playback unavailable; layout retains download fallback`,
+          );
+          continue;
+        }
+        for (const [width, height] of [
+          [1576, 828],
+          [1440, 1120],
+          [856, 718],
+          [390, 844],
+          [320, 844],
+        ]) {
+          await page.setViewportSize({ width, height });
+          await settleLayout();
+          const rects = await active()
+            .locator('[data-kind="video"]')
+            .evaluate((pane) => {
+              const pick = (selector) =>
+                pane.querySelector(selector).getBoundingClientRect().toJSON();
+              return {
+                pane: pane.getBoundingClientRect().toJSON(),
+                frame: pick('.pf-motion-media-frame'),
+                video: pick('video'),
+                dock: pick('.pf-video-controls'),
+                seek: pick('input[type=range]'),
+                time: pick('.pf-video-time'),
+                buttons: [...pane.querySelectorAll('.pf-video-controls button')].map((button) =>
+                  button.getBoundingClientRect().toJSON(),
+                ),
+              };
+            });
+          near(rects.pane.x, rects.frame.x, 'frame start');
+          near(rects.pane.width, rects.frame.width, 'frame width');
+          near(rects.frame.x, rects.dock.x, 'dock start');
+          near(rects.frame.width, rects.dock.width, 'dock width');
+          near(rects.video.bottom, rects.dock.y, 'dock follows video stage');
+          assert(rects.seek.bottom <= rects.buttons[0].y + 1, 'timeline has its own row');
+          assert(rects.time.right <= rects.buttons[1].x + 1, 'timer fits before mute control');
+          for (const button of rects.buttons)
+            assert(
+              button.x >= rects.dock.x && button.right <= rects.dock.right + 1,
+              'button fits dock',
+            );
+          if (width >= 768 && tool === 'ios') {
+            const media = await active()
+              .locator('.pf-motion-output')
+              .evaluate((output) => {
+                const image = output.querySelector('[data-kind=image] img');
+                const video = output.querySelector('video');
+                const stage = video.getBoundingClientRect();
+                const scale = Math.min(
+                  1,
+                  stage.width / video.videoWidth,
+                  stage.height / video.videoHeight,
+                );
+                return {
+                  image: image.getBoundingClientRect().toJSON(),
+                  video: {
+                    width: video.videoWidth * scale,
+                    height: video.videoHeight * scale,
+                    y: stage.y + (stage.height - video.videoHeight * scale) / 2,
+                  },
+                  fit: getComputedStyle(video).objectFit,
+                };
+              });
+            assert.equal(
+              media.fit,
+              'scale-down',
+              'small video keeps its native size, like the paired photo',
+            );
+            near(media.image.width, media.video.width, 'paired visible media width');
+            near(media.image.height, media.video.height, 'paired visible media height');
+            near(media.image.y, media.video.y, 'paired visible media top');
+            const downloads = await active()
+              .locator('.pf-motion-media-pane > .pf-text-button')
+              .evaluateAll((elements) => elements.map((el) => el.getBoundingClientRect().y));
+            near(downloads[0], downloads[1], 'paired download row');
+          }
+          await checkRanges();
+          measurements.push({ tool, shape, width, dockWidth: rects.dock.width });
+          if (width === 1576 || width === 390) {
+            await active().locator('.pf-video-controls').scrollIntoViewIfNeeded();
+            await capture(`player-${tool}-${shape}-${width}`);
+          }
+        }
+        await page.setViewportSize({ width: 1576, height: 828 });
+        await settleLayout();
+        const video = active().locator('video');
+        const seek = active().getByRole('slider', { name: 'Playback position' });
+        if (shape === 'portrait' && tool === 'android') {
+          const fullscreen = active().locator('.pf-video-fullscreen');
+          if (await fullscreen.isEnabled()) {
+            await fullscreen.click();
+            await page.waitForFunction(() =>
+              document.fullscreenElement?.classList.contains('pf-video-player'),
+            );
+            await settleLayout();
+            assert.equal(
+              await video.evaluate((el) => getComputedStyle(el).objectFit),
+              'contain',
+              'fullscreen expands video to the available stage',
+            );
+            const dock = await active().locator('.pf-video-controls').boundingBox();
+            near(dock.width, 1576, 'fullscreen dock width');
+            near(dock.y + dock.height, 828, 'fullscreen dock bottom');
+            await capture('player-fullscreen');
+            await fullscreen.click();
+            await page.waitForFunction(() => !document.fullscreenElement);
+          }
+          await page.evaluate(() => {
+            const root = document.querySelector('.pf-tool-panel:not([hidden])');
+            const input = root.querySelector('.pf-video-controls input');
+            const video = root.querySelector('video');
+            window.playerProbe = { paints: 0, timeUpdates: 0 };
+            const observer = new MutationObserver(() => window.playerProbe.paints++);
+            observer.observe(input, { attributes: true, attributeFilter: ['style'] });
+            video.addEventListener('timeupdate', () => window.playerProbe.timeUpdates++);
+          });
+          await active().getByRole('button', { name: 'Play', exact: true }).click();
+          await page.waitForFunction(
+            () => document.querySelector('.pf-tool-panel:not([hidden]) video')?.ended,
+          );
+          const probe = await page.evaluate(() => window.playerProbe);
+          assert(
+            probe.paints > probe.timeUpdates + 3,
+            'timeline updates between timeupdate events',
+          );
+          assert.equal(
+            await seek.evaluate((el) => el.style.getPropertyValue('--pf-range-fraction')),
+            '1',
+            'sub-second completion reaches the end',
+          );
+          assert(
+            (await active().locator('.pf-video-time').innerText()).includes('.8'),
+            'short clip uses tenths',
+          );
+          await seek.press('Home');
+          // A pending decoder update must not move the thumb while the pointer owns it.
+          const box = await seek.boundingBox();
+          await page.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2);
+          await page.mouse.down();
+          await page.mouse.move(box.x + box.width * 0.65, box.y + box.height / 2, { steps: 6 });
+          const draft = Number(await seek.inputValue());
+          await video.evaluate((el) => {
+            el.currentTime = 0;
+            el.dispatchEvent(new Event('timeupdate'));
+          });
+          near(Number(await seek.inputValue()) * 1000, draft * 1000, 'scrub is not overwritten');
+          await page.mouse.up();
+          assert(await video.evaluate((el) => el.paused), 'paused scrub remains paused');
+          await seek.press('End');
+          assert.equal(
+            await seek.evaluate((el) => el.style.getPropertyValue('--pf-range-fraction')),
+            '1',
+          );
+        }
+        if (shape === 'landscape' && tool === 'android') {
+          await active().getByRole('button', { name: 'Play', exact: true }).click();
+          await page.waitForFunction(
+            () => document.querySelector('.pf-tool-panel:not([hidden]) video')?.currentTime > 0.1,
+          );
+          const box = await seek.boundingBox();
+          await page.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2);
+          await page.mouse.down();
+          assert(await video.evaluate((el) => el.paused), 'scrubbing suspends playback');
+          await page.mouse.move(box.x + box.width * 0.4, box.y + box.height / 2, { steps: 8 });
+          await page.mouse.up();
+          await page.waitForFunction(
+            () => !document.querySelector('.pf-tool-panel:not([hidden]) video')?.paused,
+          );
+          await openTool('Compress');
+          const hiddenVideo = page.locator('.pf-tool-panel[hidden] video');
+          const hiddenSeek = page.locator('.pf-tool-panel[hidden] .pf-video-controls input');
+          assert(await hiddenVideo.evaluate((el) => el.paused), 'hidden tool pauses');
+          const before = await hiddenSeek.inputValue();
+          await page.evaluate(
+            () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+          );
+          assert.equal(await hiddenSeek.inputValue(), before, 'hidden timeline stops');
+        }
+      }
+    }
+    report.playerMeasurements = measurements;
+    report.interactions.push(
+      'portrait/landscape in Android+iOS: full-width two-row dock, slider/number geometry, sub-second frame updates, scrubbing ownership, pause/resume and hidden cleanup',
+    );
   }
   assert.deepEqual(errors, []);
   report.errors = errors;

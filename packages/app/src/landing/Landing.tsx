@@ -80,11 +80,12 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
               />
               <input
                 type="range"
+                step="any"
                 min="0"
                 max="100"
                 value={position}
                 aria-label={t('entry.sampleCompare')}
-                aria-valuetext={t('entry.samplePosition', { value: position })}
+                aria-valuetext={t('entry.samplePosition', { value: Math.round(position) })}
                 onChange={(event) => setPosition(Number(event.target.value))}
               />
               <span className="pf-demo-divider" aria-hidden>

@@ -12,6 +12,8 @@ Every normal page uses one shared site footer. Desktop places copyright at the l
 
 Home has a direct product heading, a short functional description, one privacy statement, a labelled sample comparison and three tool links. Repeated marketing blocks and the two-line slogan have been removed. The JPEG/WebP sample remains illustrative, and Try sample imports the JPEG into the real compressor.
 
+Tool rows share their columns and use equal left/right insets: 20 px on desktop/tablet and 12 px on phones. The comparison accepts fractional pointer positions while announcing a rounded percentage.
+
 The workbench keeps its file/viewer/inspector structure, independent tool queues, explicit global/per-image settings and stable scrollbar gutters. On phones, settings follow the preview in one scroll area. File/result media stay in memory until reload/close; the UI does not imply persistent storage.
 
 ## One control system
@@ -24,9 +26,13 @@ Focus decoration follows input mode rather than browser-specific `:focus-visible
 
 Number fields retain the previous draft behavior: Enter commits, Escape restores, blur commits, and Enter/Escape retain focus. Native spinner, tap-highlight and inner-focus decorations are reset. Buttons, disclosures, progress bars and selection colors use the same tokens. Forced-colors mode retains visible system-color boundaries and selection.
 
+Quality and percentage sliders use the same control height as their paired number fields (38 px desktop, 44 px mobile). Their backgrounds remain transparent when disabled; the thumb and fill use the disabled token. The fill ends at the thumb center, accounting for the thumb's travel instead of treating the entire track as its travel distance.
+
 `TooltipLayer` supplies themed, bounded hints from `data-tooltip`; HTML `title` attributes are not used for visible interface hints. It is non-interactive, delayed for pointer hover, and dismisses on input or scrolling.
 
 `VideoPlayer` uses the browser's media APIs with application-styled play/pause, seek, preview mute and fullscreen controls. Native video controls are not displayed. Seeking and playback do not modify exports. Leaving the tool pauses playback. Unsupported decoding still presents a static preview and a download message; the original extracted video can still be saved.
+
+Both media tools use one full-width, two-row video dock: timeline above play/time/mute/fullscreen. The shared media grid stretches each pane explicitly, aligns paired media and download rows, and keeps small videos at their native size just like the photo. Mobile stacks the panes and provides 44 px seek/button targets. Playback paints the slider from actual media time on animation frames without rerendering the workspace. Paused, hidden or inactive players stop the loop. Pointer scrubbing owns the draft position, suspends playback and resumes only if it was playing; delayed decoder updates cannot pull the thumb backward. Sub-second clips reach the end of the track, and clips below ten seconds show tenths.
 
 File selection continues to use the operating system's file picker. The web interface does not imitate or replace the OS filesystem dialog.
 
@@ -64,7 +70,7 @@ Use the existing `PICFORGE_UI_BROWSER`, `PICFORGE_UI_EXECUTABLE`, `PICFORGE_UI_U
 
 The processing engines, resize contracts, source-Blob retry ownership, clean-aperture adapter, frame timing, size guards and Vips policy are unchanged. Production still uses Compat. No dependency upgrade, remote media processing or browser deny rule was added. Camera conversion was not repeated for this UI pass. Existing native WebKit video and real Safari/iPhone qualification limits remain documented in the preceding report; a successful UI subset does not qualify those paths.
 
-### Results for this revision
+### Control replacement results (`4feed73`)
 
 - Lint and project type checks pass; 189 unit tests in 22 files pass, including all locale contracts. The production build passes.
 - Chromium: the full entry/layout/interaction/usability/details/controls pass recorded 59 captures and nine interaction groups. The final pointer/keyboard refinement was checked again with controls/usability: 16 captures and three groups.
@@ -74,3 +80,19 @@ The processing engines, resize contracts, source-Blob retry ownership, clean-ape
 - Production Chromium: static compression, downloaded dimensions, mobile layout, offline reload and re-encoding pass after the new components were bundled.
 
 Temporary evidence: `/tmp/picforge-controls-all-chromium`, `/tmp/picforge-controls-final`, `/tmp/picforge-controls-chromium`, `/tmp/picforge-controls-firefox`, `/tmp/picforge-controls-webkit`, and `/tmp/picforge-controls-production.log`. These are test artifacts, not committed camera media. The in-app browser was also used to inspect the actual open five-language menu and shared footer.
+
+### Player and range follow-up (2026-09-10)
+
+- Lint, all project type checks, 190 unit tests in 22 files, and the production build pass.
+- Chromium 145.0.7632.6: `details,ranges,usability,layout` pass with 34 captures and five interaction groups. Five locales retain aligned home columns and symmetric insets. Quality controls retain equal heights/top edges at 1576, 856, 390 and 320 px widths; lossless-disabled quality and percentage controls also pass at desktop and both phone widths.
+- Firefox 146.0.1 and Playwright WebKit 26.0: `details,ranges,usability` each pass with 13 captures and five groups. Previous native video/Safari limitations remain; these runs qualify the control UI only.
+- Chromium `player`: nine captures and 20 geometry cases pass across both tools, portrait/landscape fixtures and 1576×828, 1440×1120, 856×718, 390×844 and 320×844. iOS paired visible media dimensions/top edges and download rows agree within 1 px. Small previews do not upscale; fullscreen still expands the video to fit. The dock spans its pane, and the timer/buttons fit without overlap. Fullscreen retains the dock at the viewport bottom.
+- A 0.8-second fixture reaches a fraction of 1 at completion and updates between native `timeupdate` events. Scrubbing rejects an injected stale decoder update, respects paused/playing state, supports keyboard endpoints, and stops playback/timeline updates when the tool becomes hidden.
+
+The player check uses temporary 320×426/0.8-second and 480×320/2-second H.264 fixtures and matching JPEGs. Android extracts appended JPEG+MP4 bytes; iOS processes a JPEG+MP4 pair through the existing path. No HEIC/MOV camera qualification or engine benchmark was repeated. Evidence: `/tmp/picforge-player-qa`, `/tmp/picforge-player-controls-chromium`, `/tmp/picforge-player-controls-firefox`, `/tmp/picforge-player-controls-webkit` and `/tmp/picforge-player-build.log`.
+
+```sh
+PICFORGE_UI_GROUPS=details,ranges,usability node scripts/ui-check.mjs
+# Prefix resolves to player-{portrait,landscape}.{jpg,mp4} fixtures described above.
+PICFORGE_UI_GROUPS=player PICFORGE_PLAYER_FIXTURES=/temporary/path/player node scripts/ui-check.mjs
+```

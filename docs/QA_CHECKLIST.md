@@ -84,6 +84,8 @@ Record exact engines, dimensions and limitations. A structural invalid MP4 delib
 ## Detail regression checks
 
 - Home number, title, description, format and arrow columns share the same x positions across rows, including different text lengths and all five locales.
+- Home rows retain symmetric 20 px desktop/tablet and 12 px mobile insets; the first/last controls do not touch the separator edges.
+- Quality and percentage sliders align with their number fields in enabled and disabled states. No rectangular input background appears behind a disabled track. Fill follows the thumb center at both endpoints and between them.
 - Open/close Advanced settings and Presets at 1160×571 and 1576×828; fields retain width when a scrollbar appears. Verify the same behavior on tablet/mobile and with a selected result/download footer.
 - Closed selects show the application's chevron and deliberate hover/focus/disabled states. Number controls do not reveal browser-specific spinner buttons on hover.
 - The language picker contains exactly five languages and no automatic option. Initial browser detection still works; explicitly choosing the current language persists that choice.
@@ -98,3 +100,6 @@ Record exact engines, dimensions and limitations. A structural invalid MP4 delib
 - All pages have a single top-right GitHub icon. Copyright and Riven Cloud remain visible; desktop aligns them to opposite sides, mobile stacks and centers them.
 - No native select, title tooltip or video control UI appears in the web page. Verify app hints and synthetic-video play/pause/seek/mute/hidden-tool pause, or a clear fallback with a valid download.
 - Use `PICFORGE_UI_GROUPS=controls,video` with `PICFORGE_UI_VIDEO` pointing to a temporary synthetic MP4. Do not infer video qualification from a UI-only run.
+- In both media tools, check portrait/landscape results at desktop, tall desktop, tablet and 320/390 px widths. The timeline occupies its own row; the dock follows the video stage and spans the pane. Paired visible media and downloads align, including small inputs that must not upscale.
+- Check sub-second completion, continuous playback, paused scrubbing, dragging during playback, keyboard endpoints and switching tools while playing. Delayed video events must not overwrite the dragged thumb. Hidden tools stop playback and timeline updates.
+- Use `PICFORGE_UI_GROUPS=ranges` for shared enabled/disabled range geometry and `PICFORGE_UI_GROUPS=player` with `PICFORGE_PLAYER_FIXTURES` for temporary portrait/landscape JPEG/MP4 pairs; fixture dimensions and durations are specified in [the validation report](UI_DESIGN.md).

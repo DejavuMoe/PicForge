@@ -91,6 +91,7 @@ export function OutputPreview({
           <div className="pf-motion-media-frame">
             {video && !previewFailed ? (
               <VideoPlayer
+                key={video}
                 src={video}
                 poster={image}
                 label={`${name} — ${t('workbench.video')}`}

@@ -59,6 +59,100 @@ try {
   });
   page.on('request', (request) => requests.push(request.url()));
   await page.goto('http://127.0.0.1:4187');
+  await page.locator('.pf-brand-mark').waitFor();
+  const brand = await page.evaluate(async () => {
+    const content = (selector) => document.querySelector(selector)?.getAttribute('content');
+    const localPath = (value) => {
+      const url = new URL(value, location.href);
+      return url.pathname + url.search;
+    };
+    const og = content('meta[property="og:image"]');
+    const twitter = content('meta[name="twitter:image"]');
+    const markSource = document.querySelector('.pf-brand-mark').src;
+    const markImage = new Image();
+    markImage.src = markSource;
+    await markImage.decode();
+    const manifest = await (
+      await fetch(document.querySelector('link[rel="manifest"]').href)
+    ).json();
+    const paths = [
+      ...new Set([
+        ...[...document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]')].map(
+          (link) => localPath(link.href),
+        ),
+        ...manifest.icons.map((icon) => icon.src),
+        ...(markSource.startsWith('data:') ? [] : [localPath(markSource)]),
+        localPath(og),
+        localPath(twitter),
+      ]),
+    ];
+    const sizes = {};
+    let maskableRadius = 0;
+    let opaqueMaskable = true;
+    for (const path of paths) {
+      const image = new Image();
+      image.src = path;
+      await image.decode().catch(() => {
+        throw new Error(`Cannot decode brand asset: ${path}`);
+      });
+      sizes[path.split('?')[0]] = [image.naturalWidth, image.naturalHeight];
+      if (path === '/pwa-maskable-512.png') {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, 0, 0);
+        const data = ctx.getImageData(0, 0, 512, 512).data;
+        for (let i = 0; i < data.length; i += 4) {
+          opaqueMaskable &&= data[i + 3] === 255;
+          if (
+            Math.abs(data[i] - 196) + Math.abs(data[i + 1] - 72) + Math.abs(data[i + 2] - 50) >
+            15
+          ) {
+            const pixel = i / 4;
+            maskableRadius = Math.max(
+              maskableRadius,
+              Math.hypot((pixel % 512) + 0.5 - 256, Math.floor(pixel / 512) + 0.5 - 256) / 512,
+            );
+          }
+        }
+      }
+    }
+    return {
+      paths,
+      sizes,
+      og,
+      twitter,
+      manifest,
+      maskableRadius,
+      opaqueMaskable,
+      markSize: [markImage.naturalWidth, markImage.naturalHeight],
+      ogSize: [
+        Number(content('meta[property="og:image:width"]')),
+        Number(content('meta[property="og:image:height"]')),
+      ],
+      ogType: content('meta[property="og:image:type"]'),
+      card: content('meta[name="twitter:card"]'),
+    };
+  });
+  assert.equal(brand.og, 'https://picforge.de/og-image.png');
+  assert.equal(brand.twitter, 'https://picforge.de/twitter-card.png');
+  assert.equal(brand.ogType, 'image/png');
+  assert.equal(brand.card, 'summary_large_image');
+  assert.deepEqual(brand.markSize, [64, 64]);
+  assert.deepEqual(brand.ogSize, [1200, 630]);
+  assert.deepEqual(brand.sizes['/og-image.png'], brand.ogSize);
+  assert.deepEqual(brand.sizes['/twitter-card.png'], [1200, 600]);
+  assert.deepEqual(brand.sizes['/apple-touch-icon.png'], [180, 180]);
+  assert.deepEqual(brand.sizes['/favicon-32.png'], [32, 32]);
+  assert(
+    brand.opaqueMaskable && brand.maskableRadius < 0.4,
+    'maskable mark stays inside the safe circle',
+  );
+  for (const icon of brand.manifest.icons) {
+    if (icon.sizes !== 'any')
+      assert.deepEqual(brand.sizes[icon.src], icon.sizes.split('x').map(Number));
+  }
+  await writeFile(resolve(output, 'brand-assets.json'), JSON.stringify(brand, null, 2));
   const panel = page.locator('.pf-tool-panel:not([hidden])');
   const openTool = async (name) => {
     await page
@@ -164,6 +258,20 @@ try {
     });
     await context.setOffline(true);
     await page.reload();
+    const offlineAssets = await page.evaluate(
+      async (paths) =>
+        Promise.all(
+          paths.map(async (path) => {
+            const response = await fetch(path);
+            return { path, ok: response.ok, bytes: (await response.arrayBuffer()).byteLength };
+          }),
+        ),
+      brand.paths,
+    );
+    assert(
+      offlineAssets.every((asset) => asset.ok && asset.bytes > 0),
+      'brand assets remain available offline',
+    );
     await compressStatic();
     await context.setOffline(false);
     console.log(

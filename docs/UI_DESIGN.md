@@ -4,7 +4,7 @@ Current working version: **0.16.0**, following the 2026-09-10 browser review. Th
 
 ## Navigation and page structure
 
-The header contains the P mark, tool navigation, and a right-side group with GitHub, language and theme controls. GitHub uses an icon link and is not repeated in the footer. Phones expose language/theme through the preferences menu; GitHub remains visible.
+The header contains the [folded P mark](design/brand.md), tool navigation, and a right-side group with GitHub, language and theme controls. Its vector master also supplies favicon, install icons and sharing cards. GitHub uses an icon link and is not repeated in the footer. Phones expose language/theme through the preferences menu; GitHub remains visible.
 
 Language has exactly five choices: English, Simplified Chinese, Traditional Chinese, Japanese and Korean. Initial detection still uses the browser with English fallback, but no automatic-detection option or policy label is shown. Explicit choices persist locally, including explicitly selecting the language that is already displayed. URL previews remain transient.
 

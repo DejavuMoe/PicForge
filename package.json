@@ -18,6 +18,7 @@
     "dev": "pnpm --filter @pic-forge/app dev",
     "build": "pnpm --filter @pic-forge/app build",
     "preview": "pnpm --filter @pic-forge/app preview",
+    "assets:brand": "python3 packages/app/scripts/generate-brand-assets.py",
     "lint": "eslint packages/*/src/**/*.{ts,tsx}",
     "format": "prettier --write packages/*/src/**/*.{ts,tsx}",
     "test": "vitest run",

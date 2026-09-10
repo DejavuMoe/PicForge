@@ -1,0 +1,116 @@
+{
+  "master": "packages/app/src/assets/logo.svg",
+  "typeface": "Noto Sans (rendered to outlines; no runtime font download)",
+  "exports": [
+    {
+      "path": "docs/design/social-card.svg",
+      "bytes": 96166,
+      "sha256": "98360b4ab5ebda9216577da39dd6115717591431f332849c50acc53238ce5ef1"
+    },
+    {
+      "path": "docs/design/twitter-card.svg",
+      "bytes": 96166,
+      "sha256": "e726199e545812cea504ae87208f49b032a084f28f68604e94cb87d0801b4bd5"
+    },
+    {
+      "path": "packages/app/public/apple-touch-icon.png",
+      "bytes": 2507,
+      "sha256": "1cc1fb587f7eeefc401bde830fea776cd54ab732ec5b8af5487be7ae51c4fd73"
+    },
+    {
+      "path": "packages/app/public/brand/logo-512.png",
+      "bytes": 7303,
+      "sha256": "35c62ed5936b0a792baa6c54da3633bee08c0ed191b3d63d6c935692a4c52758"
+    },
+    {
+      "path": "packages/app/public/brand/logo-black.svg",
+      "bytes": 592,
+      "sha256": "8d69bf7b2475f860cff1261c33304d47a9806ef3067d94cb03bd3fe79f991275"
+    },
+    {
+      "path": "packages/app/public/brand/logo-lockup-white.svg",
+      "bytes": 8873,
+      "sha256": "6469bd17721154c4be01b0a00d0c30308e64cdd3a853eb934e17b48c9f095518"
+    },
+    {
+      "path": "packages/app/public/brand/logo-lockup.png",
+      "bytes": 19953,
+      "sha256": "67b7a1297c4c81628dcc3a679abbb74b9dfc4cad9987b63ef606c5dd550a3c7b"
+    },
+    {
+      "path": "packages/app/public/brand/logo-lockup.svg",
+      "bytes": 8873,
+      "sha256": "cf7be6586b2636fad4311ab1c970577cc64bc22dd5293204920e2107ba0bfc9e"
+    },
+    {
+      "path": "packages/app/public/brand/logo-white.svg",
+      "bytes": 589,
+      "sha256": "09f029338f9cfd2645e3be4344b7d5f55db64d38649af3421246aeb9e27b042e"
+    },
+    {
+      "path": "packages/app/public/brand/logo.svg",
+      "bytes": 592,
+      "sha256": "2ef33e0991d17f65ea77c4976c2b79baabed6f1817ba062a58621802f36719ad"
+    },
+    {
+      "path": "packages/app/public/favicon-16.png",
+      "bytes": 492,
+      "sha256": "28c126bda6ad8deb6ac445169c651f7c90295dd481d753c966bc7997f88f76e4"
+    },
+    {
+      "path": "packages/app/public/favicon-32.png",
+      "bytes": 879,
+      "sha256": "15cad42a14c9e612b9256e872b15b9c07e8e92c044a9cf39e37ef0567af895e2"
+    },
+    {
+      "path": "packages/app/public/favicon-48.png",
+      "bytes": 1258,
+      "sha256": "36aeef3c875f9502f9eae928d608a41f24c9cbafdaa46863549653c6f478bf25"
+    },
+    {
+      "path": "packages/app/public/favicon.ico",
+      "bytes": 7406,
+      "sha256": "fb800f0d5bb5ce0bf9c64a9f6a4d3f8dc9833666ceccc8082e486feea56b1d29"
+    },
+    {
+      "path": "packages/app/public/favicon.svg",
+      "bytes": 684,
+      "sha256": "57d811a1c31e985875e4433840a095e8f3b689b95d101921c34dd0d083a118d8"
+    },
+    {
+      "path": "packages/app/public/og-image.jpg",
+      "bytes": 52224,
+      "sha256": "7b6defd096570abdc6121189d363e7bcfc9bba2dff0a2906c1796b2bc4045164"
+    },
+    {
+      "path": "packages/app/public/og-image.png",
+      "bytes": 42388,
+      "sha256": "0435a14dfcbaffd39421ac2dcdc78833c9fcbc9fc03c73591344238d338b0630"
+    },
+    {
+      "path": "packages/app/public/pwa-192.png",
+      "bytes": 7142,
+      "sha256": "d74ed5912a108114fd4be5026841d3e037c88505d2eed6bba5b649dc425d1a2e"
+    },
+    {
+      "path": "packages/app/public/pwa-512.png",
+      "bytes": 20464,
+      "sha256": "cfe0e6dedf4f51be7c295c6ad2a6d5db050523a97f30f104bfba7e943593f035"
+    },
+    {
+      "path": "packages/app/public/pwa-icon.svg",
+      "bytes": 684,
+      "sha256": "6ca4042a6f1385204212d8fdcaf2db30d24987c34746b6698e76c77389672373"
+    },
+    {
+      "path": "packages/app/public/pwa-maskable-512.png",
+      "bytes": 6127,
+      "sha256": "beb8afc9dca34795c469c86bd7df945a0886b8a4b56159c5017f1ffa5783fdd8"
+    },
+    {
+      "path": "packages/app/public/twitter-card.png",
+      "bytes": 41895,
+      "sha256": "c7104b915cc11be40239d7dd2aed09d56070350b13f5f4d686e57633b7771a52"
+    }
+  ]
+}

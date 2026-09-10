@@ -3007,14 +3007,53 @@ progress::-moz-progress-bar {
 .pf-video-player:fullscreen video {
   object-fit: contain;
 }
+.pf-photo-preview {
+  --pf-photo-controls-height: var(--pf-video-controls-height);
+  padding-bottom: var(--pf-photo-controls-height);
+}
+.pf-photo-controls {
+  position: absolute;
+  top: var(--pf-photo-bottom);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  gap: 0 8px;
+  width: var(--pf-photo-width);
+  height: var(--pf-photo-controls-height);
+  padding: 4px 8px;
+  border-top: 1px solid var(--pf-border-default);
+  background: var(--pf-card-bg);
+}
+.pf-photo-dimensions {
+  flex: 1;
+  color: var(--pf-text-secondary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pf-photo-controls .pf-icon-control {
+  width: var(--pf-video-action-height);
+  height: var(--pf-video-action-height);
+  min-width: var(--pf-video-action-height);
+  min-height: var(--pf-video-action-height);
+  margin-left: auto;
+}
+.pf-photo-preview:fullscreen {
+  width: 100%;
+  height: 100%;
+  background: var(--pf-image-mat);
+}
+.pf-photo-preview:fullscreen .pf-photo-controls {
+  top: auto;
+  bottom: 0;
+  width: 100%;
+}
 @media (min-width: 768px) {
-  .pf-motion-output:has(.pf-video-player) [data-kind='image'] .pf-motion-media-frame {
-    padding-bottom: var(--pf-video-controls-height);
-  }
-  .pf-motion-output:has(.pf-video-player[data-compact='true'])
-    [data-kind='image']
-    .pf-motion-media-frame {
-    padding-bottom: calc(var(--pf-video-controls-height) + 14px);
+  .pf-motion-output:has(.pf-video-player[data-compact='true']) .pf-photo-preview {
+    --pf-photo-controls-height: calc(var(--pf-video-controls-height) + 14px);
   }
 }
 @media (max-width: 767px) {
@@ -3024,6 +3063,10 @@ progress::-moz-progress-bar {
   }
   .pf-motion-media-frame:has(.pf-video-player) {
     height: calc(min(62dvh, 440px) + var(--pf-video-controls-height));
+  }
+  .pf-photo-preview {
+    --pf-photo-controls-height: 56px;
+    height: calc(min(62dvh, 440px) + var(--pf-photo-controls-height));
   }
 }
 .pf-tooltip {

@@ -856,7 +856,16 @@ try {
                 container.clientWidth / video.videoWidth,
                 (container.clientHeight - dock.offsetHeight) / video.videoHeight,
               );
-              return Math.abs(player.getBoundingClientRect().width - video.videoWidth * scale) < 1;
+              const photo = document.querySelector(
+                '.pf-tool-panel:not([hidden]) .pf-photo-preview',
+              );
+              const picture = photo.querySelector('img').getBoundingClientRect();
+              const photoDock = photo.querySelector('.pf-photo-controls').getBoundingClientRect();
+              return (
+                Math.abs(player.getBoundingClientRect().width - video.videoWidth * scale) < 1 &&
+                Math.abs(picture.width - photoDock.width) < 1 &&
+                Math.abs(picture.bottom - photoDock.y) < 1
+              );
             },
             undefined,
             { timeout: 5000 },
@@ -889,6 +898,31 @@ try {
           near(rects.video.width, rects.dock.width, 'dock matches video width');
           near(rects.video.right, rects.dock.right, 'dock meets video right edge');
           near(rects.video.bottom, rects.dock.y, 'dock follows video stage');
+          const photo = await active()
+            .locator('.pf-photo-preview')
+            .evaluate((frame) => {
+              const img = frame.querySelector('img');
+              return {
+                image: img.getBoundingClientRect().toJSON(),
+                dock: frame.querySelector('.pf-photo-controls').getBoundingClientRect().toJSON(),
+                dimensions: frame.querySelector('.pf-photo-dimensions').textContent,
+                expected: `${img.naturalWidth} × ${img.naturalHeight} px`,
+                button: frame
+                  .querySelector('.pf-photo-fullscreen')
+                  .getBoundingClientRect()
+                  .toJSON(),
+              };
+            });
+          near(photo.image.x, photo.dock.x, 'photo dock left edge');
+          near(photo.image.width, photo.dock.width, 'photo dock width');
+          near(photo.image.bottom, photo.dock.y, 'photo dock follows picture');
+          assert.equal(photo.dimensions, photo.expected, 'photo reports actual pixel dimensions');
+          assert(
+            photo.button.right <= photo.dock.right && photo.button.bottom <= photo.dock.bottom,
+            'photo fullscreen control fits dock',
+          );
+          if (width >= 768) near(photo.dock.height, rects.dock.height, 'paired dock heights');
+          else assert(photo.button.height >= 44 && photo.button.width >= 44, 'mobile photo target');
           assert(rects.seek.bottom <= rects.buttons[0].y + 1, 'timeline has its own row');
           if (rects.compact)
             assert(rects.time.y >= rects.buttons[0].bottom, 'compact timer has a separate row');
@@ -961,6 +995,22 @@ try {
         const video = active().locator('video');
         const seek = active().getByRole('slider', { name: 'Playback position' });
         if (shape === 'portrait' && tool === 'android') {
+          const photoFullscreen = active().locator('.pf-photo-fullscreen');
+          if (await photoFullscreen.isEnabled()) {
+            await photoFullscreen.focus();
+            await photoFullscreen.press('Enter');
+            await page.waitForFunction(() =>
+              document.fullscreenElement?.classList.contains('pf-photo-preview'),
+            );
+            await settleLayout();
+            const photoDock = await active().locator('.pf-photo-controls').boundingBox();
+            near(photoDock.width, 1576, 'fullscreen photo dock width');
+            near(photoDock.y + photoDock.height, 828, 'fullscreen photo dock bottom');
+            await capture('photo-fullscreen');
+            await photoFullscreen.press('Enter');
+            await page.waitForFunction(() => !document.fullscreenElement);
+            await settleLayout();
+          }
           const fullscreen = active().locator('.pf-video-fullscreen');
           if (await fullscreen.isEnabled()) {
             await fullscreen.click();
@@ -1056,6 +1106,60 @@ try {
     report.playerMeasurements = measurements;
     report.interactions.push(
       'portrait/landscape in Android+iOS: dock matches visible video edges, slider/number geometry, sub-second frame updates, scrubbing ownership, pause/resume and hidden cleanup',
+    );
+  }
+  if (run('photo')) {
+    await page.setViewportSize({ width: 1301, height: 828 });
+    await page.goto(`${origin}/?tool=ios&lng=en`);
+    await active()
+      .locator('input[type=file]')
+      .setInputFiles('packages/app/src/assets/dune-sample.jpg');
+    await active().getByRole('button', { name: 'Process batch', exact: true }).click();
+    await active().getByText('1 / 1 completed', { exact: true }).waitFor();
+    await active().locator('.pf-motion-row').click();
+    await active().locator('.pf-photo-controls').waitFor();
+    assert.equal(await active().locator('.pf-photo-dimensions').innerText(), '1200 × 800 px');
+    for (const width of [1301, 390, 320]) {
+      await page.setViewportSize({ width, height: 828 });
+      await page.waitForFunction(() => {
+        const frame = document.querySelector('.pf-tool-panel:not([hidden]) .pf-photo-preview');
+        const image = frame.querySelector('img').getBoundingClientRect();
+        const dock = frame.querySelector('.pf-photo-controls').getBoundingClientRect();
+        return Math.abs(image.width - dock.width) < 1 && Math.abs(image.bottom - dock.y) < 1;
+      });
+      await active().locator('.pf-photo-controls').scrollIntoViewIfNeeded();
+      await capture(`photo-only-${width}`);
+    }
+    await page.setViewportSize({ width: 1301, height: 828 });
+    await page.getByRole('button', { name: 'Toggle color mode', exact: true }).click();
+    await capture('photo-only-dark');
+    const full = active().locator('.pf-photo-fullscreen');
+    if (await full.isEnabled()) {
+      await full.focus();
+      await full.press('Enter');
+      await page.waitForFunction(() =>
+        document.fullscreenElement?.classList.contains('pf-photo-preview'),
+      );
+      await settleLayout();
+      const fullBounds = await active()
+        .locator('.pf-photo-controls')
+        .evaluate((dock) => {
+          const bounds = dock.getBoundingClientRect();
+          return {
+            widthDifference: bounds.width - innerWidth,
+            bottomGap: innerHeight - bounds.bottom,
+          };
+        });
+      assert(
+        Math.abs(fullBounds.widthDifference) < 1 && Math.abs(fullBounds.bottomGap) < 1,
+        'photo fullscreen toolbar remains at viewport bottom',
+      );
+      await capture('photo-only-fullscreen');
+      await full.press('Enter');
+      await page.waitForFunction(() => !document.fullscreenElement);
+    }
+    report.interactions.push(
+      'photo-only result: true dimensions, fitted toolbar, mobile reflow, dark theme and keyboard fullscreen when supported',
     );
   }
   assert.deepEqual(errors, []);

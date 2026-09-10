@@ -154,6 +154,8 @@
     "zoomOut": "축소",
     "zoomLevel": "확대 비율",
     "fullscreen": "전체 화면 전환",
+    "photoControls": "사진 미리보기",
+    "photoFullscreen": "사진 전체 화면 전환",
     "videoControls": "동영상 재생",
     "play": "재생",
     "pause": "일시 정지",

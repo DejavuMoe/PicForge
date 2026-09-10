@@ -154,6 +154,8 @@
     "zoomOut": "Zoom out",
     "zoomLevel": "Zoom level",
     "fullscreen": "Toggle fullscreen",
+    "photoControls": "Photo preview",
+    "photoFullscreen": "Toggle photo fullscreen",
     "videoControls": "Video playback",
     "play": "Play",
     "pause": "Pause",

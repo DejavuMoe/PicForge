@@ -154,6 +154,8 @@
     "zoomOut": "缩小",
     "zoomLevel": "缩放比例",
     "fullscreen": "切换全屏",
+    "photoControls": "照片预览",
+    "photoFullscreen": "切换照片全屏",
     "videoControls": "视频播放",
     "play": "播放",
     "pause": "暂停",

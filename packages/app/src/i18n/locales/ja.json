@@ -154,6 +154,8 @@
     "zoomOut": "縮小",
     "zoomLevel": "ズーム倍率",
     "fullscreen": "全画面表示の切り替え",
+    "photoControls": "写真プレビュー",
+    "photoFullscreen": "写真の全画面表示を切り替え",
     "videoControls": "動画の再生",
     "play": "再生",
     "pause": "一時停止",

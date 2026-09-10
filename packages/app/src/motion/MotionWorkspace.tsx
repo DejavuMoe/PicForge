@@ -1,5 +1,6 @@
 import { SelectControl } from '../components/SelectControl';
 import { VideoPlayer } from '../components/VideoPlayer';
+import { PhotoPreview } from '../components/PhotoPreview';
 import { NumberControl } from '../components/NumberControl';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -74,9 +75,14 @@ export function OutputPreview({
       {output.image && (
         <figure className="pf-motion-media-pane" data-kind="image">
           <figcaption>{t('workbench.photo')} · JPG</figcaption>
-          <div className="pf-motion-media-frame">
-            {image && <img src={image} alt={`${name} — ${t('workbench.photo')}`} />}
-          </div>
+          {image && (
+            <PhotoPreview
+              key={image}
+              src={image}
+              label={`${name} — ${t('workbench.photo')}`}
+              active={active}
+            />
+          )}
           {downloads && (
             <button className="pf-text-button" onClick={() => saveAs(output.image!, `${name}.jpg`)}>
               <FiDownload aria-hidden />

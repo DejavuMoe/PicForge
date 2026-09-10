@@ -1,44 +1,76 @@
+<img src="../../packages/app/src/assets/logo.svg" width="56" height="56" align="right" alt="">
+
 # PicForge
 
-在瀏覽器裡處理圖片的開源工具箱：壓縮與縮放圖片、拆分 Android 動態相片、將 iOS 原況照片轉成 JPEG 和 MP4。檔案始終留在你的裝置上。
+壓縮圖片、拆分 Android 動態相片、轉換 iOS 原況照片。在瀏覽器裡執行的開源工具箱，檔案始終留在你的裝置上。
 
-[開啟 PicForge](https://picforge.de) · [English](../../README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
+[開啟 PicForge](https://picforge.de) · [English](../../README.md) · [简体中文](README.zh-CN.md) · **繁體中文** · [日本語](README.ja.md) · [한국어](README.ko.md)
 
-## 選擇工具
+![PicForge：原圖與壓縮結果比較、檔案佇列及輸出設定](../assets/readme/compression-zh-TW.jpg)
 
-| 工具 | 輸入 | 輸出 |
+*目前介面的實際截圖，使用專案內附的沙丘生成範例圖。圖中的檔案大小來自這次處理，不代表所有圖片的壓縮效果。*
+
+## 三個工具
+
+| 工具 | 用途 | 匯出 |
 | --- | --- | --- |
-| 圖片壓縮 | JPEG、PNG、WebP、AVIF 等支援的圖片 | JPEG、WebP、PNG 或 AVIF，可批次調整尺寸 |
-| Android 動態相片 | 帶有附加影片的原始 JPG | 原始 JPG + MP4，不重新編碼 |
-| iOS 原況照片 | HEIC/HEIF + MOV 原片，也可單獨處理照片或影片 | JPEG + H.264 MP4，可保留音訊 |
+| **圖片壓縮** | 批次壓縮、轉換格式及調整尺寸。接受 JPEG、PNG、WebP、AVIF、GIF、BMP 和 SVG，實際支援依瀏覽器的解碼能力而定。 | JPEG、WebP、PNG 或 AVIF |
+| **Android 動態相片** | 將尾端附有影片的 JPG 拆成原始相片與影片，不重新編碼。 | 原始 JPG + MP4 |
+| **iOS 原況照片** | 依檔名配對 HEIC/HEIF 與 MOV，轉成適合分享的格式。也可單獨處理相片或影片，並接受 JPEG、MP4 輸入。 | JPEG + H.264 MP4，可保留音訊並轉為 AAC |
 
-免註冊、免安裝、不上傳，沒有遙測。應用程式會下載自身的靜態資源與處理引擎；媒體處理全部在瀏覽器本機記憶體中完成。
+### 圖片壓縮
 
-## 使用方式
+拖入圖片、從剪貼簿貼上，或在首頁開啟範例圖。新增檔案或變更設定後，圖片會自動處理。
 
-1. 在首頁選擇工具，或點擊 **使用範例**，將非私人生成範例送入真正的壓縮流程。
-2. 加入檔案。圖片壓縮支援拖放與貼上；原況照片請同時匯入同名照片與影片。
-3. 調整設定。圖片自動處理；動態相片與原況照片由你點擊批次操作開始。
-4. 比較原圖與結果，縮放查看細節，再下載單一檔案或全部完成的結果。批次 ZIP 含有清單。
+- 拖動滑桿或並排比較原圖與結果，放大或全螢幕查看細節。
+- 為全部圖片設定參數，也可單獨設定某張圖片。之後修改全域參數，不會覆蓋單張設定。
+- 依像素或百分比縮放。符合邊界時維持比例且不放大；置中裁切填滿指定尺寸；拉伸則使用精確寬高。
+- PNG 輸出採無損壓縮，不使用品質滑桿。
 
-**設定範圍。** 全部圖片共用設定；僅此圖片建立完整的獨立設定。全域修改不會覆蓋自訂圖片，需明確選擇使用全域才能重新跟隨。
+### 動態相片與原況照片
 
-**尺寸。** 適應邊界保持比例且不放大；居中裁切填滿指定尺寸；拉伸使用精確寬高。百分比縮放位於進階設定。數字欄位按 Enter 或離開欄位後套用，Escape 取消輸入。PNG 為無損壓縮，不受品質滑桿影響。
+加入原始檔、確認佇列後，開始批次處理。工作依序執行，支援取消與重試。相片和影片可並排預覽、分別下載，也可將已完成的結果打包成附清單的 ZIP。
 
-**佇列。** 切換工具、回首頁和瀏覽器上一頁／下一頁會保留本次工作階段的佇列。重新整理或關閉頁面會清除檔案與結果，請先下載。手機點選檔案進入預覽；設定接在圖片下方，批次操作保持可用。
+Android 拆分保留原始位元組。iOS 轉換會處理顯示裁切與旋轉，預設保留影片原始時間戳記，也可選擇固定 30 fps。
 
-## 能力範圍
+<details>
+<summary>查看兩個媒體工具的實際介面</summary>
 
-- Android 擷取保留原始位元組。影片能否預覽取決於內嵌編碼，無法播放仍可下載。
-- iOS 依檔名配對，不驗證 Apple 資源識別碼。重名需要處理。輸出用於分享，並非保存 HEIC 中繼資料、HDR 與輔助圖像的封存檔。
-- 影片預設保留原始時間戳，也可選擇 30 fps。目前 FFmpeg 搭配顯示裁切與旋轉適配器。
-- Worker 並行數、檔案大小與像素數有限制；超大檔案可能被拒絕。取消與重試保留原始檔案。
-- 離線使用需先快取應用資源。大型轉換引擎必須成功載入與快取後才能離線使用，首次轉換可能需要連線。
-- 預設跟隨瀏覽器語言，以英語為後備。明確選擇的語言與主題儲存在本機，停用儲存時仍可在本次造訪中切換。支援五種語言資源及明暗主題。
+**Android 動態相片**
 
-## 本機開發
+![Android 動態相片拆分後的相片與影片預覽](../assets/readme/android-zh-TW.jpg)
 
-需要 Node.js **≥22.12.0** 與 pnpm **11.8.x**。
+**iOS 原況照片**
+
+![iOS 原況照片轉換後的 JPEG、MP4 及輸出設定](../assets/readme/ios-zh-TW.jpg)
+
+示範檔案由同一張沙丘生成圖合成，截圖呈現實際拆分與轉換結果，不作為相機相容性測試。見[圖片來源說明](../assets/readme/README.md)。
+
+</details>
+
+## 檔案如何處理
+
+所有處理都在本機完成，不需帳號、上傳檔案、處理伺服器或 API 金鑰。PicForge 沒有遙測；瀏覽器只需下載應用程式和所需引擎。
+
+| 路徑 | 處理過程 |
+| --- | --- |
+| 圖片 | 瀏覽器解碼、Canvas 調整尺寸，再由 Web Worker 呼叫 `@jsquash/*` 編碼。 |
+| Android | 驗證內嵌 MP4 結構，再依位元組範圍拆出原始 JPG 與 MP4。 |
+| iOS | 依同名檔案分組。libheif 解碼 HEIC、MozJPEG 編碼 JPEG；FFmpeg 將影片轉成 H.264/AAC MP4。 |
+
+下載前，結果保存在瀏覽器記憶體中。切換工具、返回首頁或使用瀏覽器上一頁／下一頁，都會保留目前佇列。**重新整理或關閉頁面會清除檔案與結果，請先下載。**
+
+## 使用前須知
+
+- **原況照片依檔名配對**，不驗證 Apple 資產識別碼。請保留原始檔：JPEG/MP4 匯出不適合用來封存 HEIC 的 HDR、中繼資料及輔助影像。
+- **支援程度依瀏覽器而異。** 圖片解碼和影片預覽受瀏覽器及編碼格式影響；擷取的影片即使無法預覽，仍可下載。大型檔案可能超出記憶體或大小限制。
+- **離線使用前須先載入。** 應用程式可從快取執行，轉換引擎也必須先成功載入並快取；首次轉換可能需要網路連線。
+
+介面支援英語、簡體中文、繁體中文、日語及韓語，並提供明暗主題。尚未手動選擇時，語言依瀏覽器設定，主題依系統設定。
+
+## 本機執行
+
+需要 **Node.js ≥22.12.0** 和 **pnpm 11.8.x**。
 
 ```sh
 git clone https://github.com/DejavuMoe/PicForge.git
@@ -47,22 +79,34 @@ pnpm install
 pnpm dev
 ```
 
-開啟 `http://127.0.0.1:5173`。`pnpm build` 建置，`pnpm preview` 預覽。編解碼器由專案自行託管在 `/wasm/`，不需要媒體處理伺服器或 API 金鑰。
+開啟 [127.0.0.1:5173](http://127.0.0.1:5173)。`pnpm build` 建置，`pnpm preview` 預覽。開發和建置命令會準備由專案自行託管的 `/wasm/` 編解碼資源；建置時也會產生 Service Worker 使用的資源清單。
+
+## 技術與開發
+
+| 部分 | 技術 |
+| --- | --- |
+| 介面 | React 19、TypeScript、Vite 8、原生 CSS |
+| 狀態與多語言 | Zustand、i18next |
+| 媒體處理 | Canvas、Web Workers、WebAssembly、`@jsquash/*`、libheif、FFmpeg |
+| 下載與離線 | JSZip、Service Worker |
+
+`packages/app` 包含介面和媒體工具，`packages/worker` 負責圖片處理與 Worker，`packages/codecs` 提供編碼器介接及參數定義。正式版壓縮使用 **Compat** 引擎，wasm-vips 仍處於實驗階段。
+
+修改後執行：
 
 ```sh
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
-# 開發伺服器執行時檢查介面
-PICFORGE_UI_GROUPS=entry,layout,interaction,usability node scripts/ui-check.mjs
-pnpm test:browser
 ```
 
-UI 檢查可設定 `PICFORGE_UI_BROWSER=chromium|firefox|webkit`，證據寫入暫存目錄。媒體驗收另需 `ffprobe`，合成轉換樣本另需 `heif-enc` 與 `ffmpeg`。請勿提交私人相機檔案。
+瀏覽器與媒體檢查見 [QA 清單](../QA_CHECKLIST.md)，目前介面見 [UI 設計](../UI_DESIGN.md)，後續工作見[開發計畫](../next-steps-plan.md)。[相機樣本驗證](../SAMPLE_VALIDATION.md)與[引擎驗證](../phase4-validation.md)記錄了各自的測試環境；Playwright WebKit 通過不代表已驗證實際 Safari 或 iPhone。
 
-正式壓縮路徑保留 `@jsquash/*` 相容引擎，wasm-vips 仍為實驗。介面使用 React 與原生 HTML/CSS，轉換引擎和 ZIP 程式庫按需要載入。參見 [介面與驗證](../UI_DESIGN.md)、[QA 清單](../QA_CHECKLIST.md)、[歷史媒體證據](../SAMPLE_VALIDATION.md) 與 [下一步](../next-steps-plan.md)。Playwright WebKit 不等於真實 Safari／iPhone 驗證；請勿跨主機比較效能數字。
+歡迎回報問題與提交修補。請附上瀏覽器、重現步驟、檔案格式及相關設定。請勿在 Issue 或提交中加入私人相片，盡量使用非私人範例重現。
 
-## 授權
+## 開源授權
 
-應用程式碼採 [MIT](../../LICENSE)。FFmpeg 為 GPL，libheif 為 LGPL，不因應用程式的 MIT 授權而改變。完整資訊見 [NOTICE.txt](../../packages/app/public/licenses/NOTICE.txt)。公開散布二進位檔前需履行對應原始碼義務；MotionFlow 與歷史視覺元件的授權檔案均保留。
+應用程式碼採用 [MIT](../../LICENSE)。媒體元件使用各自的授權，包括 [GPL FFmpeg](../../packages/app/public/licenses/FFmpeg-GPL-2.0.txt) 和 [LGPL libheif](../../packages/app/public/licenses/libheif-LGPL-3.0.txt)。元件署名（含 MotionFlow）見 [NOTICE.txt](../../packages/app/public/licenses/NOTICE.txt)。
+
+散布編解碼器二進位檔時，仍須履行相應的原始碼提供義務。應用程式的 MIT 授權不會取代這些元件的授權。

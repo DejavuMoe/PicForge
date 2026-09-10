@@ -1,44 +1,76 @@
+<img src="packages/app/src/assets/logo.svg" width="56" height="56" align="right" alt="">
+
 # PicForge
 
-An open-source image toolbox that runs in your browser. Compress and resize images, extract Android Motion Photos, and convert iOS Live Photo originals into JPEG and MP4. Your files stay on your device.
+Compress images, split Android Motion Photos, and convert iOS Live Photos. An open-source toolbox that runs in your browser and keeps your files on your device.
 
-[Open PicForge](https://picforge.de) · [简体中文](docs/readme/README.zh-CN.md) · [繁體中文](docs/readme/README.zh-TW.md) · [日本語](docs/readme/README.ja.md) · [한국어](docs/readme/README.ko.md)
+[Open PicForge](https://picforge.de) · **English** · [简体中文](docs/readme/README.zh-CN.md) · [繁體中文](docs/readme/README.zh-TW.md) · [日本語](docs/readme/README.ja.md) · [한국어](docs/readme/README.ko.md)
 
-## Pick a tool
+![PicForge: original and compressed image, file queue and output settings](docs/assets/readme/compression-en.jpg)
 
-| Tool | Input | Output |
+*The current interface, processing the project's generated dune sample. Sizes shown are actual results for this image, not a compression benchmark.*
+
+## Three tools
+
+| Tool | What it does | Export |
 | --- | --- | --- |
-| Image compression | JPEG, PNG, WebP, AVIF and other supported browser images | JPEG, WebP, PNG or AVIF; optional batch resize |
-| Android Motion Photos | Original JPG Motion Photos with appended video | Original JPG + MP4, without re-encoding |
-| iOS Live Photos | HEIC/HEIF + MOV originals; individual photos or videos also work | JPEG + H.264 MP4, with optional audio |
+| **Image compression** | Batch compression, format conversion and resizing. Accepts JPEG, PNG, WebP, AVIF, GIF, BMP and SVG, subject to browser decoding support. | JPEG, WebP, PNG or AVIF |
+| **Android Motion Photos** | Splits a JPG containing an appended video into its original photo and video, without re-encoding. | Original JPG + MP4 |
+| **iOS Live Photos** | Pairs HEIC/HEIF and MOV by filename and converts them for sharing. Individual photos or videos also work; JPEG and MP4 inputs are accepted too. | JPEG + H.264 MP4, with optional AAC audio |
 
-No account, installation, upload or telemetry is required. The app loads its own static assets and processing engines; media processing happens in local browser memory.
+### Image compression
 
-## Use PicForge
+Drop in images, paste from the clipboard, or open the sample from the home page. Processing starts automatically when you add files or change settings.
 
-1. Choose a tool on the home page. **Try sample** opens a generated, non-personal sample in the real compression tool.
-2. Add files. Compression also accepts drag-and-drop and image paste. For Live Photos, import the matching photo and video together.
-3. Adjust settings. Compression starts automatically; Motion/Live Photo tools have an explicit batch action.
-4. Compare the original and result, inspect details with zoom, then download one file or all completed results. Multiple compression results and Motion/Live Photo batches include a ZIP manifest.
+- Compare the original and result with a slider or side by side; zoom in or open fullscreen to check details.
+- Apply settings to all images, or give one image its own settings. Later global edits leave those custom settings alone.
+- Resize by pixels or percentage. Fit keeps proportions without enlarging; center crop fills the frame; stretch uses the exact width and height.
+- PNG output is lossless. Its compression does not use the quality slider.
 
-**Settings scope matters.** All images changes the shared settings. This image creates a complete independent snapshot. Global changes leave custom images alone; Use global explicitly reconnects an image to shared settings.
+### Motion Photos and Live Photos
 
-**Resize behaves predictably.** Fit within bounds preserves proportions and never enlarges the source. Center crop fills the requested dimensions from the center. Stretch uses exact dimensions. Percentage sizing is in Advanced settings. Number fields apply on Enter or when leaving the field; Escape cancels the draft. PNG is lossless and does not use the quality slider.
+Add originals, check the queue, then start the batch. Jobs run one at a time, with cancellation and retry. Preview photos and videos together, download them separately, or save completed results as a ZIP with a manifest.
 
-**Queues survive tool navigation.** Switch tools, return home or use browser Back/Forward without losing the current session's queues. Reloading or closing the page clears files and results, so download first. On mobile, select a file to open its preview; use Back to files to return. Settings follow the preview, with batch actions kept visible.
+Android extraction keeps the original bytes. iOS conversion handles display crop and rotation, preserves source video timing by default, and offers a 30 fps option.
 
-## What to expect
+<details>
+<summary>View both media tools</summary>
 
-- Android extraction preserves the original bytes. Video preview depends on the embedded codec; a playback fallback does not prevent downloading the extracted file.
-- iOS pairing uses filenames, not Apple asset identifiers. Duplicate names require attention. Outputs are web derivatives: HEIC metadata, HDR and auxiliary images are not preserved as an archive.
-- Source timing is preserved by default for video, with an explicit 30 fps option. The pinned FFmpeg uses a clean-aperture adapter for crop and rotation.
-- Engines use bounded workers and size/pixel guards. Very large files can be rejected to protect browser memory. Cancellation and retry keep the original source available.
-- Offline use requires the app assets to be cached. Heavy conversion engines are available offline only after they have loaded and cached successfully. The first conversion may need a connection.
-- Language follows the browser with English fallback. Explicit language and theme choices are stored locally when storage is available. English, Simplified Chinese, Traditional Chinese, Japanese and Korean share the same light/dark interface.
+**Android Motion Photos**
+
+![Android Motion Photo split into a photo and a playable video](docs/assets/readme/android-en.jpg)
+
+**iOS Live Photos**
+
+![iOS Live Photo converted to JPEG and MP4, with output settings](docs/assets/readme/ios-en.jpg)
+
+The media examples are synthesized from the same generated dune image. These are real extraction and conversion results, not camera compatibility tests. [Image provenance](docs/assets/readme/README.md).
+
+</details>
+
+## How files are processed
+
+Everything runs locally. No account, media upload, processing server or API key is needed. PicForge has no telemetry; the browser downloads the app and the engines it needs.
+
+| Path | Processing |
+| --- | --- |
+| Images | Browser decoding and Canvas resizing, then a Web Worker encodes with `@jsquash/*`. |
+| Android | Validate the embedded MP4 structure, then split the original file into JPG and MP4 byte ranges. |
+| iOS | Group matching filenames. libheif decodes HEIC and MozJPEG encodes JPEG; FFmpeg converts video to H.264/AAC MP4. |
+
+Results stay in browser memory until you download them. Switching tools, returning home and using Back/Forward keep your queues. **Reloading or closing the page clears files and results.**
+
+## Before you start
+
+- **Live Photo pairing uses filenames**, not Apple's asset identifiers. Keep the originals: JPEG/MP4 exports do not preserve HEIC's HDR, metadata or auxiliary images as an archive.
+- **Browser support varies.** Image decoding and video preview depend on the browser and codec. An extracted video can still be downloaded if it cannot play in the preview. Large files may hit memory or size limits.
+- **Offline use needs a first load.** The app can work from its cache; conversion engines must also have loaded and cached successfully. Your first conversion may need a connection.
+
+The interface supports English, Simplified Chinese, Traditional Chinese, Japanese and Korean, with light and dark themes. Language and theme follow your browser/system until you choose otherwise.
 
 ## Run locally
 
-Requires Node.js **22.12.0 or newer** and pnpm **11.8.x**.
+Requires **Node.js ≥22.12.0** and **pnpm 11.8.x**.
 
 ```sh
 git clone https://github.com/DejavuMoe/PicForge.git
@@ -47,16 +79,20 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://127.0.0.1:5173`. To build and preview:
+Open [127.0.0.1:5173](http://127.0.0.1:5173). Use `pnpm build` to build and `pnpm preview` to preview. Dev/build prepare the self-hosted codecs under `/wasm/`; the build also generates the service worker's asset list.
 
-```sh
-pnpm build
-pnpm preview
-```
+## Under the hood
 
-Dev/build prepare pinned, self-hosted codecs under `/wasm/`. The build generates `precache.json` for the service worker. No processing server or API key is needed.
+| Part | Stack |
+| --- | --- |
+| Interface | React 19, TypeScript, Vite 8, plain CSS |
+| State and translation | Zustand, i18next |
+| Media | Canvas, Web Workers, WebAssembly, `@jsquash/*`, libheif, FFmpeg |
+| Downloads and offline use | JSZip, Service Worker |
 
-## Development and checks
+`packages/app` contains the interface and media tools, `packages/worker` the image pipeline and workers, and `packages/codecs` the encoder adapters and settings. Production compression uses the **Compat** engine; wasm-vips remains experimental.
+
+For changes, run:
 
 ```sh
 pnpm lint
@@ -65,36 +101,12 @@ pnpm test
 pnpm build
 ```
 
-With the dev server running:
+See the [QA checklist](docs/QA_CHECKLIST.md) for browser and media checks, [UI design](docs/UI_DESIGN.md) for the current interface, and [next steps](docs/next-steps-plan.md) for planned work. [Camera validation](docs/SAMPLE_VALIDATION.md) and [engine validation](docs/phase4-validation.md) record their test environments; Playwright WebKit results do not establish real Safari or iPhone support.
 
-```sh
-# Synthetic UI checks; no HEIC/MOV conversion
-PICFORGE_UI_GROUPS=entry,layout,interaction,usability node scripts/ui-check.mjs
-
-# Production compression and offline acceptance
-pnpm test:browser
-```
-
-UI checks support `PICFORGE_UI_BROWSER=chromium|firefox|webkit`, `PICFORGE_UI_URL` and `PICFORGE_QA_OUTPUT`. Browser engines must be installed through Playwright. The media acceptance script requires native `ffprobe`; synthetic Motion/Live Photo conversion additionally requires `heif-enc` and `ffmpeg`. Private camera files are optional and must never be committed. See [QA checklist](docs/QA_CHECKLIST.md) for test selection.
-
-The app uses React, Vite, Zustand and i18next; UI controls use native HTML and CSS. JSZip is loaded for archive export. `@jsquash/*` remains the production compression path. FFmpeg and libheif are loaded for the conversions that need them. Experimental wasm-vips is **not** selected in production.
-
-| Location | Purpose |
-| --- | --- |
-| `packages/app/src/` | App shell, three workspaces, settings, previews and locale resources |
-| `packages/codecs/` | Codec contracts, settings and engine policy |
-| `packages/worker/` | Decode, resize, encode and worker lifecycle |
-| `scripts/` | Asset preparation, browser acceptance and performance checks |
-| `docs/` | Design specification, validation evidence and engineering plans |
-
-## Evidence and browser support
-
-[UI design and validation](docs/UI_DESIGN.md) records the current interface and checks. [Media validation](docs/SAMPLE_VALIDATION.md) and [Phase 4 validation](docs/phase4-validation.md) contain historical camera and engine evidence with their environments. [Next steps](docs/next-steps-plan.md) describes the remaining production-engine gates.
-
-A passing Playwright WebKit run is not real Safari or physical iPhone qualification. Do not infer universal format support or compare performance numbers from different hosts. Unsupported capabilities and unavailable native video playback have explicit fallback states.
+Bug reports and patches are welcome. Include the browser, reproduction steps and relevant format/settings. Please keep private photos out of issues and commits; a non-personal reproducer is best.
 
 ## License
 
-Application code is [MIT](LICENSE). Codec binaries have separate licenses, including [GPL FFmpeg](packages/app/public/licenses/FFmpeg-GPL-2.0.txt) and [LGPL libheif](packages/app/public/licenses/libheif-LGPL-3.0.txt). MotionFlow attribution and all component notices are preserved in [NOTICE.txt](packages/app/public/licenses/NOTICE.txt).
+App code is [MIT](LICENSE). Media components have their own licenses, including [GPL FFmpeg](packages/app/public/licenses/FFmpeg-GPL-2.0.txt) and [LGPL libheif](packages/app/public/licenses/libheif-LGPL-3.0.txt). See [NOTICE.txt](packages/app/public/licenses/NOTICE.txt) for component credits, including MotionFlow.
 
-Public binary distribution must satisfy the codecs' corresponding-source obligations. The MIT app license does not relicense those components.
+If you distribute codec binaries, you must also meet their corresponding-source obligations. The app's MIT license does not replace those licenses.

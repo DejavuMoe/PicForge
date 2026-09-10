@@ -32,7 +32,7 @@ Quality and percentage sliders use the same control height as their paired numbe
 
 `VideoPlayer` uses the browser's media APIs with application-styled play/pause, seek, preview mute and fullscreen controls. Native video controls are not displayed. Seeking and playback do not modify exports. Leaving the tool pauses playback. Unsupported decoding still presents a static preview and a download message; the original extracted video can still be saved.
 
-Both media tools use one full-width, two-row video dock: timeline above play/time/mute/fullscreen. The shared media grid stretches each pane explicitly, aligns paired media and download rows, and keeps small videos at their native size just like the photo. Mobile stacks the panes and provides 44 px seek/button targets. Playback paints the slider from actual media time on animation frames without rerendering the workspace. Paused, hidden or inactive players stop the loop. Pointer scrubbing owns the draft position, suspends playback and resumes only if it was playing; delayed decoder updates cannot pull the thumb backward. Sub-second clips reach the end of the track, and clips below ten seconds show tenths.
+Both media tools size the player and its controls to the **visible video**, not the enclosing pane. The dock shares the picture's left/right edges and directly follows its bottom edge. Intrinsic video dimensions and available stage space determine the size; a ResizeObserver updates it on reflow and disconnects when the tool is inactive. Small videos retain their native size. Narrow players place the timer on a separate row so controls cannot force a wider box. The shared media grid keeps paired pictures and downloads aligned. Mobile stacks the panes; fullscreen retains its expanded stage and bottom dock. Playback paints the slider from actual media time on animation frames without rerendering the workspace. Paused, hidden or inactive players stop the loop. Pointer scrubbing owns the draft position, suspends playback and resumes only if it was playing; delayed decoder updates cannot pull the thumb backward. Sub-second clips reach the end of the track, and clips below ten seconds show tenths.
 
 File selection continues to use the operating system's file picker. The web interface does not imitate or replace the OS filesystem dialog.
 
@@ -81,7 +81,9 @@ The processing engines, resize contracts, source-Blob retry ownership, clean-ape
 
 Temporary evidence: `/tmp/picforge-controls-all-chromium`, `/tmp/picforge-controls-final`, `/tmp/picforge-controls-chromium`, `/tmp/picforge-controls-firefox`, `/tmp/picforge-controls-webkit`, and `/tmp/picforge-controls-production.log`. These are test artifacts, not committed camera media. The in-app browser was also used to inspect the actual open five-language menu and shared footer.
 
-### Player and range follow-up (2026-09-10)
+### Initial player and range follow-up (`e31c0c7`)
+
+The pane-width assumption in this pass was rejected by the next user review. Its geometry assertions are superseded by the visible-picture checks below; the prior test passing did not establish correct dock width.
 
 - Lint, all project type checks, 190 unit tests in 22 files, and the production build pass.
 - Chromium 145.0.7632.6: `details,ranges,usability,layout` pass with 34 captures and five interaction groups. Five locales retain aligned home columns and symmetric insets. Quality controls retain equal heights/top edges at 1576, 856, 390 and 320 px widths; lossless-disabled quality and percentage controls also pass at desktop and both phone widths.
@@ -96,3 +98,9 @@ PICFORGE_UI_GROUPS=details,ranges,usability node scripts/ui-check.mjs
 # Prefix resolves to player-{portrait,landscape}.{jpg,mp4} fixtures described above.
 PICFORGE_UI_GROUPS=player PICFORGE_PLAYER_FIXTURES=/temporary/path/player node scripts/ui-check.mjs
 ```
+
+### Corrected player width (2026-09-10)
+
+The regression now compares the dock with the visible video edges, including actual rendered timer text bounds. Chromium checks both tools, both fixture orientations and six viewports (1576×828, the reported 1301×828, 1440×1120, 856×718, 390×844 and 320×844). Normal and compact controls, full screen, sub-second seeking and hidden-tool cleanup are covered. Temporary evidence: `/tmp/picforge-fitted-player`. The user's existing 1301×828 Android result was also inspected in the in-app browser: video and dock each measured 221.4765625 px, with zero left/right edge difference and zero bottom gap; its queue was preserved.
+
+All 24 geometry cases and 13 captures pass, with zero measured video/dock width or left-edge difference. Tool switching preserves the current result and fitted size. Lint, project type checks, 190 unit tests and the build pass (`/tmp/picforge-fitted-player-build.log`). Native playback in Firefox/WebKit and real Safari were not newly qualified by this targeted change.

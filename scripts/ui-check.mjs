@@ -837,6 +837,7 @@ try {
         }
         for (const [width, height] of [
           [1576, 828],
+          [1301, 828],
           [1440, 1120],
           [856, 718],
           [390, 844],
@@ -844,6 +845,22 @@ try {
         ]) {
           await page.setViewportSize({ width, height });
           await settleLayout();
+          await page.waitForFunction(
+            () => {
+              const video = document.querySelector('.pf-tool-panel:not([hidden]) video');
+              const player = video.parentElement;
+              const container = player.parentElement;
+              const dock = player.querySelector('.pf-video-controls');
+              const scale = Math.min(
+                1,
+                container.clientWidth / video.videoWidth,
+                (container.clientHeight - dock.offsetHeight) / video.videoHeight,
+              );
+              return Math.abs(player.getBoundingClientRect().width - video.videoWidth * scale) < 1;
+            },
+            undefined,
+            { timeout: 5000 },
+          );
           const rects = await active()
             .locator('[data-kind="video"]')
             .evaluate((pane) => {
@@ -854,8 +871,13 @@ try {
                 frame: pick('.pf-motion-media-frame'),
                 video: pick('video'),
                 dock: pick('.pf-video-controls'),
+                compact: pane.querySelector('.pf-video-player').dataset.compact === 'true',
                 seek: pick('input[type=range]'),
-                time: pick('.pf-video-time'),
+                time: (() => {
+                  const range = document.createRange();
+                  range.selectNodeContents(pane.querySelector('.pf-video-time'));
+                  return range.getBoundingClientRect().toJSON();
+                })(),
                 buttons: [...pane.querySelectorAll('.pf-video-controls button')].map((button) =>
                   button.getBoundingClientRect().toJSON(),
                 ),
@@ -863,15 +885,23 @@ try {
             });
           near(rects.pane.x, rects.frame.x, 'frame start');
           near(rects.pane.width, rects.frame.width, 'frame width');
-          near(rects.frame.x, rects.dock.x, 'dock start');
-          near(rects.frame.width, rects.dock.width, 'dock width');
+          near(rects.video.x, rects.dock.x, 'dock meets video left edge');
+          near(rects.video.width, rects.dock.width, 'dock matches video width');
+          near(rects.video.right, rects.dock.right, 'dock meets video right edge');
           near(rects.video.bottom, rects.dock.y, 'dock follows video stage');
           assert(rects.seek.bottom <= rects.buttons[0].y + 1, 'timeline has its own row');
-          assert(rects.time.right <= rects.buttons[1].x + 1, 'timer fits before mute control');
+          if (rects.compact)
+            assert(rects.time.y >= rects.buttons[0].bottom, 'compact timer has a separate row');
+          else
+            assert(
+              rects.time.right <= rects.buttons[1].x + 1,
+              'timer text fits before mute control',
+            );
+          assert(rects.time.bottom <= rects.dock.bottom, 'wrapped timer stays inside dock');
           for (const button of rects.buttons)
             assert(
               button.x >= rects.dock.x && button.right <= rects.dock.right + 1,
-              'button fits dock',
+              `${tool}/${shape}/${width}: button fits dock ${JSON.stringify({ dock: rects.dock, button })}`,
             );
           if (width >= 768 && tool === 'ios') {
             const media = await active()
@@ -900,7 +930,11 @@ try {
               'scale-down',
               'small video keeps its native size, like the paired photo',
             );
-            near(media.image.width, media.video.width, 'paired visible media width');
+            near(
+              media.image.width,
+              media.video.width,
+              `${tool}/${shape}/${width} paired visible media width`,
+            );
             near(media.image.height, media.video.height, 'paired visible media height');
             near(media.image.y, media.video.y, 'paired visible media top');
             const downloads = await active()
@@ -909,8 +943,15 @@ try {
             near(downloads[0], downloads[1], 'paired download row');
           }
           await checkRanges();
-          measurements.push({ tool, shape, width, dockWidth: rects.dock.width });
-          if (width === 1576 || width === 390) {
+          measurements.push({
+            tool,
+            shape,
+            width,
+            videoWidth: rects.video.width,
+            dockWidth: rects.dock.width,
+            edgeDifference: rects.video.x - rects.dock.x,
+          });
+          if (width === 1301 || width === 856 || width === 390) {
             await active().locator('.pf-video-controls').scrollIntoViewIfNeeded();
             await capture(`player-${tool}-${shape}-${width}`);
           }
@@ -1014,7 +1055,7 @@ try {
     }
     report.playerMeasurements = measurements;
     report.interactions.push(
-      'portrait/landscape in Android+iOS: full-width two-row dock, slider/number geometry, sub-second frame updates, scrubbing ownership, pause/resume and hidden cleanup',
+      'portrait/landscape in Android+iOS: dock matches visible video edges, slider/number geometry, sub-second frame updates, scrubbing ownership, pause/resume and hidden cleanup',
     );
   }
   assert.deepEqual(errors, []);

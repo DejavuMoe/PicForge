@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FiMaximize, FiPause, FiPlay, FiVolume2, FiVolumeX } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { getRangeProgressStyle } from '../utils/rangeProgress';
@@ -34,6 +34,45 @@ export function VideoPlayer({
   const timer = useRef<HTMLSpanElement>(null);
   const scrubbing = useRef<{ resume: boolean; target: number } | null>(null);
   const [duration, setDuration] = useState(0);
+  useLayoutEffect(() => {
+    const element = frame.current;
+    const video = player.current;
+    const container = element?.parentElement;
+    if (!active || !element || !video || !container) return;
+    const fit = () => {
+      if (!video.videoWidth || !video.videoHeight) return;
+      const bounds = container.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      // Choose the layout from its row tokens, not the previous dock's rendered height.
+      const baseDockHeight =
+        parseFloat(style.getPropertyValue('--pf-video-seek-height')) +
+        parseFloat(style.getPropertyValue('--pf-video-action-height')) +
+        9;
+      const scaleForDock = (height: number) =>
+        Math.min(
+          1,
+          bounds.width / video.videoWidth,
+          Math.max(0, bounds.height - height) / video.videoHeight,
+        );
+      const compact = video.videoWidth * scaleForDock(baseDockHeight) < 220;
+      element.dataset.compact = String(compact);
+      const dockHeight = baseDockHeight + (compact ? 14 : 0);
+      const scale = scaleForDock(dockHeight);
+      if (!(scale > 0)) return;
+      element.style.setProperty('--pf-video-width', `${video.videoWidth * scale}px`);
+      element.style.setProperty('--pf-video-height', `${video.videoHeight * scale + dockHeight}px`);
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(container);
+    video.addEventListener('loadedmetadata', fit);
+    video.addEventListener('resize', fit);
+    fit();
+    return () => {
+      observer.disconnect();
+      video.removeEventListener('loadedmetadata', fit);
+      video.removeEventListener('resize', fit);
+    };
+  }, [active]);
   const paint = useCallback(
     (seconds: number) => {
       const input = seek.current;
@@ -109,6 +148,10 @@ export function VideoPlayer({
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
         onLoadedMetadata={(event) => {
+          const value = event.currentTarget.duration;
+          setDuration(Number.isFinite(value) ? value : 0);
+        }}
+        onDurationChange={(event) => {
           const value = event.currentTarget.duration;
           setDuration(Number.isFinite(value) ? value : 0);
         }}

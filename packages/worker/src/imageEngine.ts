@@ -1,7 +1,8 @@
+import { inspectAnimation, animationError, type AnimationMetadata } from './animation/metadata';
 import type { CompressSettings } from '@pic-forge/codecs';
 
-export type ImageEngineKind = 'compat' | 'vips';
-export type ImageEnginePolicy = 'auto' | ImageEngineKind;
+export type ImageEngineKind = 'compat' | 'vips' | 'animation';
+export type ImageEnginePolicy = 'auto' | 'compat' | 'vips';
 
 export interface ImageRuntimeCapabilities {
   crossOriginIsolated: boolean;
@@ -25,6 +26,7 @@ export interface ImageProcessRequest {
   id: string;
   /** Source of truth: each engine reads its own buffer, including after a transfer failure. */
   source: Blob;
+  animation?: AnimationMetadata;
   settings: CompressSettings;
   onProgress?: (progress: number) => void;
 }
@@ -57,7 +59,11 @@ export class ImageEngineError extends Error {
   }
 }
 
-export function createImageProcessor(compat: ImageEngine, vips?: ImageEngine) {
+export function createImageProcessor(
+  compat: ImageEngine,
+  vips?: ImageEngine,
+  animation?: ImageEngine,
+) {
   let runtimeFailures = 0;
   return {
     get vipsDisabled() {
@@ -70,6 +76,14 @@ export function createImageProcessor(compat: ImageEngine, vips?: ImageEngine) {
       capabilities = getImageRuntimeCapabilities(),
     ): Promise<ImageProcessResult> {
       signal?.throwIfAborted();
+      const metadata = await inspectAnimation(request.source);
+      signal?.throwIfAborted();
+      if (metadata) {
+        if (!animation) animationError('unsupported');
+        const result = await animation.process({ ...request, animation: metadata }, signal);
+        signal?.throwIfAborted();
+        return result;
+      }
       if (
         policy !== 'compat' &&
         vips &&

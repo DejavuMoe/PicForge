@@ -2,7 +2,7 @@
 
 ## Current state
 
-Working version **0.16.0**, browser-only image toolbox. The initial integration is implemented; no release/deployment is implied by the package version.
+Working version **0.17.0**, browser-only image toolbox. The initial integration is implemented; no release/deployment is implied by the package version.
 
 - **Image compression:** existing `@jsquash/*` pipeline, batch resize, global/per-image settings, compare/zoom previews and ZIP manifest.
 - **Android Motion Photos:** binary JPG + MP4 extraction; no re-encoding or Apple engine loading. MotionFlow's separate app has been removed; its license remains.

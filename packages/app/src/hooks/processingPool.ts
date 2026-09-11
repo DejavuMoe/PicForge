@@ -1,3 +1,4 @@
+import { animationEngine } from '../animation/engine';
 /**
  * Lazy singleton WorkerPool for the compression pipeline.
  *
@@ -30,4 +31,8 @@ export function setPoolForTests(next: WorkerPool | null): void {
 }
 
 // Session lifetime; Phase 4 can supply a qualified preferred engine here.
-export const imageProcessor = createImageProcessor(createCompatImageEngine(getPool));
+export const imageProcessor = createImageProcessor(
+  createCompatImageEngine(getPool),
+  undefined,
+  animationEngine,
+);

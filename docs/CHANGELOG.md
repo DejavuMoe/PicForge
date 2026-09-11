@@ -10,6 +10,25 @@ All notable changes to PicForge are documented here.
 - Consolidate project guidance; remove obsolete compressor documentation, unused helper exports/loading styles, duplicate TypeScript declaration and stale sharp build permission.
 
 
+## [0.17.0] - 2026-09-11
+
+### Added
+
+- Convert GIF/APNG to animated WebP with frame timing, finite/infinite loops, transparency and resizing preserved.
+- Run animation decoding, APNG compatibility adapters and WebP encoding in a dedicated Worker using the existing self-hosted FFmpeg core.
+- Add animation correctness, cancellation, browser/offline and same-host performance checks.
+
+### Fixed
+
+- Prevent animated inputs from silently becoming a single static frame; changing an unsupported output setting to WebP resumes processing.
+- Preserve APNG separate posters, partial frames, transparent disposal and the final frame duration.
+- Share the heavy processing lane with Live Photos and release completed task outputs.
+
+### Changed
+
+- Remove the redundant GIF/APNG hint beneath the format selector.
+- Update app/package and PWA cache versions to 0.17.0.
+
 ## [0.14.1] - 2026-07-06
 
 ### Changed

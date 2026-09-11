@@ -19,3 +19,14 @@ export type {
   ImageProcessRequest,
   ImageProcessResult,
 } from './imageEngine';
+
+export {
+  inspectAnimation,
+  parseAnimation,
+  animationError,
+  finishWebpTimeline,
+} from './animation/metadata';
+export type { AnimationMetadata } from './animation/metadata';
+export { calculateResizeGeometry } from './imageProcessor';
+
+export { normalizeApngPoster, promoteApngRgba } from './animation/apng';

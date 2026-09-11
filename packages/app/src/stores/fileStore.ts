@@ -57,8 +57,9 @@ function bumpEpoch(file: ImageFile): number {
   return (file.taskEpoch ?? 0) + 1;
 }
 
-function isInFlightStatus(status: ImageFile['status']): boolean {
-  return status === 'pending' || status === 'processing' || status === 'done';
+function canReprocess(file: ImageFile): boolean {
+  return ['pending', 'processing', 'done'].includes(file.status) ||
+    (file.status === 'error' && ['Animation: format', 'Animation: settings'].includes(file.error ?? ''));
 }
 
 function markForReprocess(file: ImageFile, nextSettingsHash?: string): ImageFile {
@@ -216,8 +217,7 @@ export const useFileStore = create<FileStore>((set, get) => ({
     set((state) => ({
       files: state.files.map((f) => {
         if (f.settingsMode !== 'global') return f;
-        if (f.status === 'cancelled' || f.status === 'error') return f;
-        if (!isInFlightStatus(f.status)) return f;
+        if (!canReprocess(f)) return f;
         return markForReprocess(f, nextSettingsHash);
       }),
     }));
@@ -226,8 +226,7 @@ export const useFileStore = create<FileStore>((set, get) => ({
   resetAllToPending: () => {
     set((state) => ({
       files: state.files.map((f) => {
-        if (f.status === 'cancelled' || f.status === 'error') return f;
-        if (!isInFlightStatus(f.status)) return f;
+        if (!canReprocess(f)) return f;
         return markForReprocess(f);
       }),
     }));

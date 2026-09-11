@@ -265,7 +265,7 @@
     "errorDetails": "详细信息",
     "preferences": "偏好设置",
     "skipToContent": "跳转到内容",
-    "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
+    "formatHint": "JPEG · PNG / APNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "降低质量可缩小体积，下载前建议对比细节。",
     "losslessHint": "PNG 为无损压缩，无需设置质量。",
     "smaller": "体积减小 {{percent}}%",
@@ -291,5 +291,17 @@
     "compression": "图片压缩",
     "android": "动态照片",
     "ios": "实况照片"
+  },
+  "animationErrors": {
+    "format": "请选择 WebP 以保留动画，其他输出格式暂不支持动画。",
+    "unsupported": "暂不支持这种动画输入（包括动态 WebP），未导出静态替代文件。",
+    "limit": "动画超出限制：输入 50 MiB、单帧 800 万像素、2,000 帧、累计处理 5 亿像素、10 分钟或 65,535 次播放。",
+    "invalid": "动画文件不完整或格式无效。",
+    "timing": "该动画的时间信息无法在 WebP 中保留。",
+    "color": "暂不支持该动画的色彩配置或位深。",
+    "settings": "动画支持质量、无损和压缩方法设置；其他高级参数暂不支持非默认值。",
+    "decode": "动画解码或编码失败。",
+    "output": "输出动画未通过校验，未导出文件。",
+    "timeout": "动画处理超时，请缩小图片或减少帧数。"
   }
 }

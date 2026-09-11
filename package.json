@@ -1,6 +1,6 @@
 {
   "name": "pic-forge",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "private": true,
   "description": "Local browser image toolbox: compression, Motion Photo extraction and Live Photo conversion",
   "license": "MIT",
@@ -30,7 +30,9 @@
     "test:browser": "pnpm build && node scripts/browser-check.mjs",
     "benchmark": "tsc -p scripts/performance/tsconfig.json && node scripts/performance/run.mjs",
     "test:vips": "node scripts/vips/run.mjs",
-    "test:vips:engine": "node scripts/vips/engine-run.mjs"
+    "test:vips:engine": "node scripts/vips/engine-run.mjs",
+    "test:animation": "node scripts/animation/check.mjs",
+    "benchmark:animation": "node scripts/animation/benchmark.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

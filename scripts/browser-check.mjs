@@ -1,3 +1,4 @@
+import { apng, variableFrames } from './animation/fixtures.mjs';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -281,6 +282,65 @@ try {
     console.log('PASS: production static compression, download dimensions, mobile width');
   }
   assert.deepEqual(errors, []);
+  // Exercise the production controller/worker/download path, including recovery
+  // from a static-output setting. Separate page keeps Android lazy-load evidence scoped.
+  const animationPage = await context.newPage();
+  animationPage.on('pageerror', error => errors.push(error.message));
+  const animationFile = { name: 'animation.apng', mimeType: 'image/apng',
+    buffer: apng({ width: 320, height: 240, frames: variableFrames }) };
+  await animationPage.goto('http://127.0.0.1:4187/?tool=compression');
+  await animationPage.getByTestId('file-input').setInputFiles(animationFile);
+  await animationPage.getByText('Select WebP to preserve this animation. Other output formats are not supported for animations.', { exact: true }).waitFor();
+  assert(!await animationPage.locator('.pf-download-current').isEnabled());
+  const chooseWebp = async () => {
+    await animationPage.getByRole('combobox', { name: 'Format', exact: true }).click();
+    await animationPage.getByRole('option', { name: 'WebP', exact: true }).click();
+  };
+  const downloadAnimation = async (name) => {
+    await animationPage.getByText('1 / 1 completed', { exact: true }).waitFor();
+    const waiting = animationPage.waitForEvent('download');
+    await animationPage.locator('.pf-download-current').click();
+    const path = resolve(output, name);
+    await (await waiting).saveAs(path);
+    return readFile(path);
+  };
+  await chooseWebp();
+  const animated = await downloadAnimation('animation.webp');
+  const durations = [];
+  for (let p = 12; p < animated.length;) {
+    const size = animated.readUInt32LE(p + 4);
+    if (animated.toString('ascii', p, p + 4) === 'ANMF') durations.push(animated.readUIntLE(p + 20, 3));
+    p += 8 + size + (size & 1);
+  }
+  assert.deepEqual(durations, [70, 130, 240]);
+  assert.equal(await animationPage.locator('vite-error-overlay').count(), 0);
+  await animationPage.screenshot({ path: resolve(output, 'animation-desktop.png') });
+  await animationPage.getByTestId('add-file-input').setInputFiles({ ...animationFile, name: 'animation-copy.apng' });
+  await animationPage.getByText('2 / 2 completed', { exact: true }).waitFor();
+  await animationPage.setViewportSize({ width: 390, height: 844 });
+  assert(await animationPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await animationPage.screenshot({ path: resolve(output, 'animation-mobile.png'), fullPage: true });
+  const [animationZipDownload] = await Promise.all([
+    animationPage.waitForEvent('download'),
+    animationPage.getByRole('button', { name: 'Download results', exact: true }).click(),
+  ]);
+  const animationZipPath = resolve(output, 'animation-mobile.zip');
+  await animationZipDownload.saveAs(animationZipPath);
+  const animationZip = await createRequire(new URL('../packages/app/package.json', import.meta.url))('jszip').loadAsync(await readFile(animationZipPath));
+  assert.deepEqual(await animationZip.file('animation.webp').async('nodebuffer'), animated);
+  await animationPage.setViewportSize({ width: 1440, height: 1000 });
+  if (engine === 'chromium') {
+    await animationPage.evaluate(async () => { await navigator.serviceWorker.ready; });
+    await animationPage.waitForFunction(async () => !!await caches.match('/wasm/ffmpeg-0.12.10/ffmpeg-core.wasm'));
+    await context.setOffline(true);
+    await animationPage.reload();
+    await chooseWebp();
+    await animationPage.getByTestId('file-input').setInputFiles(animationFile);
+    assert.deepEqual(await downloadAnimation('animation-offline.webp'), animated);
+    await context.setOffline(false);
+  }
+  await animationPage.close();
+  console.log('PASS: animated WebP production conversion, format correction, timing, download, mobile and cached offline conversion');
   await page.getByRole('button', { name: 'PicForge home', exact: true }).click();
   if (syntheticMedia) {
     // Generate test signals, never use private camera media.
@@ -359,7 +419,7 @@ try {
     ]),
     await readFile(sampleAndroid),
   );
-  assert(!requests.some((url) => /ffmpeg|heif-/.test(url)), 'Android must not load Apple engines');
+  assert(!requests.some((url) => /\/wasm\/(?:ffmpeg-|heif-)/.test(url)), 'Android must not load Apple engines');
   await page.getByRole('button', { name: 'PicForge home', exact: true }).click();
   await openTool('iOS Live Photos');
   const originals = [sampleIosHeic, sampleIosMov];

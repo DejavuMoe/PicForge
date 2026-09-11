@@ -265,7 +265,7 @@
     "errorDetails": "詳細資訊",
     "preferences": "偏好設定",
     "skipToContent": "跳至內容",
-    "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
+    "formatHint": "JPEG · PNG / APNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "降低品質可縮小體積，下載前建議比較細節。",
     "losslessHint": "PNG 為無損壓縮，無需設定品質。",
     "smaller": "體積減少 {{percent}}%",
@@ -291,5 +291,17 @@
     "compression": "圖片壓縮",
     "android": "動態相片",
     "ios": "原況照片"
+  },
+  "animationErrors": {
+    "format": "請選擇 WebP 以保留動畫，其他輸出格式暫不支援動畫。",
+    "unsupported": "暫不支援這種動畫輸入（包括動態 WebP），未匯出靜態替代檔案。",
+    "limit": "動畫超出限制：輸入 50 MiB、單幀 800 萬像素、2,000 幀、累計處理 5 億像素、10 分鐘或 65,535 次播放。",
+    "invalid": "動畫檔案不完整或格式無效。",
+    "timing": "該動畫的時間資訊無法在 WebP 中保留。",
+    "color": "暫不支援該動畫的色彩描述或位元深度。",
+    "settings": "動畫支援品質、無損和壓縮方法設定；其他進階參數暫不支援非預設值。",
+    "decode": "動畫解碼或編碼失敗。",
+    "output": "輸出動畫未通過驗證，未匯出檔案。",
+    "timeout": "動畫處理逾時，請縮小圖片或減少幀數。"
   }
 }

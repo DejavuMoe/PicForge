@@ -67,6 +67,8 @@ describe('isSupportedImage', () => {
     expect(isSupportedImage(makeFile('a.webp', 'image/webp'))).toBe(true);
     expect(isSupportedImage(makeFile('a.avif', 'image/avif'))).toBe(true);
     expect(isSupportedImage(makeFile('a.gif', 'image/gif'))).toBe(true);
+    expect(isSupportedImage(makeFile('a.apng', 'image/apng'))).toBe(true);
+    expect(isSupportedImage(makeFile('a.apng', ''))).toBe(true);
     expect(isSupportedImage(makeFile('a.bmp', 'image/bmp'))).toBe(true);
   });
 

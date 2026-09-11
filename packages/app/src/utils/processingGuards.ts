@@ -1,3 +1,5 @@
+import { inspectAnimation } from '@pic-forge/worker';
+
 export interface ImageDimensions {
   width: number;
   height: number;
@@ -32,9 +34,7 @@ export function getMainPipelineConcurrency(device: DeviceHints = getNavigatorHin
 export function getImageSafetyLimits(device: DeviceHints = getNavigatorHints()): ImageSafetyLimits {
   const cores = device.hardwareConcurrency ?? 4;
   const memory = device.deviceMemory ?? 8;
-  const maxPixels = cores <= 4 || memory <= 4
-    ? LOW_RESOURCE_MAX_PIXELS
-    : DEFAULT_MAX_PIXELS;
+  const maxPixels = cores <= 4 || memory <= 4 ? LOW_RESOURCE_MAX_PIXELS : DEFAULT_MAX_PIXELS;
 
   return {
     maxDimension: MAX_CANVAS_DIMENSION,
@@ -72,10 +72,14 @@ export function validateImageDimensions(
 }
 
 export function isPermanentImageError(error?: string): boolean {
-  return !!error?.startsWith(PERMANENT_IMAGE_ERROR_PREFIX);
+  return (
+    !!error && (error.startsWith(PERMANENT_IMAGE_ERROR_PREFIX) || error.startsWith('Animation: '))
+  );
 }
 
 export async function readImageDimensions(file: File): Promise<ImageDimensions> {
+  const animation = await inspectAnimation(file);
+  if (animation) return { width: animation.width, height: animation.height };
   const url = URL.createObjectURL(file);
 
   try {
@@ -105,10 +109,7 @@ export async function runWithConcurrency<T>(
     }
   }
 
-  const runners = Array.from(
-    { length: Math.min(safeLimit, items.length) },
-    () => runNext(),
-  );
+  const runners = Array.from({ length: Math.min(safeLimit, items.length) }, () => runNext());
 
   await Promise.all(runners);
 }

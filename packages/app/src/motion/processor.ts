@@ -1,3 +1,4 @@
+import { runInFFmpegLane } from '../utils/ffmpegLane';
 import { cleanApertureFilters } from './cleanAperture';
 import {
   splitMotionPhoto,
@@ -55,35 +56,38 @@ export async function processMedia(
     progress(item.video ? 30 : 100);
   }
   if (item.video) {
-    signal.throwIfAborted();
-    const { FFmpeg } = await import('@ffmpeg/ffmpeg');
-    signal.throwIfAborted();
-    const ffmpeg = new FFmpeg();
-    const abort = () => ffmpeg.terminate();
-    signal.addEventListener('abort', abort, { once: true });
-    const timer = setTimeout(abort, 300_000);
-    try {
-      await ffmpeg.load({
-        coreURL: new URL('/wasm/ffmpeg-0.12.10/ffmpeg-core.js', location.origin).href,
-        wasmURL: new URL('/wasm/ffmpeg-0.12.10/ffmpeg-core.wasm', location.origin).href,
-      });
+    const video = item.video;
+    await runInFFmpegLane(async () => {
       signal.throwIfAborted();
-      const input = await item.video.arrayBuffer();
-      const aperture = cleanApertureFilters(input);
-      await ffmpeg.writeFile('input.mov', new Uint8Array(input));
-      ffmpeg.on('progress', ({ progress: ratio }) =>
-        progress(30 + Math.min(0.99, Math.max(0, ratio)) * 69),
-      );
-      const result = await ffmpeg.exec(videoArguments(settings, aperture), 240_000);
-      if (result !== 0) throw new Error('videoFailed');
-      const data = await ffmpeg.readFile('output.mp4');
-      if (typeof data === 'string' || data.byteLength === 0) throw new Error('videoFailed');
-      output.video = new Blob([new Uint8Array(data)], { type: 'video/mp4' });
-    } finally {
-      clearTimeout(timer);
-      signal.removeEventListener('abort', abort);
-      ffmpeg.terminate();
-    }
+      const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+      signal.throwIfAborted();
+      const ffmpeg = new FFmpeg();
+      const abort = () => ffmpeg.terminate();
+      signal.addEventListener('abort', abort, { once: true });
+      const timer = setTimeout(abort, 300_000);
+      try {
+        await ffmpeg.load({
+          coreURL: new URL('/wasm/ffmpeg-0.12.10/ffmpeg-core.js', location.origin).href,
+          wasmURL: new URL('/wasm/ffmpeg-0.12.10/ffmpeg-core.wasm', location.origin).href,
+        });
+        signal.throwIfAborted();
+        const input = await video.arrayBuffer();
+        const aperture = cleanApertureFilters(input);
+        await ffmpeg.writeFile('input.mov', new Uint8Array(input));
+        ffmpeg.on('progress', ({ progress: ratio }) =>
+          progress(30 + Math.min(0.99, Math.max(0, ratio)) * 69),
+        );
+        const result = await ffmpeg.exec(videoArguments(settings, aperture), 240_000);
+        if (result !== 0) throw new Error('videoFailed');
+        const data = await ffmpeg.readFile('output.mp4');
+        if (typeof data === 'string' || data.byteLength === 0) throw new Error('videoFailed');
+        output.video = new Blob([new Uint8Array(data)], { type: 'video/mp4' });
+      } finally {
+        clearTimeout(timer);
+        signal.removeEventListener('abort', abort);
+        ffmpeg.terminate();
+      }
+    }, signal);
   }
   signal.throwIfAborted();
   return output;

@@ -265,7 +265,7 @@
     "errorDetails": "Details",
     "preferences": "Preferences",
     "skipToContent": "Skip to content",
-    "formatHint": "JPEG · PNG · WebP · AVIF · GIF · BMP",
+    "formatHint": "JPEG · PNG / APNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "Lower quality makes smaller files. Compare before downloading.",
     "losslessHint": "PNG is lossless; quality does not apply.",
     "smaller": "{{percent}}% smaller",
@@ -291,5 +291,17 @@
     "compression": "Compress",
     "android": "Motion Photo",
     "ios": "Live Photo"
+  },
+  "animationErrors": {
+    "format": "Select WebP to preserve this animation. Other output formats are not supported for animations.",
+    "unsupported": "This animation input is not supported yet (including animated WebP). No static replacement was exported.",
+    "limit": "This animation exceeds the limits: 50 MiB input, 8 MP per frame, 2,000 frames, 500 million processed pixels, 10 minutes, or 65,535 plays.",
+    "invalid": "The animation file is incomplete or invalid.",
+    "timing": "This animation has timing that cannot be preserved in WebP.",
+    "color": "This animation uses color profiles or bit depths that are not supported yet.",
+    "settings": "For animations, use quality, lossless and method settings. Other non-default advanced settings are not supported.",
+    "decode": "The animation could not be decoded or encoded.",
+    "output": "The output animation could not be verified. No file was exported.",
+    "timeout": "Animation processing timed out. Try a smaller image or fewer frames."
   }
 }

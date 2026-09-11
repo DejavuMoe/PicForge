@@ -620,7 +620,11 @@ export function Preview({
       {(file.status === 'error' || file.status === 'cancelled') && (
         <div className={`pf-preview-feedback${file.status === 'error' ? ' is-error' : ''}`}>
           <p role={file.status === 'error' ? 'alert' : 'status'}>
-            {t(file.status === 'error' ? 'workbench.processingFailed' : 'status.cancelled')}
+            {file.status === 'error' && file.error?.startsWith('Animation: ')
+              ? t(`animationErrors.${file.error.slice(11)}`, {
+                  defaultValue: t('workbench.processingFailed'),
+                })
+              : t(file.status === 'error' ? 'workbench.processingFailed' : 'status.cancelled')}
           </p>
           <button
             className="pf-text-button"
@@ -628,7 +632,7 @@ export function Preview({
           >
             {t('tooltips.retryImage')}
           </button>
-          {file.status === 'error' && file.error && (
+          {file.status === 'error' && file.error && !file.error.startsWith('Animation: ') && (
             <details>
               <summary>{t('workbench.errorDetails')}</summary>
               <p>{file.error}</p>

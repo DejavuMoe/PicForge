@@ -375,6 +375,17 @@ describe('fileStore', () => {
     });
   });
 
+  it('retries animation settings errors after a corrective global edit, but preserves cancellation', () => {
+    useFileStore.getState().addFiles([createMockFile('animation.gif', 'image/gif')]);
+    const id = useFileStore.getState().files[0].id;
+    useFileStore.getState().updateFile(id, { status: 'error', error: 'Animation: format' });
+    useFileStore.getState().resetGlobalToPending('webp-settings');
+    expect(useFileStore.getState().files[0]).toMatchObject({ status: 'pending', error: undefined });
+    useFileStore.getState().cancelFile(id);
+    useFileStore.getState().resetGlobalToPending('new-settings');
+    expect(useFileStore.getState().files[0].status).toBe('cancelled');
+  });
+
   describe('cancel and retry', () => {
     it('marks processing files cancelled and keeps them cancelled after settings changes', () => {
       useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);

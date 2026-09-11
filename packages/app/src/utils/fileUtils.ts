@@ -57,13 +57,16 @@ export function isSupportedImage(file: File): boolean {
   const supportedTypes = [
     'image/jpeg',
     'image/png',
+    'image/apng',
     'image/webp',
     'image/avif',
     'image/gif',
     'image/bmp',
     'image/svg+xml',
   ];
-  return supportedTypes.includes(file.type) || /\.(jpe?g|png|webp|avif|gif|bmp|svg)$/i.test(file.name);
+  return (
+    supportedTypes.includes(file.type) || /\.(jpe?g|a?png|webp|avif|gif|bmp|svg)$/i.test(file.name)
+  );
 }
 
 /**

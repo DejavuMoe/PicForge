@@ -17,8 +17,12 @@ describe('processingGuards', () => {
   });
 
   it('uses lower pixel limits for low-resource devices', () => {
-    expect(getImageSafetyLimits({ hardwareConcurrency: 4, deviceMemory: 8 }).maxPixels).toBe(24_000_000);
-    expect(getImageSafetyLimits({ hardwareConcurrency: 8, deviceMemory: 8 }).maxPixels).toBe(50_000_000);
+    expect(getImageSafetyLimits({ hardwareConcurrency: 4, deviceMemory: 8 }).maxPixels).toBe(
+      24_000_000,
+    );
+    expect(getImageSafetyLimits({ hardwareConcurrency: 8, deviceMemory: 8 }).maxPixels).toBe(
+      50_000_000,
+    );
   });
 
   it('estimates decoded RGBA memory', () => {
@@ -47,6 +51,7 @@ describe('processingGuards', () => {
   it('detects permanent image errors', () => {
     expect(isPermanentImageError(`${PERMANENT_IMAGE_ERROR_PREFIX}: too large`)).toBe(true);
     expect(isPermanentImageError('Codec failed')).toBe(false);
+    expect(isPermanentImageError('Animation: format')).toBe(true);
     expect(isPermanentImageError()).toBe(false);
   });
 

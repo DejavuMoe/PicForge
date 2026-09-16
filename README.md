@@ -105,6 +105,11 @@ See the [QA checklist](docs/QA_CHECKLIST.md) for browser and media checks, [UI d
 
 Bug reports and patches are welcome. Include the browser, reproduction steps and relevant format/settings. Please keep private photos out of issues and commits; a non-personal reproducer is best.
 
+## CI release retention
+
+After successful activation, the site publisher keeps the current release and the immediately previous release in `releases/`, pruning older release directories under the deployment lock. Failed or stale publications do not trigger cleanup; a cleanup failure emits a warning. The first deployment has one release, subsequent successful deployments normally keep two. The retained previous release is available for manual rollback.
+
+
 ## License
 
 App code is [MIT](LICENSE). Media components have their own licenses, including [GPL FFmpeg](packages/app/public/licenses/FFmpeg-GPL-2.0.txt) and [LGPL libheif](packages/app/public/licenses/libheif-LGPL-3.0.txt). See [NOTICE.txt](packages/app/public/licenses/NOTICE.txt) for component credits, including MotionFlow.

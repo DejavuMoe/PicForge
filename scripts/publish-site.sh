@@ -22,6 +22,7 @@ exec 9>"$site/.deploy.lock"
 flock -x -w 900 9
 
 live="$site/html"
+current=""
 if [ -L "$live" ]; then
   current=$(readlink "$live")
   printf '%s\n' "$current" | grep -Eq '^releases/[0-9a-f]{40}-[0-9]+-[0-9]+$' || exit 67
@@ -44,7 +45,7 @@ candidate="$site/releases/$release_id"
 next="$site/.next-$release_id"
 [ ! -e "$candidate" ] && [ ! -L "$candidate" ] || exit 73
 [ ! -e "$next" ] && [ ! -L "$next" ] || exit 73
-# Keep failed candidates for inspection; never remove an active or previous release.
+# Failed candidates remain for inspection until a later successful publish prunes them.
 trap 'rm -f -- "$next"' EXIT
 trap 'exit 1' HUP INT TERM
 mkdir -m 0755 "$candidate"
@@ -56,4 +57,14 @@ ln -s "releases/$release_id" "$next"
 verify "$next"
 # Relative link resolves on both the container and host; rename is on one filesystem.
 mv -Tf -- "$next" "$live"
+verify "$live"
+# After successful activation, keep the current and immediately previous release.
+for obsolete in "$site/releases"/*; do
+  [ -d "$obsolete" ] && [ ! -L "$obsolete" ] || continue
+  printf '%s\n' "$(basename "$obsolete")" | grep -Eq '^[0-9a-f]{40}-[0-9]+-[0-9]+$' || continue
+  [ "$obsolete" != "$candidate" ] && [ "$obsolete" != "$site/$current" ] || continue
+  if ! rm -r -- "$obsolete"; then
+    echo "warning: release is active, but could not remove old release: $obsolete" >&2
+  fi
+done
 echo "Activated picforge.de: $release_id"

@@ -7,6 +7,16 @@
 export { WorkerPool, getFormatConcurrencyLimit, getRecommendedWorkerPoolSize } from './workerPool';
 export type { TaskCallbacks, WorkerPoolOptions } from './workerPool';
 export { decodeImage, resizeImage } from './imageProcessor';
+export {
+  DEFAULT_MAX_PIXELS,
+  MAX_CANVAS_DIMENSION,
+  PERMANENT_IMAGE_ERROR_PREFIX,
+  resolveResizeGeometry,
+  validateResizeOptions,
+  validateResizeTarget,
+  validateSourceDimensions,
+} from './imageProcessor';
+export type { ResizeTargetLimits } from './imageProcessor';
 export { buildEncoderOptions } from './encoderOptions';
 export { createCompatImageEngine } from './compatImageEngine';
 export type { CompatImageEngineDeps } from './compatImageEngine';

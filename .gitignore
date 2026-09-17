@@ -34,7 +34,7 @@ Thumbs.db
 # Local screenshots and temporary exports
 tmp/
 temp/
-sample/
+sample/local/
 *.local.*
 
 # Reproducibly copied from pinned npm codec packages

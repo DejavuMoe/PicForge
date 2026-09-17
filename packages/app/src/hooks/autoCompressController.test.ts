@@ -9,15 +9,15 @@ import {
   type AutoCompressDeps as ControllerDeps,
 } from './autoCompressController';
 import { setPoolForTests, getPool as defaultGetPool } from './processingPool';
+import { PERMANENT_IMAGE_ERROR_PREFIX } from '../utils/processingGuards';
 
 type AutoCompressDeps = ControllerDeps & CompatImageEngineDeps;
 
 // Keep the real compatibility adapter in scheduler race tests; gate its browser work only.
 function createAutoCompressController(overrides: Partial<AutoCompressDeps> = {}) {
-  const { getPool = defaultGetPool, decodeImage, resizeImage, ...controller } = overrides;
+  const { getPool = defaultGetPool, decodeAndResizeImage, ...controller } = overrides;
   const compat = createCompatImageEngine(getPool, {
-    ...(decodeImage ? { decodeImage } : {}),
-    ...(resizeImage ? { resizeImage } : {}),
+    ...(decodeAndResizeImage ? { decodeAndResizeImage } : {}),
   });
   return createControllerWithEngine({ processImage: compat.process, ...controller });
 }
@@ -140,7 +140,13 @@ class ControllablePool {
 }
 
 function pixels() {
-  return { data: new Uint8ClampedArray(16), width: 2, height: 2 };
+  return {
+    data: new Uint8ClampedArray(16),
+    width: 2,
+    height: 2,
+    originalWidth: 2,
+    originalHeight: 2,
+  };
 }
 
 async function waitUntil(predicate: () => boolean, label: string) {
@@ -172,16 +178,6 @@ function createGate<T>(value: T) {
       return value;
     },
   };
-}
-
-function gatedFile(name = 'a.jpg') {
-  const gate = createGate(new ArrayBuffer(32));
-  const source = new File([new ArrayBuffer(32)], name, { type: 'image/jpeg' });
-  Object.defineProperty(source, 'arrayBuffer', {
-    configurable: true,
-    value: () => gate.wait(),
-  });
-  return { source, gate };
 }
 
 function seedDoneFile(previewUrl = 'blob:result-a') {
@@ -260,8 +256,7 @@ describe('auto-compress cancel semantics', () => {
     const id = useFileStore.getState().files[0].id;
     const controller = createAutoCompressController({
       getPool: () => pool as unknown as WorkerPool,
-      decodeImage: async () => pixels(),
-      resizeImage: (data, width, height) => ({ data, width, height }),
+      decodeAndResizeImage: async () => pixels(),
       readImageDimensions: async () => ({ width: 2, height: 2 }),
       validateImageDimensions: () => null,
       getMainPipelineConcurrency: () => 1,
@@ -289,8 +284,7 @@ describe('auto-compress cancel semantics', () => {
     const id = useFileStore.getState().files[0].id;
     const controller = createAutoCompressController({
       getPool: () => pool as unknown as WorkerPool,
-      decodeImage: () => decodeGate.wait(),
-      resizeImage: (data, width, height) => ({ data, width, height }),
+      decodeAndResizeImage: () => decodeGate.wait(),
       readImageDimensions: async () => ({ width: 2, height: 2 }),
       validateImageDimensions: () => null,
       getMainPipelineConcurrency: () => 1,
@@ -307,26 +301,27 @@ describe('auto-compress cancel semantics', () => {
     expect(useFileStore.getState().files[0].status).toBe('cancelled');
   });
 
-  it('does not enqueue after cancel during file read', async () => {
-    const { source, gate } = gatedFile();
-    useFileStore.getState().addFiles([source]);
+  it('does not enqueue after cancel during source dimension preflight', async () => {
+    const dimensionGate = createGate({ width: 2, height: 2 });
+    useFileStore.getState().addFiles([new File([new ArrayBuffer(32)], 'a.jpg', { type: 'image/jpeg' })]);
     const id = useFileStore.getState().files[0].id;
+    const decodeAndResizeImage = vi.fn(async () => pixels());
     const controller = createAutoCompressController({
       getPool: () => pool as unknown as WorkerPool,
-      decodeImage: async () => pixels(),
-      resizeImage: (data, width, height) => ({ data, width, height }),
-      readImageDimensions: async () => ({ width: 2, height: 2 }),
+      decodeAndResizeImage,
+      readImageDimensions: () => dimensionGate.wait(),
       validateImageDimensions: () => null,
       getMainPipelineConcurrency: () => 1,
       debounceMs: 0,
     });
 
     const running = controller.run();
-    await waitUntil(() => gate.hasEntered(), 'read barrier');
+    await waitUntil(() => dimensionGate.hasEntered(), 'preflight barrier');
     useFileStore.getState().cancelFile(id);
-    gate.release();
+    dimensionGate.release();
     await running;
 
+    expect(decodeAndResizeImage).not.toHaveBeenCalled();
     expect(pool.enqueued).toHaveLength(0);
     expect(useFileStore.getState().getFile(id)?.status).toBe('cancelled');
   });
@@ -340,8 +335,7 @@ describe('auto-compress cancel semantics', () => {
     const started: string[] = [];
     const controller = createAutoCompressController({
       getPool: () => pool as unknown as WorkerPool,
-      decodeImage: async () => pixels(),
-      resizeImage: (data, width, height) => ({ data, width, height }),
+      decodeAndResizeImage: async () => pixels(),
       readImageDimensions: async () => {
         started.push('dim');
         return { width: 2, height: 2 };
@@ -366,8 +360,7 @@ describe('auto-compress cancel semantics', () => {
     const id = useFileStore.getState().files[0].id;
     const controller = createAutoCompressController({
       getPool: () => pool as unknown as WorkerPool,
-      decodeImage: async () => pixels(),
-      resizeImage: (data, width, height) => ({ data, width, height }),
+      decodeAndResizeImage: async () => pixels(),
       readImageDimensions: async () => ({ width: 2, height: 2 }),
       validateImageDimensions: () => null,
       getMainPipelineConcurrency: () => 1,
@@ -407,8 +400,7 @@ describe('auto-compress cancel semantics', () => {
     const [firstId, secondId] = useFileStore.getState().files.map((file) => file.id);
     const controller = createAutoCompressController({
       getPool: () => pool as unknown as WorkerPool,
-      decodeImage: async () => pixels(),
-      resizeImage: (data, width, height) => ({ data, width, height }),
+      decodeAndResizeImage: async () => pixels(),
       readImageDimensions: async () => ({ width: 2, height: 2 }),
       validateImageDimensions: () => null,
       getMainPipelineConcurrency: () => 2,
@@ -436,8 +428,7 @@ describe('auto-compress cancel semantics', () => {
     const firstId = useFileStore.getState().files[0].id;
     const controller = createAutoCompressController({
       getPool: () => pool as unknown as WorkerPool,
-      decodeImage: async () => pixels(),
-      resizeImage: (data, width, height) => ({ data, width, height }),
+      decodeAndResizeImage: async () => pixels(),
       readImageDimensions: async () => ({ width: 2, height: 2 }),
       validateImageDimensions: () => null,
       getMainPipelineConcurrency: () => 1,
@@ -475,8 +466,7 @@ describe('auto-compress cancel semantics', () => {
     const id = useFileStore.getState().files[0].id;
     const controller = createAutoCompressController({
       getPool: () => workerPool,
-      decodeImage: async () => pixels(),
-      resizeImage: (data, width, height) => ({ data, width, height }),
+      decodeAndResizeImage: async () => pixels(),
       readImageDimensions: async () => ({ width: 2, height: 2 }),
       validateImageDimensions: () => null,
       getMainPipelineConcurrency: () => 1,
@@ -509,8 +499,7 @@ describe('auto-compress settings invalidation and abort', () => {
   function createController(overrides: Partial<AutoCompressDeps> = {}) {
     return createAutoCompressController({
       getPool: () => pool as unknown as WorkerPool,
-      decodeImage: async () => pixels(),
-      resizeImage: (data, width, height) => ({ data, width, height }),
+      decodeAndResizeImage: async () => pixels(),
       readImageDimensions: async () => ({ width: 2, height: 2 }),
       validateImageDimensions: () => null,
       getMainPipelineConcurrency: () => 1,
@@ -565,19 +554,19 @@ describe('auto-compress settings invalidation and abort', () => {
     expect(isResultExportable(file, useSettingsStore.getState().settings)).toBe(true);
   });
 
-  it('reprocesses with the latest quality after settings change during File.arrayBuffer', async () => {
-    const { source, gate } = gatedFile();
-    useFileStore.getState().addFiles([source]);
+  it('reprocesses with the latest quality after settings change during fused decode', async () => {
+    const decodeGate = createGate(pixels());
+    useFileStore.getState().addFiles([new File([new ArrayBuffer(32)], 'a.jpg', { type: 'image/jpeg' })]);
     const id = useFileStore.getState().files[0].id;
-    const controller = createController();
+    const controller = createController({ decodeAndResizeImage: () => decodeGate.wait() });
 
     const running = controller.run();
-    await waitUntil(() => gate.hasEntered(), 'read barrier');
-    expect(useFileStore.getState().files[0].status).toBe('pending');
+    await waitUntil(() => decodeGate.hasEntered(), 'decode barrier');
+    expect(useFileStore.getState().files[0].status).toBe('processing');
 
     useSettingsStore.getState().setQuality(40);
     controller.schedule();
-    gate.release();
+    decodeGate.release();
 
     await waitUntil(
       () => pool.enqueued.some((task) => task.id === id && task.settings.quality === 40),
@@ -597,7 +586,7 @@ describe('auto-compress settings invalidation and abort', () => {
     const decodeGate = createGate(pixels());
     const id = seedDoneFile();
     const controller = createController({
-      decodeImage: () => decodeGate.wait(),
+      decodeAndResizeImage: () => decodeGate.wait(),
     });
 
     useSettingsStore.getState().setQuality(40);
@@ -625,17 +614,17 @@ describe('auto-compress settings invalidation and abort', () => {
     expect(file.lastProcessedSettingsHash).toBe(getSettingsHash(useSettingsStore.getState().settings));
   });
 
-  it('does not leave a first import stuck in processing after a read-stage quality change', async () => {
-    const { source, gate } = gatedFile();
-    useFileStore.getState().addFiles([source]);
+  it('does not leave a first import stuck in processing after a fused-decode quality change', async () => {
+    const decodeGate = createGate(pixels());
+    useFileStore.getState().addFiles([new File([new ArrayBuffer(32)], 'a.jpg', { type: 'image/jpeg' })]);
     const id = useFileStore.getState().files[0].id;
-    const controller = createController();
+    const controller = createController({ decodeAndResizeImage: () => decodeGate.wait() });
 
     const running = controller.run();
-    await waitUntil(() => gate.hasEntered(), 'read barrier');
+    await waitUntil(() => decodeGate.hasEntered(), 'decode barrier');
     useSettingsStore.getState().setQuality(40);
     controller.schedule();
-    gate.release();
+    decodeGate.release();
     await waitUntil(() => pool.enqueued.some((task) => task.id === id), 'reprocess enqueue');
     expect(pool.enqueued).toHaveLength(1);
     pool.complete(id);
@@ -718,9 +707,9 @@ describe('auto-compress settings invalidation and abort', () => {
     expect(pool.enqueued).toHaveLength(0);
   });
 
-  it('restores matching result A during B read and ignores the late B encode', async () => {
-    const { source, gate } = gatedFile();
-    useFileStore.getState().addFiles([source]);
+  it('restores matching result A during B decode and ignores the late B encode', async () => {
+    const decodeGate = createGate(pixels());
+    useFileStore.getState().addFiles([new File([new ArrayBuffer(32)], 'a.jpg', { type: 'image/jpeg' })]);
     const id = useFileStore.getState().files[0].id;
     const hashA = getSettingsHash(useSettingsStore.getState().settings);
     useFileStore.getState().updateFile(id, {
@@ -734,13 +723,13 @@ describe('auto-compress settings invalidation and abort', () => {
     });
 
     useSettingsStore.getState().setQuality(40);
-    const controller = createController();
+    const controller = createController({ decodeAndResizeImage: () => decodeGate.wait() });
     const running = controller.run();
-    await waitUntil(() => gate.hasEntered(), 'B read barrier');
+    await waitUntil(() => decodeGate.hasEntered(), 'B decode barrier');
 
     useSettingsStore.getState().setQuality(75);
     controller.schedule();
-    gate.release();
+    decodeGate.release();
     await running;
 
     const restored = useFileStore.getState().getFile(id)!;
@@ -774,5 +763,62 @@ describe('auto-compress settings invalidation and abort', () => {
     expect(isResultExportable(restored, useSettingsStore.getState().settings)).toBe(true);
     expect(URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:result-a');
     expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('rejects an oversized target before decode or enqueue and recovers on explicit retry', async () => {
+    useFileStore.getState().addFiles([new File([new ArrayBuffer(32)], 'a.jpg', { type: 'image/jpeg' })]);
+    const id = useFileStore.getState().files[0].id;
+    useSettingsStore.setState({
+      settings: {
+        ...baseSettings,
+        resize: {
+          enabled: true,
+          mode: 'absolute',
+          maxWidth: 10_000,
+          maxHeight: 10_000,
+          percentage: 50,
+          method: 'stretch',
+        },
+      },
+    });
+    const decodeAndResizeImage = vi.fn(async () => pixels());
+    const controller = createController({
+      readImageDimensions: async () => ({ width: 100, height: 100 }),
+      decodeAndResizeImage,
+    });
+
+    await controller.run();
+
+    const file = useFileStore.getState().files[0];
+    expect(file.status).toBe('error');
+    expect(file.error).toContain(PERMANENT_IMAGE_ERROR_PREFIX);
+    expect(decodeAndResizeImage).not.toHaveBeenCalled();
+    expect(pool.enqueued).toHaveLength(0);
+
+    // A permanent target error must not be auto-retried by a later schedule.
+    controller.schedule();
+    await Promise.resolve();
+    expect(pool.enqueued).toHaveLength(0);
+
+    // Correcting the setting and retrying explicitly must recover.
+    useSettingsStore.setState({
+      settings: {
+        ...baseSettings,
+        resize: {
+          enabled: true,
+          mode: 'absolute',
+          maxWidth: 1920,
+          maxHeight: 1080,
+          percentage: 50,
+          method: 'contain',
+        },
+      },
+    });
+    useFileStore.getState().retryFile(id);
+    const retryRun = controller.run();
+    await waitUntil(() => pool.enqueued.some((task) => task.id === id), 'retry enqueue');
+    pool.complete(id);
+    await retryRun;
+    expect(useFileStore.getState().files[0].status).toBe('done');
   });
 });

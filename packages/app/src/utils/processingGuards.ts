@@ -1,4 +1,15 @@
-import { inspectAnimation } from '@pic-forge/worker';
+import {
+  DEFAULT_MAX_PIXELS,
+  MAX_CANVAS_DIMENSION,
+  PERMANENT_IMAGE_ERROR_PREFIX,
+  inspectAnimation,
+  resolveResizeGeometry,
+  validateResizeOptions,
+  validateResizeTarget,
+} from '@pic-forge/worker';
+import type { ResizeOptions } from '@pic-forge/codecs';
+
+export { PERMANENT_IMAGE_ERROR_PREFIX };
 
 export interface ImageDimensions {
   width: number;
@@ -18,10 +29,6 @@ interface DeviceHints {
 
 const BYTES_PER_PIXEL = 4;
 const LOW_RESOURCE_MAX_PIXELS = 24_000_000;
-const DEFAULT_MAX_PIXELS = 50_000_000;
-const MAX_CANVAS_DIMENSION = 16_384;
-
-export const PERMANENT_IMAGE_ERROR_PREFIX = 'Image exceeds browser safety limit';
 
 export function getMainPipelineConcurrency(device: DeviceHints = getNavigatorHints()): number {
   const cores = device.hardwareConcurrency ?? 4;
@@ -69,6 +76,28 @@ export function validateImageDimensions(
   }
 
   return null;
+}
+
+/**
+ * Device-policy guard for the resize target. Runs before decode when the
+ * controller already knows the normalized source dimensions. The engine still
+ * enforces a final hard-ceiling guard at the allocation entry.
+ */
+export function validateImageTarget(
+  source: ImageDimensions,
+  resize: ResizeOptions | undefined,
+  limits: ImageSafetyLimits = getImageSafetyLimits(),
+): string | null {
+  if (!resize?.enabled) return null;
+
+  const optionsError = validateResizeOptions(resize);
+  if (optionsError) return optionsError;
+
+  const geometry = resolveResizeGeometry(source.width, source.height, resize);
+  return validateResizeTarget(geometry, {
+    maxDimension: limits.maxDimension,
+    maxPixels: limits.maxPixels,
+  });
 }
 
 export function isPermanentImageError(error?: string): boolean {

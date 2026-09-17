@@ -1,38 +1,49 @@
-import { decodeImage, resizeImage } from './imageProcessor';
+import { decodeAndResizeImage } from './imageProcessor';
 import type { ImageEngine } from './imageEngine';
 import type { WorkerPool } from './workerPool';
 
 export interface CompatImageEngineDeps {
   getPool: () => WorkerPool;
-  decodeImage: typeof decodeImage;
-  resizeImage: typeof resizeImage;
+  decodeAndResizeImage: typeof decodeAndResizeImage;
 }
 
-/** Preserve the existing Canvas decode/resize and jSquash Worker encoding path. */
+/**
+ * Transfer the pixel buffer only when the view covers the whole ArrayBuffer.
+ * A view with an offset or extra capacity copies just the visible bytes; the
+ * underlying (possibly larger) buffer is never transferred wholesale.
+ */
+export function toOwnedPixelBuffer(data: Uint8ClampedArray): ArrayBuffer {
+  const buffer = data.buffer as ArrayBuffer;
+  if (data.byteOffset === 0 && data.byteLength === buffer.byteLength) return buffer;
+  return buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+}
+
+/**
+ * Preserve the existing browser decode and jSquash Worker encoding path, but
+ * draw the original Blob directly into the target-size canvas. The source is
+ * never materialized as a full-frame RGBA array and no intermediate source
+ * canvas is created.
+ */
 export function createCompatImageEngine(
   getPool: () => WorkerPool,
   overrides: Partial<Omit<CompatImageEngineDeps, 'getPool'>> = {},
 ): ImageEngine {
-  const deps = { decodeImage, resizeImage, ...overrides };
+  const deps = { decodeAndResizeImage, ...overrides };
   return {
     kind: 'compat',
     supports: ({ settings }) =>
       ['mozjpeg', 'webp', 'avif', 'oxipng'].includes(settings.outputFormat),
     async process({ id, source, settings, onProgress }, signal) {
       signal?.throwIfAborted();
-      const input = await source.arrayBuffer();
-      signal?.throwIfAborted();
       onProgress?.(0);
       signal?.throwIfAborted();
-      const decoded = await deps.decodeImage(input);
+      const decoded = await deps.decodeAndResizeImage(source, settings.resize, {
+        signal,
+        onDecoded: () => onProgress?.(30),
+        onResized: () => onProgress?.(50),
+      });
       signal?.throwIfAborted();
-      onProgress?.(30);
-      const resized = settings.resize?.enabled
-        ? deps.resizeImage(decoded.data, decoded.width, decoded.height, settings.resize)
-        : decoded;
-      signal?.throwIfAborted();
-      onProgress?.(50);
-      const pixels = resized.data.buffer.slice(0) as ArrayBuffer;
+      const pixels = toOwnedPixelBuffer(decoded.data);
       signal?.throwIfAborted();
       const pool = getPool();
       const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
@@ -44,7 +55,7 @@ export function createCompatImageEngine(
         signal?.addEventListener('abort', abort, { once: true });
         try {
           signal?.throwIfAborted();
-          pool.enqueue(id, pixels, resized.width, resized.height, source.size, settings, {
+          pool.enqueue(id, pixels, decoded.width, decoded.height, source.size, settings, {
             onProgress: (_id, progress) => {
               if (!signal?.aborted) onProgress?.(progress);
             },
@@ -69,10 +80,10 @@ export function createCompatImageEngine(
       signal?.throwIfAborted();
       return {
         buffer,
-        width: resized.width,
-        height: resized.height,
-        originalWidth: decoded.width,
-        originalHeight: decoded.height,
+        width: decoded.width,
+        height: decoded.height,
+        originalWidth: decoded.originalWidth,
+        originalHeight: decoded.originalHeight,
         originalSize: source.size,
         outputSize: buffer.byteLength,
         engine: 'compat',

@@ -35,8 +35,8 @@ async function detectSimd(): Promise<boolean> {
   if (simdSupported !== null) return simdSupported;
   try {
     const bytes = new Uint8Array([
-      0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 65,
-      0, 253, 15, 253, 98, 11,
+      0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 65, 0, 253,
+      15, 253, 98, 11,
     ]);
     simdSupported = WebAssembly.validate(bytes);
   } catch {
@@ -58,6 +58,30 @@ let oxipngOptimise: ((data: any, options?: any) => Promise<ArrayBuffer>) | null 
 let avifLock: Promise<void> | null = null;
 let avifEncode: ((data: ImageData, options?: any) => Promise<ArrayBuffer>) | null = null;
 
+/**
+ * Upstream @jsquash/avif reads `data.data.buffer` without honoring byteOffset or
+ * byteLength, so a partial view would encode pixels from the start of the whole
+ * backing buffer. Normalize a partial view to its visible bytes once, here at the
+ * shared boundary. A fixed, non-shared ArrayBuffer view that spans its entire buffer keeps
+ * the zero-extra-copy fast path.
+ *
+ * Lifetime: encoders read the view after the module-init await resolves, inside
+ * the synchronous `module.encode(...)` call. The caller must keep the view alive
+ * until the returned promise settles; the image Worker transfers and discards it,
+ * and the HEIC path builds a fresh full-buffer array.
+ */
+function normalizedPixelView(imageData: Uint8ClampedArray): Uint8ClampedArray<ArrayBuffer> {
+  if (
+    imageData.buffer instanceof ArrayBuffer &&
+    !('resizable' in imageData.buffer && imageData.buffer.resizable) &&
+    imageData.byteOffset === 0 &&
+    imageData.byteLength === imageData.buffer.byteLength
+  ) {
+    return new Uint8ClampedArray(imageData.buffer);
+  }
+  return new Uint8ClampedArray(imageData);
+}
+
 export async function encodeImage(
   codecName: string,
   imageData: Uint8ClampedArray,
@@ -65,7 +89,8 @@ export async function encodeImage(
   height: number,
   options: Record<string, any>,
 ): Promise<ArrayBuffer> {
-  const imageDataObj = new ImageData(new Uint8ClampedArray(imageData), width, height);
+  const view = normalizedPixelView(imageData);
+  const imageDataObj = new ImageData(view, width, height);
 
   switch (codecName) {
     case 'mozjpeg':
@@ -77,7 +102,7 @@ export async function encodeImage(
     case 'avif':
       return encodeAvif(imageDataObj, options as AvifOptions);
     default:
-      return encodeWithCanvas(imageData, width, height, 'image/png', options?.quality ?? 75);
+      return encodeWithCanvas(view, width, height, 'image/png', options?.quality ?? 75);
   }
 }
 
@@ -183,7 +208,7 @@ async function encodeAvif(imageData: ImageData, options: AvifOptions): Promise<A
 }
 
 async function encodeWithCanvas(
-  imageData: Uint8ClampedArray,
+  imageData: Uint8ClampedArray<ArrayBuffer>,
   width: number,
   height: number,
   mime: string,
@@ -194,7 +219,7 @@ async function encodeWithCanvas(
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Failed to get 2D canvas context');
-  ctx.putImageData(new ImageData(new Uint8ClampedArray(imageData), width, height), 0, 0);
+  ctx.putImageData(new ImageData(imageData, width, height), 0, 0);
   const q = quality / 100;
 
   return new Promise((resolve, reject) => {
@@ -203,7 +228,10 @@ async function encodeWithCanvas(
         // Release canvas bitmap memory eagerly
         canvas.width = 0;
         canvas.height = 0;
-        if (!blob) { reject(new Error('Canvas encoding failed')); return; }
+        if (!blob) {
+          reject(new Error('Canvas encoding failed'));
+          return;
+        }
         blob.arrayBuffer().then(resolve).catch(reject);
       },
       mime,

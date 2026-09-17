@@ -18,6 +18,7 @@ import {
   readImageDimensions,
   runWithConcurrency,
   validateImageDimensions,
+  validateImageTarget,
 } from '../utils/processingGuards';
 import { abortAllProcessing, imageProcessor } from './processingPool';
 
@@ -28,6 +29,7 @@ export interface AutoCompressDeps {
   processImage: ImageEngine['process'];
   readImageDimensions: typeof readImageDimensions;
   validateImageDimensions: typeof validateImageDimensions;
+  validateImageTarget: typeof validateImageTarget;
   getImageSafetyLimits: typeof getImageSafetyLimits;
   getMainPipelineConcurrency: typeof getMainPipelineConcurrency;
   isPermanentImageError: typeof isPermanentImageError;
@@ -39,6 +41,7 @@ const defaultDeps: AutoCompressDeps = {
   processImage: imageProcessor.process,
   readImageDimensions,
   validateImageDimensions,
+  validateImageTarget,
   getImageSafetyLimits,
   getMainPipelineConcurrency,
   isPermanentImageError,
@@ -190,7 +193,8 @@ export function createAutoCompressController(partialDeps: Partial<AutoCompressDe
             return;
           }
 
-          const dimensionError = deps.validateImageDimensions(dimensions, deps.getImageSafetyLimits());
+          const limits = deps.getImageSafetyLimits();
+          const dimensionError = deps.validateImageDimensions(dimensions, limits);
           if (dimensionError) {
             retryCount.set(current.id, deps.maxRetries);
             if (!isTaskCurrent(current.id, epoch, settingsHash)) return;
@@ -198,6 +202,18 @@ export function createAutoCompressController(partialDeps: Partial<AutoCompressDe
               status: 'error',
               progress: 0,
               error: dimensionError,
+            });
+            return;
+          }
+
+          const targetError = deps.validateImageTarget(dimensions, settings.resize, limits);
+          if (targetError) {
+            retryCount.set(current.id, deps.maxRetries);
+            if (!isTaskCurrent(current.id, epoch, settingsHash)) return;
+            useFileStore.getState().updateFile(current.id, {
+              status: 'error',
+              progress: 0,
+              error: targetError,
             });
             return;
           }

@@ -19,6 +19,8 @@ Working version **0.17.0**, browser-only image toolbox. The initial integration 
 
 ## Commands and checks
 
+- Development supports Node `^22.13.0 || >=24.0.0` with pnpm 11.8.0. ESLint 10 retains the existing rule configuration; CI uses Node 24.21.0.
+
 - `pnpm install`; `pnpm dev` (127.0.0.1:5173); `pnpm build`; `pnpm preview`. The approved HEIC module, WASM, license and manifest are versioned static inputs; ordinary builds and CI need no Emscripten or codec download.
 - HEIC uses source-built libheif 1.23.4 / libde265 1.1.1. `pnpm test:heif` verifies the asset gate; dev/build fail on absent, stale or mismatched artifacts. `pnpm codecs:heif` is only for deliberately regenerating/upgrading these assets ([instructions](docs/heif-build.md)). Do not restore the vulnerable libheif-js 1.23.2 package.
 - Compression codec packages are exact-pinned to their static WASM. `static-codecs.mjs` verifies byte equality and maps upstream fallback URLs to `/wasm/` during production builds, including Workers. Keep this mapping and the AVIF/OxiPNG patches aligned when upgrading. `pnpm test:build` checks that contract and the existing performance-report validators; CI runs it without executing benchmarks.

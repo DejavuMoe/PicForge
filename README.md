@@ -70,7 +70,7 @@ The interface supports English, Simplified Chinese, Traditional Chinese, Japanes
 
 ## Run locally
 
-Requires **Node.js ≥22.12.0** and **pnpm 11.8.x**.
+Requires **Node.js 22.13+ (22.x) / 24+** and **pnpm 11.8.x**.
 
 The pinned HEIC module and WASM are included as [versioned static assets](docs/heif-build.md). Normal development and CI do not need Emscripten or a separate codec build.
 

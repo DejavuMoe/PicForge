@@ -3,12 +3,20 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { verifyHeifAssets } from './verify-heif.mjs';
+import { verifyStaticCodecs } from '../packages/app/scripts/static-codecs.mjs';
 
 const root = resolve(process.argv[2] || 'packages/app/dist');
 await verifyHeifAssets(resolve(root, 'wasm/heif-1.23.4-de265-1.1.1'));
+await verifyStaticCodecs(resolve(root, 'wasm'));
 assert(
   !files(root).some((name) => /^wasm\/heif-(?!1\.23\.4-de265-1\.1\.1\/)/.test(name)),
   'Obsolete HEIF assets',
+);
+assert(
+  !files(root).some((name) =>
+    /^assets\/(?:avif_enc|mozjpeg_enc|webp_enc(?:_simd)?|squoosh_oxipng_bg)-.*\.wasm$/.test(name),
+  ),
+  'Duplicate compression WASM: use the verified /wasm/ assets',
 );
 function files(directory, prefix = '') {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {

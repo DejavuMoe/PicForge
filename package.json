@@ -21,6 +21,7 @@
     "assets:brand": "python3 packages/app/scripts/generate-brand-assets.py",
     "codecs:heif": "python scripts/build-heif.py",
     "test:heif": "node --test scripts/verify-heif.test.mjs",
+    "test:build": "node --test scripts/static-codecs.test.mjs scripts/performance/validate.test.mjs",
     "lint": "eslint packages/*/src/**/*.{ts,tsx}",
     "format": "prettier --write packages/*/src/**/*.{ts,tsx}",
     "test": "vitest run",

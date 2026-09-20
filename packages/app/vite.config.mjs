@@ -4,6 +4,7 @@ import wasm from 'vite-plugin-wasm';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { staticCodecUrls } from './scripts/static-codecs.mjs';
 
 const appPackage = JSON.parse(
   readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'package.json'), 'utf8'),
@@ -36,6 +37,7 @@ export default defineConfig({
   plugins: [
     react(),
     wasm(),
+    staticCodecUrls(),
     {
       name: 'picforge-isolation-revalidation',
       configureServer(server) {
@@ -73,7 +75,7 @@ export default defineConfig({
   },
   worker: {
     format: 'es',
-    plugins: () => [wasm()],
+    plugins: () => [wasm(), staticCodecUrls()],
   },
   optimizeDeps: {
     exclude: ['@pic-forge/codecs', '@pic-forge/worker', '@ffmpeg/ffmpeg'],

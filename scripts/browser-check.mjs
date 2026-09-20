@@ -267,6 +267,74 @@ try {
     mimeType: 'image/png',
     buffer: Buffer.from(synthetic, 'base64'),
   };
+  const checkEncoders = () =>
+    page.evaluate(async () => {
+      const modules = await (await fetch('/precache.json')).json();
+      const workerURL = modules.find((path) => /\/imageWorker-.*\.js$/.test(path));
+      if (!workerURL) throw new Error('Missing encoder worker');
+      const results = [];
+      for (const [format, mime] of Object.entries({
+        mozjpeg: 'image/jpeg',
+        webp: 'image/webp',
+        oxipng: 'image/png',
+        avif: 'image/avif',
+      })) {
+        const width = 32,
+          height = 24;
+        const pixels = new Uint8ClampedArray(width * height * 4);
+        for (let i = 0; i < pixels.length; i += 4)
+          pixels.set([i % 251, (i / 4) % 239, 127, 255], i);
+        const buffer = await new Promise((resolve, reject) => {
+          const worker = new Worker(workerURL, { type: 'module' });
+          const finish = () => {
+            clearTimeout(timer);
+            worker.terminate();
+          };
+          const timer = setTimeout(() => {
+            finish();
+            reject(new Error(`${format} timed out`));
+          }, 30000);
+          worker.onerror = (error) => {
+            finish();
+            reject(new Error(error.message));
+          };
+          worker.onmessage = ({ data }) => {
+            if (data.type === 'progress') return;
+            finish();
+            if (data.type === 'error') reject(new Error(data.payload.error));
+            else resolve(data.payload.resultBuffer);
+          };
+          worker.postMessage(
+            {
+              type: 'task',
+              payload: {
+                id: format,
+                pixelBuffer: pixels.buffer,
+                width,
+                height,
+                originalSize: pixels.byteLength,
+                settings: { outputFormat: format, quality: 75 },
+              },
+            },
+            [pixels.buffer],
+          );
+        });
+        const bitmap = await createImageBitmap(new Blob([buffer], { type: mime }));
+        const dimensions = [bitmap.width, bitmap.height];
+        bitmap.close();
+        const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', buffer))]
+          .map((x) => x.toString(16).padStart(2, '0'))
+          .join('');
+        results.push({ format, dimensions, bytes: buffer.byteLength, digest });
+      }
+      return results;
+    });
+  const encoded = await checkEncoders();
+  for (const result of encoded) {
+    assert(result.bytes > 0);
+    assert.deepEqual(result.dimensions, [32, 24]);
+  }
+  await writeFile(resolve(output, 'static-codecs.json'), JSON.stringify(encoded, null, 2));
   const compressStatic = async () => {
     await openTool('Image compression');
     await panel.getByTestId('add-file-input').setInputFiles(staticFile);
@@ -326,6 +394,11 @@ try {
       'brand assets remain available offline',
     );
     await compressStatic();
+    assert.deepEqual(
+      await checkEncoders(),
+      encoded,
+      'All four encoders preserve their bytes offline',
+    );
     await context.setOffline(false);
     console.log(
       'PASS: production static compression, download dimensions, mobile width, offline reload/re-encode',

@@ -10,7 +10,7 @@ when:
 
 steps:
   - name: test
-    image: node:24.19.0-alpine3.24
+    image: node:24.21.0-alpine3.24
     commands:
       - apk add --no-cache git coreutils util-linux ffmpeg
       - npm install --global pnpm@11.8.0
@@ -18,6 +18,7 @@ steps:
       - pnpm lint
       - pnpm test
       - pnpm test:heif
+      - pnpm test:build
       - pnpm typecheck
       - pnpm build
       - node scripts/verify-site-output.mjs packages/app/dist

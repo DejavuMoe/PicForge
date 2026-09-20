@@ -101,6 +101,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm test:heif
+pnpm test:build
 pnpm build
 ```
 

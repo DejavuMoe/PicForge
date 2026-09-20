@@ -43,7 +43,9 @@ PicForge applies version-specific pnpm patches to @jsquash/avif 2.1.1 and
 @jsquash/oxipng 2.3.0 JavaScript initialization wrappers to retain single-thread
 encoding under cross-origin isolation. Patch sources are in the repository's
 patches/ directory. The WASM binaries and upstream license notices are unchanged.
-
+The Vite build also rewrites the five compression wrappers' default WASM URLs
+to the existing /wasm/ static assets, avoiding duplicate binaries. Source mapping:
+packages/app/scripts/static-codecs.mjs. Codec algorithms and WASM bytes are unchanged.
 
 PicForge also patches wasm-vips 0.0.18 browser ES-module glue to cap the Emscripten
 pthread pool and VIPS_MAX_THREADS together at six. Pool exhaustion returns EAGAIN

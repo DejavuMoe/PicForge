@@ -25,3 +25,11 @@ The earlier review reports remain historical evidence.
   and the Chromium approved-camera/PWA harness including individual downloads,
   ZIP member equality, animation ZIP and offline conversion.
 - [Upstream changelog](https://github.com/Stuk/jszip/blob/main/CHANGES.md).
+
+## Vitest patch
+
+- Upgrade Vitest 5.0.0 to 5.0.1, including its matching mocker/spy packages.
+- No test configuration, assertion or timeout was weakened.
+- Verified: peer checks, lint/typecheck, all 227 unit tests, the 25 HEIF/build
+  regressions, production build and output verification.
+- [Upstream release](https://github.com/vitest-dev/vitest/releases/tag/v5.0.1).

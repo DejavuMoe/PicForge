@@ -14,3 +14,14 @@ The earlier review reports remain historical evidence.
 - Verified on Node 24.21.0: no peer conflicts, lint passes with the same 7 existing
   warnings, typecheck passes, 226 unit tests pass, production build/output verification passes.
 - [ESLint migration guide](https://eslint.org/docs/latest/use/migrate-to-10.0.0).
+
+## JSZip patch
+
+- Upgrade JSZip 3.10.1 to 3.10.2 without changing export names, compression settings
+  or manifest structure.
+- Add a regression for native Blob, a cross-realm typed-array subview and Unicode
+  archive member names; verify extracted bytes and manifest data.
+- Verified: lint/typecheck, 227 unit tests, production build/output verification,
+  and the Chromium approved-camera/PWA harness including individual downloads,
+  ZIP member equality, animation ZIP and offline conversion.
+- [Upstream changelog](https://github.com/Stuk/jszip/blob/main/CHANGES.md).

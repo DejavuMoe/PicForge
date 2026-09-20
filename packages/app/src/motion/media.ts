@@ -57,11 +57,14 @@ export function groupMedia(files: File[], android: boolean): MediaItem[] {
 // start of padding explicitly — otherwise a long zero tail would be swallowed as a
 // size-0 "to EOF" box and bypass the padding limit.
 const MAX_TRAILING_PADDING = 4096;
+const MAX_BOX_CHECKS = 100_000;
 
 export function splitMotionPhoto(buffer: ArrayBuffer, source?: Blob): MediaOutput {
   const bytes = new Uint8Array(buffer);
   if (bytes[0] !== 0xff || bytes[1] !== 0xd8) throw new Error('invalidMotion');
   const view = new DataView(buffer);
+  // Bound total work across all candidate starts, not just each individual walk.
+  let boxChecks = 0;
   for (let i = bytes.length - 16; i >= 4; i--) {
     if (bytes[i] !== 102 || bytes[i + 1] !== 116 || bytes[i + 2] !== 121 || bytes[i + 3] !== 112)
       continue;
@@ -70,6 +73,7 @@ export function splitMotionPhoto(buffer: ArrayBuffer, source?: Blob): MediaOutpu
     let movie = false;
     let media = false;
     while (pos + 8 <= bytes.length) {
+      if (++boxChecks > MAX_BOX_CHECKS) throw new Error('invalidMotion');
       let size = view.getUint32(pos);
       const type = String.fromCharCode(...bytes.subarray(pos + 4, pos + 8));
       if (size === 0 && type === '\0\0\0\0') break; // zero padding begins here

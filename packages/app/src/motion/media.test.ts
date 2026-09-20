@@ -158,6 +158,18 @@ describe('motion tools', () => {
     expect(videoArguments({ ...defaultMotionSettings, fps: '30', audio: false })).toContain('-an');
     expect(videoArguments({ ...defaultMotionSettings, fps: '30' }).join(' ')).toContain('fps=30');
   });
+
+  it('bounds repeated box walks across all candidate starts', () => {
+    const box = makeBox('ftyp', Buffer.alloc(8));
+    const source = Buffer.concat([Buffer.from([0xff, 0xd8]), ...Array(500).fill(box)]);
+    const reads = vi.spyOn(DataView.prototype, 'getUint32');
+    try {
+      expect(() => splitMotionPhoto(new Uint8Array(source).buffer)).toThrow('invalidMotion');
+      expect(reads.mock.calls.length).toBeLessThanOrEqual(100_000);
+    } finally {
+      reads.mockRestore();
+    }
+  });
 });
 
 it('applies the iOS clean aperture in its autorotated frame', () => {

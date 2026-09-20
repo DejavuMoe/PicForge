@@ -72,6 +72,8 @@ The interface supports English, Simplified Chinese, Traditional Chinese, Japanes
 
 Requires **Node.js ≥22.12.0** and **pnpm 11.8.x**.
 
+The pinned HEIC module and WASM are included as [versioned static assets](docs/heif-build.md). Normal development and CI do not need Emscripten or a separate codec build.
+
 ```sh
 git clone https://github.com/DejavuMoe/PicForge.git
 cd PicForge
@@ -98,6 +100,7 @@ For changes, run:
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:heif
 pnpm build
 ```
 

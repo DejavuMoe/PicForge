@@ -17,6 +17,7 @@ steps:
       - pnpm install --frozen-lockfile
       - pnpm lint
       - pnpm test
+      - pnpm test:heif
       - pnpm typecheck
       - pnpm build
       - node scripts/verify-site-output.mjs packages/app/dist

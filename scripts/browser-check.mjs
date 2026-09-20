@@ -43,6 +43,36 @@ try {
       ? { executablePath: process.env.PICFORGE_BROWSER_EXECUTABLE }
       : {}),
   });
+  // A stale/mispackaged codec must fail before any imported bytes reach its parser.
+  for (const [heifVersion, de265Version] of [
+    ['1.23.2', 0x01010100],
+    ['1.23.4', 0x01000f00],
+  ]) {
+    const gateContext = await browser.newContext({ serviceWorkers: 'block', locale: 'en-US' });
+    await gateContext.route('**/wasm/heif-1.23.4-de265-1.1.1/libheif.mjs', (route) =>
+      route.fulfill({
+        contentType: 'text/javascript',
+        body: `export default async () => ({
+        heif_get_version: () => '${heifVersion}',
+        _de265_get_version_number: () => ${de265Version},
+        HeifDecoder: class { constructor() { throw new Error('UNEXPECTED_PARSE'); } }
+      });`,
+      }),
+    );
+    const gatePage = await gateContext.newPage();
+    await gatePage.goto('http://127.0.0.1:4187/?tool=ios&lng=en');
+    await gatePage.locator('input[type=file]').setInputFiles({
+      name: 'version-gate.heic',
+      mimeType: 'image/heic',
+      buffer: Buffer.from([0, 0, 0, 0]),
+    });
+    await gatePage.getByRole('button', { name: 'Process batch', exact: true }).click();
+    const english = JSON.parse(await readFile('packages/app/src/i18n/locales/en.json', 'utf8'));
+    await gatePage.getByText(english.motion.errors.engineFailed, { exact: true }).first().waitFor();
+    assert.equal(await gatePage.getByText('UNEXPECTED_PARSE', { exact: true }).count(), 0);
+    await gateContext.close();
+  }
+  console.log('PASS: stale HEIF runtime rejected before parsing');
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
     locale: 'en-US',
@@ -59,8 +89,30 @@ try {
     console.error(error);
   });
   page.on('request', (request) => requests.push(request.url()));
+  if (engine === 'chromium') {
+    await page.goto('http://127.0.0.1:4187/manifest.webmanifest');
+    await page.evaluate(async () => {
+      const cache = await caches.open('picforge-v0.17.0-runtime');
+      await cache.put('/wasm/heif-1.23.2/libheif-bundle.mjs', new Response('obsolete'));
+    });
+  }
   await page.goto('http://127.0.0.1:4187');
   await page.locator('.pf-brand-mark').waitFor();
+  if (engine === 'chromium') {
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+    });
+    await page.waitForFunction(
+      async () => !(await caches.keys()).includes('picforge-v0.17.0-runtime'),
+    );
+    assert.equal(
+      await page.evaluate(
+        async () => !!(await caches.match('/wasm/heif-1.23.2/libheif-bundle.mjs')),
+      ),
+      false,
+    );
+    console.log('PASS: previous HEIF cache evicted');
+  }
   const brand = await page.evaluate(async () => {
     const content = (selector) => document.querySelector(selector)?.getAttribute('content');
     const localPath = (value) => {

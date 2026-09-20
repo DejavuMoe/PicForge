@@ -15,12 +15,18 @@ Binary is copied without modification from the pinned npm package by scripts/pre
 Redistributors must satisfy corresponding-source distribution obligations for the codec binary;
 these links identify upstream sources and are not a substitute for a corresponding-source release archive.
 
-libheif-js 1.23.2: LGPL-3.0, includes libheif/libde265.
-License: libheif-LGPL-3.0.txt, plus /wasm/heif-1.23.2/LICENSE (bundled component notices).
-Source and build scripts: https://github.com/catdad-experiments/libheif-js/tree/v1.23.2
-https://github.com/strukturag/libheif
-https://github.com/strukturag/libde265
-The browser module is copied unmodified and can be replaced independently.
+libheif 1.23.4 and libde265 1.1.1: LGPL-3.0 / LGPL-3.0-or-later.
+License: libheif-LGPL-3.0.txt, plus /wasm/heif-1.23.4-de265-1.1.1/LICENSE (upstream component licenses).
+PicForge includes the prebuilt HEVC-only browser module as versioned static assets.
+It was built from checksum-pinned upstream sources with Emscripten 3.1.61;
+rebuild instructions: scripts/build-heif.py and docs/heif-build.md.
+https://github.com/strukturag/libheif/releases/tag/v1.23.4
+https://github.com/strukturag/libde265/releases/tag/v1.1.1
+The separately served module/WASM can be replaced independently. The generated
+/wasm/heif-1.23.4-de265-1.1.1/build-manifest.json records source and binary hashes and build flags.
+Before public binary distribution, provide corresponding sources and required
+relinking materials; upstream links alone do not replace those obligations.
+Historical libheif-js wrapper source: https://github.com/catdad-experiments/libheif-js
 
 Existing image encoders: @jsquash/jpeg, @jsquash/webp, @jsquash/avif, @jsquash/oxipng.
 Source, licenses and build instructions: https://github.com/jamsinclair/jSquash
@@ -37,6 +43,7 @@ PicForge applies version-specific pnpm patches to @jsquash/avif 2.1.1 and
 @jsquash/oxipng 2.3.0 JavaScript initialization wrappers to retain single-thread
 encoding under cross-origin isolation. Patch sources are in the repository's
 patches/ directory. The WASM binaries and upstream license notices are unchanged.
+
 
 PicForge also patches wasm-vips 0.0.18 browser ES-module glue to cap the Emscripten
 pthread pool and VIPS_MAX_THREADS together at six. Pool exhaustion returns EAGAIN

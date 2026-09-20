@@ -1,0 +1,2 @@
+# Preserve exact bytes covered by the prebuilt HEIF manifest, including text assets.
+packages/app/public/wasm/heif-1.23.4-de265-1.1.1/* -text -whitespace

@@ -37,6 +37,12 @@ temp/
 sample/local/
 *.local.*
 
-# Reproducibly copied from pinned npm codec packages
+# Generated codec copies; the approved HEIF release below is versioned static input.
 packages/app/public/wasm/ffmpeg-*/
 packages/app/public/wasm/heif-*/
+!packages/app/public/wasm/heif-1.23.4-de265-1.1.1/
+packages/app/public/wasm/heif-1.23.4-de265-1.1.1/*
+!packages/app/public/wasm/heif-1.23.4-de265-1.1.1/libheif.mjs
+!packages/app/public/wasm/heif-1.23.4-de265-1.1.1/libheif.wasm
+!packages/app/public/wasm/heif-1.23.4-de265-1.1.1/LICENSE
+!packages/app/public/wasm/heif-1.23.4-de265-1.1.1/build-manifest.json

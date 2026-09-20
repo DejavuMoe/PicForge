@@ -2,8 +2,14 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { verifyHeifAssets } from './verify-heif.mjs';
 
 const root = resolve(process.argv[2] || 'packages/app/dist');
+await verifyHeifAssets(resolve(root, 'wasm/heif-1.23.4-de265-1.1.1'));
+assert(
+  !files(root).some((name) => /^wasm\/heif-(?!1\.23\.4-de265-1\.1\.1\/)/.test(name)),
+  'Obsolete HEIF assets',
+);
 function files(directory, prefix = '') {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const name = `${prefix}${entry.name}`;

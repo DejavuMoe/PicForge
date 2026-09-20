@@ -12,9 +12,12 @@ interface HeifImage {
 }
 self.onmessage = async ({ data }: MessageEvent<{ buffer: ArrayBuffer; quality: number }>) => {
   try {
-    const url = new URL('/wasm/heif-1.23.2/libheif-bundle.mjs', self.location.origin).href;
+    const url = new URL('/wasm/heif-1.23.4-de265-1.1.1/libheif.mjs', self.location.origin).href;
     const { default: createHeif } = await import(/* @vite-ignore */ url);
     const heif = await createHeif();
+    // Check the compiled library before any untrusted bytes reach its parser.
+    if (heif.heif_get_version() !== '1.23.4' || heif._de265_get_version_number?.() !== 0x01010100)
+      throw new Error('engineFailed');
     const images: HeifImage[] = new heif.HeifDecoder().decode(new Uint8Array(data.buffer));
     try {
       const primary = images.find((image) => image.is_primary()) ?? images[0];

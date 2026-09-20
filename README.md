@@ -111,6 +111,11 @@ Bug reports and patches are welcome. Include the browser, reproduction steps and
 
 ## CI release retention
 
+The single `.woodpecker/test.yml` workflow tests, builds once, verifies the output,
+and then publishes that same `dist/` from its shared workspace. A failed check stops
+publication. Only the final publish step mounts the deployment directory; the
+workflow retains the existing production concurrency limit and publisher lock.
+
 After successful activation, the site publisher keeps the current release and the immediately previous release in `releases/`, pruning older release directories under the deployment lock. Failed or stale publications do not trigger cleanup; a cleanup failure emits a warning. The first deployment has one release, subsequent successful deployments normally keep two. The retained previous release is available for manual rollback.
 
 

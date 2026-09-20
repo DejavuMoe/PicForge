@@ -33,3 +33,25 @@ The earlier review reports remain historical evidence.
 - Verified: peer checks, lint/typecheck, all 227 unit tests, the 25 HEIF/build
   regressions, production build and output verification.
 - [Upstream release](https://github.com/vitest-dev/vitest/releases/tag/v5.0.1).
+
+## One build handed to deployment
+
+- Consolidate into `.woodpecker/test.yml`, retaining the existing `test` workflow
+  name. Its test step installs once, runs all gates, builds once, writes
+  `SHA256SUMS`, and runs the existing temporary-root publisher regression.
+- The next `publish-site` step consumes that same `packages/app/dist` from
+  Woodpecker's shared workspace. There is no second install/build or remote
+  artifact download; a failed prior step stops publication.
+- Only the publish step mounts `/var/www/picforge.de:/deploy`. Keep master push
+  gating, the production concurrency group/limit, and the publisher's checksum,
+  lock, stale-run rejection, atomic switch and retention logic unchanged.
+- Remove the separate `deploy` workflow/status. External branch protection must
+  not require that removed status; the retained `test` workflow now covers the
+  final publication result too. No remote project settings were modified.
+- Verified with the checksum-verified official Woodpecker CLI 3.18.1:
+  `woodpecker-cli --disable-update-check lint --strict .woodpecker` passes.
+  GNU sha256sum accepts a valid handoff fixture and rejects a post-validation
+  mutation. The existing full publisher regression remains in CI.
+- No Linux Docker/WSL is available locally, so the actual two-container execution
+  and POSIX publisher regression await CI. No push or live publication was run.
+- [Woodpecker shared workspace and sequential steps](https://woodpecker-ci.org/docs/usage/workflow-syntax).

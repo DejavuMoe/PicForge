@@ -10,6 +10,8 @@ export interface MediaItem {
 export interface MediaOutput {
   image?: Blob;
   video?: Blob;
+  /** Which converter produced the video (diagnostics; the output contract is the same). */
+  videoEngine?: 'webcodecs' | 'ffmpeg';
 }
 export type VideoPreset = 'balanced' | 'quality' | 'compact';
 export interface MotionSettings {
@@ -149,12 +151,37 @@ export function splitMotionPhoto(buffer: ArrayBuffer, source?: Blob): MediaOutpu
   throw new Error('invalidMotion');
 }
 
+/** AAC bitrate of both video paths. */
+export const AUDIO_BITRATE = 96_000;
+
+/** Longest output edge of a video preset. */
+export const videoEdge = (settings: MotionSettings) =>
+  settings.preset === 'compact' ? 1280 : 1920;
+
+/** FFmpeg audio-only AAC helper for the WebCodecs path when AudioEncoder is unavailable. */
+export function audioArguments(input = 'input.mov'): string[] {
+  return [
+    '-i',
+    input,
+    '-map',
+    '0:a:0',
+    '-vn',
+    '-c:a',
+    'aac',
+    '-b:a',
+    `${AUDIO_BITRATE / 1000}k`,
+    '-map_metadata',
+    '-1',
+    'audio.m4a',
+  ];
+}
+
 export function videoArguments(
   settings: MotionSettings,
   aperture?: string[],
   input = 'input.mov',
 ): string[] {
-  const edge = settings.preset === 'compact' ? 1280 : 1920;
+  const edge = videoEdge(settings);
   const crf = { balanced: 23, quality: 20, compact: 26 }[settings.preset];
   const scale = `scale=w='min(iw,${edge})':h='min(ih,${edge})':force_original_aspect_ratio=decrease:force_divisible_by=2`;
   return [
@@ -180,7 +207,7 @@ export function videoArguments(
     '-c:a',
     'aac',
     '-b:a',
-    '96k',
+    `${AUDIO_BITRATE / 1000}k`,
     '-map_metadata',
     '-1',
     '-movflags',

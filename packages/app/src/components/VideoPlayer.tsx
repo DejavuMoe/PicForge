@@ -3,6 +3,10 @@ import { FiMaximize, FiPause, FiPlay, FiVolume2, FiVolumeX } from 'react-icons/f
 import { useTranslation } from 'react-i18next';
 import { getRangeProgressStyle } from '../utils/rangeProgress';
 
+/** Reload a load still waiting for metadata after this long, at most this many times. */
+const STALL_RETRY_MS = 3000;
+const STALL_RETRIES = 3;
+
 const timeLabel = (seconds: number, precise: boolean) => {
   const value = precise ? Math.floor(seconds * 10) / 10 : Math.floor(seconds);
   const part = precise
@@ -135,6 +139,24 @@ export function VideoPlayer({
       document.removeEventListener('visibilitychange', visibility);
     };
   }, [active, paused, paint]);
+  useEffect(() => {
+    // A local Blob reaches metadata within milliseconds. Playwright WebKit (GStreamer)
+    // leaves loads started a few seconds after a WebCodecs conversion stuck with no
+    // error until they are reloaded, so retry a load that is still waiting a few times.
+    const video = player.current;
+    if (!video) return;
+    let retries = 0;
+    const watchdog = window.setInterval(() => {
+      const waiting = video.readyState === 0 && video.networkState === 2 && !video.error;
+      if (!waiting || retries >= STALL_RETRIES) {
+        window.clearInterval(watchdog);
+        return;
+      }
+      retries += 1;
+      video.load();
+    }, STALL_RETRY_MS);
+    return () => window.clearInterval(watchdog);
+  }, [src]);
   const toggle = () => {
     if (player.current?.paused) play();
     else player.current?.pause();

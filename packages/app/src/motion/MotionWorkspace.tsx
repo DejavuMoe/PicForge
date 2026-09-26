@@ -495,34 +495,36 @@ export default function MotionWorkspace({
     <Inspector title={t(android ? 'workbench.outputFiles' : 'workbench.conversionSettings')}>
       {android ? (
         <>
-          {(['image', 'video'] as const).map((type) => (
-            <div className="pf-output-file" key={type}>
-              <div>
-                <h3>
-                  {t(type === 'image' ? 'workbench.photo' : 'workbench.video')} ·{' '}
-                  {type === 'image' ? 'JPG' : 'MP4'}
-                </h3>
-                <p>
-                  {selectedJob?.output?.[type]
-                    ? formatFileSize(selectedJob.output[type]!.size)
-                    : t('workbench.notReady')}
-                </p>
+          <div className="pf-output-files">
+            {(['image', 'video'] as const).map((type) => (
+              <div className="pf-output-file" key={type}>
+                <div>
+                  <h3>
+                    {t(type === 'image' ? 'workbench.photo' : 'workbench.video')} ·{' '}
+                    {type === 'image' ? 'JPG' : 'MP4'}
+                  </h3>
+                  <p>
+                    {selectedJob?.output?.[type]
+                      ? formatFileSize(selectedJob.output[type]!.size)
+                      : t('workbench.notReady')}
+                  </p>
+                </div>
+                <button
+                  className="pf-button"
+                  disabled={!selectedJob?.output?.[type]}
+                  onClick={() => {
+                    if (selectedJob?.output?.[type] && selected)
+                      saveAs(
+                        selectedJob.output[type]!,
+                        `${selected.name}.${type === 'image' ? 'jpg' : 'mp4'}`,
+                      );
+                  }}
+                >
+                  {t(type === 'image' ? 'workbench.downloadJpg' : 'workbench.downloadMp4')}
+                </button>
               </div>
-              <button
-                className="pf-button"
-                disabled={!selectedJob?.output?.[type]}
-                onClick={() => {
-                  if (selectedJob?.output?.[type] && selected)
-                    saveAs(
-                      selectedJob.output[type]!,
-                      `${selected.name}.${type === 'image' ? 'jpg' : 'mp4'}`,
-                    );
-                }}
-              >
-                {t(type === 'image' ? 'workbench.downloadJpg' : 'workbench.downloadMp4')}
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
           <section className="pf-settings-section">
             <h3>{t('workbench.originalBytes')}</h3>
             <p className="pf-field-hint">{t('motion.androidNote')}</p>

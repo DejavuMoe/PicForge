@@ -161,6 +161,70 @@ try {
       }
     }
   }
+  if (run('ledger')) {
+    // Batch ledger: beside-the-action layouts centre the status block on the action,
+    // secondary text actions never break inside, and nothing leaves the ledger.
+    const checkLedger = async (name) => {
+      await settleLayout();
+      const ledger = await active()
+        .locator('.pf-status-bar')
+        .evaluate((bar) => {
+          const box = (element) => element.getBoundingClientRect();
+          const visible = (selector) =>
+            [...bar.querySelectorAll(selector)].filter((element) => element.offsetParent);
+          const text = visible('.pf-batch-status, .pf-batch-totals');
+          const action = visible(':scope > .pf-export-button, :scope > .pf-motion-actions')[0];
+          const top = Math.min(...text.map((element) => box(element).top));
+          const bottom = Math.max(...text.map((element) => box(element).bottom));
+          const bounds = box(bar);
+          return {
+            beside: box(action).left > box(text[0]).right,
+            offset: (top + bottom) / 2 - (box(action).top + box(action).bottom) / 2,
+            broken: visible('.pf-batch-status .pf-text-button')
+              .filter((element) => box(element).height > 30)
+              .map((element) => element.textContent),
+            outside: visible('.pf-batch-status > *, .pf-batch-totals, button')
+              .filter((element) => {
+                const r = box(element);
+                return r.left < bounds.left - 0.5 || r.right > bounds.right + 0.5;
+              })
+              .map((element) => element.textContent),
+          };
+        });
+      if (ledger.beside) assert(Math.abs(ledger.offset) <= 1.5, `${name}: ledger offset`);
+      assert.deepEqual(ledger.broken, [], `${name}: text action wraps inside`);
+      assert.deepEqual(ledger.outside, [], `${name}: ledger overflow`);
+      await active()
+        .locator('.pf-status-bar')
+        .screenshot({ path: resolve(output, `${name}.png`) });
+      report.layouts.push(name);
+    };
+    for (const lang of ['en', 'zh-CN', 'zh-TW', 'ja', 'ko']) {
+      for (const tool of ['ios', 'compression']) {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.goto(`${origin}/?tool=${tool}&lng=${lang}`);
+        await active()
+          .locator('input[type=file]')
+          .first()
+          .setInputFiles('packages/app/src/assets/dune-sample.jpg');
+        if (tool === 'ios') {
+          for (const width of [1301, 820, 390, 320]) {
+            await page.setViewportSize({ width, height: 844 });
+            await checkLedger(`ledger-${tool}-pending-${lang}-${width}`);
+          }
+          await active().locator('.pf-motion-actions .pf-button').first().click();
+          await active().locator('.pf-batch-status .pf-text-button').waitFor();
+        } else await active().locator('.pf-batch-totals').waitFor();
+        for (const width of [1301, 820, 390, 320]) {
+          await page.setViewportSize({ width, height: 844 });
+          await checkLedger(`ledger-${tool}-done-${lang}-${width}`);
+        }
+      }
+    }
+    report.interactions.push(
+      'batch ledger: status centred on the action beside it, unbroken text actions, no overflow in five locales',
+    );
+  }
   if (run('interaction')) {
     await page.setViewportSize({ width: 1536, height: 1024 });
     await page.goto(`${origin}/?tool=compression&lng=en`);

@@ -646,14 +646,24 @@
   width: 100%;
 }
 
-/* Android output files */
-.pf-output-file {
+/* Android output files: one shared column keeps the download buttons equal. */
+.pf-output-files {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px 12px;
+}
+.pf-output-file {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: 12px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--pf-rule);
+}
+/* The following section's top rule closes the list; avoid a doubled rule. */
+.pf-output-file:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 .pf-output-file h3 {
   color: var(--pf-ink);
@@ -839,6 +849,20 @@
   }
   .pf-motion-actions > .pf-button {
     width: auto;
+  }
+}
+
+/* Tablet and phone ledgers put the action beside the status. */
+@media (max-width: 1100px) {
+  /* Without a totals row the status is the only row: centre it on the action. */
+  .pf-status-bar:not(:has(> .pf-batch-totals)) > .pf-export-button,
+  .pf-status-bar:not(:has(> .pf-batch-totals)) > .pf-motion-actions {
+    grid-row: 1;
+  }
+  /* A secondary action follows the count and wraps below it as a whole. */
+  .pf-status-bar .pf-batch-status .pf-text-button {
+    margin-left: 0;
+    white-space: nowrap;
   }
 }
 

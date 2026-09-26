@@ -43,7 +43,7 @@ Unsupported video playback, including metadata with no decoded frame size, uses 
 
 The player retries a load still waiting for metadata every three seconds, up to three times. Linux Playwright WebKit can delay the first preview after conversion; successful conversion alone does not establish immediate playback. Check decoded frames and audio separately.
 
-Android lists extracted files and their sizes with the no-re-encoding note. iOS offers preset, source timing or 30 fps, JPEG quality and audio; completed-item settings are locked but readable. The batch ledger provides counts, New batch, process/extract or cancel, and Download results.
+Android lists extracted files and their sizes with the no-re-encoding note. iOS offers preset, source timing or 30 fps, JPEG quality and audio; completed-item settings are locked but readable. The batch ledger provides counts, New batch, process/extract or cancel, and Download results. Where the action sits beside the status (tablet and phone), the status block is centred on it, and a secondary text action follows the count, wrapping below it as a whole. Android download buttons share one width.
 
 ## Landing, language and assets
 

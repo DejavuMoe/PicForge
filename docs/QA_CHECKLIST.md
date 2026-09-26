@@ -106,6 +106,7 @@ Record exact engines, dimensions and limitations in temporary test output. A str
 - Enter commits and Escape cancels numeric drafts without losing focus. Tab continues to the next control.
 - Touch/non-hover inputs do not receive sticky desktop hover decoration, and keyboard focus is still visible.
 - Run `PICFORGE_UI_GROUPS=details,usability node scripts/ui-check.mjs` for these targeted regressions; results include measured column/disclosure drift.
+- `PICFORGE_UI_GROUPS=ledger` checks the batch ledger in the Live Photo and compression tools at 1301/820/390/320 px in all five locales: status centred on the action beside it, unbroken text actions, no overflow.
 
 ## Complete controls and footer review
 

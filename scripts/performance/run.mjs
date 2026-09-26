@@ -521,7 +521,10 @@ const server = await preview({
 const report = {
   schemaVersion: 1,
   date: new Date().toISOString(),
-  commit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+  // Build mirrors have no .git; they pass the source revision explicitly.
+  commit:
+    process.env.PICFORGE_BENCH_REVISION ||
+    execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   node: process.version,
   layer,
   engine,

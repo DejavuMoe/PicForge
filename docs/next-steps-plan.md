@@ -8,6 +8,7 @@
 > 尚未在低端设备上校准；Compat 解码仍在主线程，搬入 Worker 仍按本节条件决定。
 > 同机（WSL Chromium）实况照片端到端：HEAD 19.2 s，本次 20.1 s（各一次，含 FFmpeg 加载；
 > 24 MP sRGB 转换约 0.15–0.35 s）。详见 [2026-09-26 验证记录](validation-2026-09-26.md)。
+> 5A 同机基准已完成：[2026-09-26 基准](performance/baseline-2026-09-26.md)（Compat/Vips、真实照片、画质-体积、三浏览器、实况照片）。
 
 用户随后明确了性能、技术栈能力、转换/处理效果三项工程重点，并要求先设计统一视觉。
 必要约束已提取到 AGENTS.md；视觉提案见 [影像工作台](design/visual-direction.md)。

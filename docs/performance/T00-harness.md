@@ -16,17 +16,18 @@ validates results against the selected case and fails the process on any gap.
 
 ## Engine parameters
 
-| Variable                         | Values                      | Default    | Notes                                                                                                                                        |
-| -------------------------------- | --------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PICFORGE_BENCH_LAYER`           | `legacy\|engine\|codec`     | `legacy`   | `application` is rejected here; use `application.mjs`.                                                                                       |
-| `PICFORGE_BENCH_CASES`           | comma list of case ids      | all        | Unknown ids fail. A requested id that belongs only to another layer is reported in `skipped`. Zero selected cases in the chosen layer fails. |
-| `PICFORGE_BENCH_ENGINE`          | `auto\|compat\|vips`        | `compat`   | Execution policy. `animation` is not a policy: A01 routes to the animation engine naturally.                                                 |
-| `PICFORGE_BENCH_REPEATS`         | 1–20                        | 3          | Warm iterations on the same pool; iteration 0 is the first-use sample. No P95/P99 is computed.                                               |
-| `PICFORGE_BROWSER`               | `chromium\|firefox\|webkit` | `chromium` |                                                                                                                                              |
-| `PICFORGE_BROWSER_EXECUTABLE`    | path                        | —          | Engine/codec runner only; permits a temporary platform launcher.                                                                             |
-| `PICFORGE_BENCH_OUTPUT`          | directory                   | `mkdtemp`  | Raw `results.json`, `engine-results.json`, `codec-view-results.json`, `application-results.json`.                                            |
-| `PICFORGE_BENCH_VIPS_PROBE`      | `1`                         | unset      | Opt-in Vips availability probe. It never expands a normal selection.                                                                         |
-| `PICFORGE_BENCH_FORCE_VIPS_FAIL` | `1`                         | unset      | Harness self-test: injects one explicit Vips runtime fault to exercise requested/actual/fallback recording. Never labels a fallback as Vips. |
+| Variable                         | Values                      | Default              | Notes                                                                                                                                        |
+| -------------------------------- | --------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PICFORGE_BENCH_LAYER`           | `legacy\|engine\|codec`     | `legacy`             | `application` is rejected here; use `application.mjs`.                                                                                       |
+| `PICFORGE_BENCH_CASES`           | comma list of case ids      | all                  | Unknown ids fail. A requested id that belongs only to another layer is reported in `skipped`. Zero selected cases in the chosen layer fails. |
+| `PICFORGE_BENCH_ENGINE`          | `auto\|compat\|vips`        | `compat`             | Execution policy. `animation` is not a policy: A01 routes to the animation engine naturally.                                                 |
+| `PICFORGE_BENCH_REPEATS`         | 1–20                        | 3                    | Warm iterations on the same pool; iteration 0 is the first-use sample. No P95/P99 is computed.                                               |
+| `PICFORGE_BROWSER`               | `chromium\|firefox\|webkit` | `chromium`           |                                                                                                                                              |
+| `PICFORGE_BROWSER_EXECUTABLE`    | path                        | —                    | Engine/codec runner only; permits a temporary platform launcher.                                                                             |
+| `PICFORGE_BENCH_OUTPUT`          | directory                   | `mkdtemp`            | Raw `results.json`, `engine-results.json`, `codec-view-results.json`, `application-results.json`.                                            |
+| `PICFORGE_BENCH_VIPS_PROBE`      | `1`                         | unset                | Opt-in Vips availability probe. It never expands a normal selection.                                                                         |
+| `PICFORGE_BENCH_FORCE_VIPS_FAIL` | `1`                         | unset                | Harness self-test: injects one explicit Vips runtime fault to exercise requested/actual/fallback recording. Never labels a fallback as Vips. |
+| `PICFORGE_BENCH_REVISION`        | commit id                   | `git rev-parse HEAD` | Required where the checkout has no `.git` (WSL build mirrors); record the Windows source commit.                                             |
 
 `PICFORGE_SRGB_PROFILE` and `PICFORGE_P3_PROFILE` select external ICC files.
 The runner uses the installed sRGB fallback paths when the former is unset. Requested

@@ -2,7 +2,7 @@
 
 PicForge is a browser-only image toolbox for image compression, Android Motion
 Photo extraction and iOS Live Photo conversion. The working package version is
-**0.17.0**; package metadata does not establish a release or deployment.
+**0.18.0**; package metadata does not establish a release or deployment.
 
 These documents describe the current implementation and its operating constraints.
 Validation commands specify how to check a checkout, not a claim that it has passed.

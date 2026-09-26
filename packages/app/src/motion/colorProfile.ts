@@ -4,7 +4,7 @@
  * libheif returns RGB in the image's own colour space (iPhone photos: Display
  * P3) and does no colour management. MozJPEG writes no ICC profile, so viewers
  * would interpret those values as sRGB and show desaturated colours. Like the
- * Canvas and Vips compression paths, the export is converted to sRGB
+ * Canvas compression path, the export is converted to sRGB
  * (relative colorimetric, out-of-gamut values clipped).
  *
  * Supported: ICC matrix/TRC RGB profiles (curv/para curves) and nclx with BT.709,

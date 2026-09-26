@@ -40,36 +40,11 @@ export const CONTENT_SECURITY_POLICY = [
   "form-action 'none'",
 ].join('; ');
 
-const isolationHeaders = {
-  'Cross-Origin-Opener-Policy': 'same-origin',
-  'Cross-Origin-Embedder-Policy': 'require-corp',
-};
-
-function preserveIsolationHeaders(server, headers) {
-  // Vite's cached-transform 304 fast path bypasses server.headers. WebKit
-  // requires COEP on these revalidated Worker imports as well as on 200s.
-  server.middlewares.use((_request, response, next) => {
-    for (const name of Object.keys(isolationHeaders)) {
-      if (headers?.[name] !== undefined) response.setHeader(name, headers[name]);
-    }
-    next();
-  });
-}
-
 export default defineConfig({
   plugins: [
     react(),
     wasm(),
     staticCodecUrls(),
-    {
-      name: 'picforge-isolation-revalidation',
-      configureServer(server) {
-        preserveIsolationHeaders(server, server.config.server.headers);
-      },
-      configurePreviewServer(server) {
-        preserveIsolationHeaders(server, server.config.preview.headers);
-      },
-    },
     {
       name: 'picforge-content-security-policy',
       apply: 'build',
@@ -104,11 +79,9 @@ export default defineConfig({
   },
   server: {
     host: '127.0.0.1',
-    headers: isolationHeaders,
   },
   preview: {
     host: '127.0.0.1',
-    headers: isolationHeaders,
   },
   worker: {
     format: 'es',

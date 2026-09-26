@@ -11,7 +11,7 @@ media-processing server, account system or upload pipeline.
 | `packages/app/src/App.tsx` | Tool navigation, shared shell, theme and update prompt |
 | `packages/app/src/CompressionWorkspace.tsx` | Compression workspace and active-tool import |
 | `packages/app/src/stores/` and `hooks/` | Settings/file state, scheduling, epochs and result publication |
-| `packages/worker/src/` | Image-engine policy, Compat Worker pool, decode/resize and experimental Vips |
+| `packages/worker/src/` | Image routing (Compat/animation), Compat Worker pool, decode/resize |
 | `packages/codecs/src/` | Pinned jSquash encoders, settings and format contracts |
 | `packages/app/src/animation/` | GIF/APNG to animated WebP with FFmpeg |
 | `packages/app/src/motion/` | Android extraction, Apple pairing, HEIC and video conversion |
@@ -107,28 +107,6 @@ other half and produces one terminal outcome.
 The [validation guide](validation.md) describes camera, playback and real-device
 checks. A successful conversion alone does not establish native preview support.
 
-## Experimental Vips
-
-`packages/worker/src/vips/` contains an internal engine and separate probe.
-**The production processor does not register Vips**, and ordinary builds do not
-ship its JS/WASM. Test harnesses build temporary entries explicitly.
-
-The engine uses one shared serial Worker lane. Its exact wasm-vips patch fixes the
-pthread pool and `VIPS_MAX_THREADS` at six with growth disabled; do not multiply
-instances by the Compat pool size. Its 90-second watchdog is a qualification
-timeout, not a measured production limit. It handles bounded 8-bit JPEG/PNG/WebP input,
-orientation, ICC-to-sRGB, alpha-aware resize and JPEG/WebP output with metadata
-stripped. Unsupported formats/options route to Compat. In particular, automatic
-JPEG quality 80–89 needs Compat's 4:2:2 subsampling.
-
-Preferred-engine policy checks capability, initialization, supported settings and
-session failures. It makes at most one Compat fallback from the original Blob;
-two explicitly classified runtime faults open the session breaker. Cancellation
-never falls back or increments the breaker. Correct initialization and output do
-not detect successful-but-slow processing: production selection requires
-[equivalent same-host measurements](performance/README.md) and application validation.
-Keep 60 MP as a safety-rejection case.
-
 ## Assets, offline behavior and deployment
 
 Dev/build preparation verifies the [four versioned HEIC files](heif-build.md),
@@ -141,9 +119,9 @@ Heavy engines load lazily and work offline only after successful caching; each
 engine version has its own cache. A new worker waits for the update prompt, and
 one previous shell generation retains hashed modules for open tabs.
 
-Dev/preview bind to loopback and set COOP/COEP on normal and revalidated responses.
-Compat remains usable without isolation. Production HTTP headers belong to the
-host configuration, which is outside this repository. Built HTML constrains
+Dev/preview bind to loopback and, like production, are not cross-origin isolated:
+no path needs SharedArrayBuffer. Production HTTP headers belong to the host
+configuration, which is outside this repository. Built HTML constrains
 connections and resource destinations with CSP; `script-src` is deliberately
 unrestricted for WASM compatibility, so this is not a universal egress guarantee.
 

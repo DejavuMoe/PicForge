@@ -10,7 +10,7 @@
 - 输入按内容识别，不依赖扩展名/MIME。`.apng`、`image/apng` 也能通过导入入口。
 - 普通 PNG 在 IDAT 前检查 acTL，静态 WebP 检查头部；不为普通静态输入读取全部压缩数据。
 - GIF/APNG 的帧数、画布、循环与时间轴在解码前检查。只缓存原始 Blob 对应的元数据，不缓存展开后的帧。
-- 动画路由先于 Compat/Vips 策略。即使调用方指定 Compat，动画也不会进入静态解码；失败后没有静态回退。
+- 动画路由先于静态压缩：动画不会进入 Compat 静态解码，失败后也没有静态回退。
 - APNG 容器适配、CRC 更新、帧解码、处置、合成、缩放、编码与输出时间轴校验都在 FFmpeg Worker 内完成，不向 React/主线程发送 RGBA 帧数组。
 - 保留原始 Blob 作为重试源。每个任务拥有一个直接加载固定 FFmpeg core 的专用 Worker，结束/取消后终止；复用 HTTP/WASM 编译缓存，
   不以常驻大堆换取启动时间。源数据、MEMFS、编码缓冲和最终输出仍有内存成本，并非零拷贝或恒定内存。
@@ -77,6 +77,5 @@ pnpm benchmark:animation
 
 - [PNG/APNG 标准](https://www.w3.org/TR/png-3/)
 - [libwebp 动画编码 API](https://chromium.googlesource.com/webm/libwebp/+/refs/heads/main/src/webp/mux.h)
-- [libvips 多页与动画](https://www.libvips.org/API/8.17/multipage-and-animated-images.html)
 - [FFmpeg APNG 解复用器](https://ffmpeg.org/doxygen/trunk/apngdec_8c_source.html)
 - [WebCodecs 标准](https://www.w3.org/TR/webcodecs/)

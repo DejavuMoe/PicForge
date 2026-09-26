@@ -2,14 +2,14 @@
 
 本页说明当前测量入口、参数和判定契约，不保存单次运行结果。处理架构见
 [架构](../architecture.md)，媒体、离线和发布检查见[验证](../validation.md)。
-生产压缩使用 Compat；基准中的 Vips 策略只用于实验，不会切换应用默认引擎。
+静态图片压缩使用 Compat，动画使用 FFmpeg 动画引擎。
 
 ## 运行入口
 
 | 入口 | 范围 |
 | --- | --- |
 | `PICFORGE_BENCH_LAYER=legacy pnpm benchmark` | `decodeImage → resizeImage → WorkerPool` 的分阶段诊断，调用当前共享函数；不能代表应用端到端耗时。未指定 layer 时使用此入口。 |
-| `PICFORGE_BENCH_LAYER=engine pnpm benchmark` | 应用源图预检与真实 Compat/Vips/animation 引擎，记录请求/实际引擎、尝试、回退、阶段与 Long Tasks。 |
+| `PICFORGE_BENCH_LAYER=engine pnpm benchmark` | 应用源图预检与真实 Compat/animation 引擎，记录实际引擎、尝试、阶段与 Long Tasks。 |
 | `PICFORGE_BENCH_LAYER=codec pnpm benchmark` | 通过共享 `encodeImage` 调用真实 WASM，检查 JPEG/WebP/AVIF/OxiPNG 的缓冲区视图、输入不变性、连续编码稳定性和解码结果。 |
 | `node scripts/performance/application.mjs` | 生产页面中的首页样例、48 MP 导入→取消→重试、双文件导入和下载尺寸。复用 `packages/app/dist`，源码改变后须重新构建。 |
 
@@ -47,14 +47,11 @@ node scripts/performance/application.mjs
 | --- | --- | --- |
 | `PICFORGE_BENCH_LAYER` | `legacy`（默认）、`engine`、`codec` | `run.mjs`；不接受 `application`。 |
 | `PICFORGE_BENCH_CASES` | 逗号分隔的用例 ID；默认当前层全部用例 | 未知 ID 或当前层零用例时报错；属于其他层的 ID 记录为 `skipped`。 |
-| `PICFORGE_BENCH_ENGINE` | `compat`（默认）、`auto`、`vips` | engine 执行策略；动画自行路由，`S08-cancel` 固定使用 Compat。 |
 | `PICFORGE_BENCH_REPEATS` | 1–20，默认 3 | 两个入口均运行 `repeats + 1` 次；温度含义见下文。 |
 | `PICFORGE_BROWSER` | `chromium`（默认）、`firefox`、`webkit` | 两个入口。 |
 | `PICFORGE_BROWSER_EXECUTABLE` | 自定义浏览器路径 | 仅 `run.mjs`。 |
 | `PICFORGE_BENCH_OUTPUT` | 结果目录；默认新建系统临时目录 | 两个入口；保留 raw JSON、临时样本、截图和导出，不放入仓库。 |
 | `PICFORGE_BENCH_REVISION` | 源 commit；默认 `git rev-parse HEAD` | 仅 `run.mjs`；没有 `.git` 时必须提供。 |
-| `PICFORGE_BENCH_VIPS_PROBE` | `1` 启用，默认关闭 | engine 层额外运行 S02 Vips 可用性探针，不改变选定用例列表。 |
-| `PICFORGE_BENCH_FORCE_VIPS_FAIL` | `1` 启用，默认关闭 | engine 层额外注入一次 Vips 运行时故障，检查实际引擎和回退记录；不作为性能样本。 |
 | `PICFORGE_SRGB_PROFILE` | 外部 sRGB ICC 路径 | `run.mjs`；未设置时检查脚本声明的已安装路径。 |
 | `PICFORGE_P3_PROFILE` | 外部 Display P3 ICC 路径 | `run.mjs`；无默认文件。 |
 
@@ -80,7 +77,8 @@ node scripts/performance/application.mjs
 
 斜线写法表示分别选择完整 ID，如 `C02-contain,C02-cover`；不能把斜线传入变量。
 codec 层只有 `codec-view`，覆盖完整视图、非零偏移、零偏移短视图，以及运行时支持的
-SharedArrayBuffer 和 resizable ArrayBuffer。缺少 SharedArrayBuffer 会阻断 codec 运行。
+SharedArrayBuffer 和 resizable ArrayBuffer。应用不是跨源隔离环境，通常没有 SharedArrayBuffer；
+报告的 `sharedArrayBuffer` 字段记录是否测了该视图。
 
 legacy 层的 ID 定义在 [`run.mjs`](../../scripts/performance/run.mjs) 的 `legacyCases`：
 `jpeg-12mp/24mp/48mp/60mp`、`png-photo`、`png-alpha-mozjpeg/webp/avif/oxipng`、
@@ -94,7 +92,7 @@ legacy 层的 ID 定义在 [`run.mjs`](../../scripts/performance/run.mjs) 的 `l
 [`validate.test.mjs`](../../scripts/performance/validate.test.mjs) 检查这些门槛本身，
 也由 `pnpm test:build` 执行。失败先写结果，再以非零退出，不能输出整体 `PASS`。
 
-- `S08-corrupt` 必须在预检以 `Error: Failed to read image dimensions` 失败，没有引擎尝试、实际引擎或回退。
+- `S08-corrupt` 必须在预检以 `Error: Failed to read image dimensions` 失败，没有引擎尝试或实际引擎。
 - `S08-target` 必须以 `target: pixel limit` 拒绝，没有引擎尝试。
 - 当前 `S08-cancel` 分别触发 Worker 解码和主线程图片加载取消：检查 `AbortError`、Worker 终止且队列/活动任务为空、图片监听器/URL 清理，以及同一个原始 Blob 成功重试。不支持 Worker 解码时显式记录该能力缺失。
 - 色彩参考由 ImageMagick/LittleCMS 对实际带标记输入转换到 sRGB 后缩放；保存输入、ICC、参考像素哈希和工具版本。RGB/合成误差要求 MAE < 12，alpha MAE < 3，固定色块中心每通道最大误差 < 12。Firefox 测试显式使用 tagged-media 色彩管理、相对色度意图和所选 sRGB 显示配置，并写入报告；这些设置只作用于测试浏览器。
@@ -110,8 +108,8 @@ application 用页面 `performance.now()` 标记起点、首个结果和完成�
 observer drain 前固定；Long Tasks 按测量窗口重叠计入，未支持时为 `null`。
 Node 墙钟耗时是独立字段，不与页面指标混合。这些入口不采集进程 RSS/PSS。
 
-比较时固定主机、浏览器版本、输入字节/哈希、设置、色彩管理、隔离和缓存条件，
-记录源版本、未提交差异、实际引擎、回退、耗时、输出体积与质量。不同层、不同主机
+比较时固定主机、浏览器版本、输入字节/哈希、设置、色彩管理和缓存条件，
+记录源版本、未提交差异、实际引擎、耗时、输出体积与质量。不同层、不同主机
 或不同测量窗口不能直接算提升比例；基准采集不与重型测试并行。合成图不能替代
 真实照片画质检查，SSIM/PSNR 也应结合参考缩放算法、相同体积与视觉结果解释。
 
@@ -119,7 +117,7 @@ Node 墙钟耗时是独立字段，不与页面指标混合。这些入口不采
 和安全拒绝不得伪装为可回退运行失败。优化必须保留尺寸、裁切/方向、ICC/颜色、alpha、
 元数据清理和全局/单图设置语义；显式数组减少不代表浏览器完整解码位图消失。
 
-Vips 必须满足实际应用性能与集成要求才可改变默认范围；初始化成功和故障熔断不能
-发现“成功但慢”。保留单一 Vips 任务通道、六 pthread 配置和 AVIF/OxiPNG 单线程补丁。
+新引擎或浏览器原生路径必须满足实际应用性能与集成要求才可替换 Compat 的某个范围；
+初始化成功和故障熔断不能发现“成功但慢”。保留 AVIF/OxiPNG 单线程补丁。
 任务结束或 Worker 消失不能证明 CPU/RSS 已立即回落。Playwright WebKit 不代表真实
 Safari，硬件编解码质量、设备播放和资源回收仍需对应设备验证。

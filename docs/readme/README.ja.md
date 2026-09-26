@@ -93,7 +93,7 @@ pnpm dev
 | メディア処理 | Canvas、Web Workers、WebCodecs、WebAssembly、`@jsquash/*`、libheif、FFmpeg |
 | ダウンロード・オフライン | JSZip、Service Worker |
 
-`packages/app` に UI と写真・動画ツール、`packages/worker` に画像処理と Worker、`packages/codecs` にエンコーダーのアダプターと設定があります。本番の画像圧縮には **Compat** エンジンを使用し、wasm-vips は実験段階です。
+`packages/app` に UI と写真・動画ツール、`packages/worker` に画像処理と Worker、`packages/codecs` にエンコーダーのアダプターと設定があります。画像圧縮には **Compat** エンジンを使用します。
 
 変更後は次を実行してください。
 

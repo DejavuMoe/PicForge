@@ -93,7 +93,7 @@ pnpm dev
 | 미디어 처리 | Canvas, Web Workers, WebCodecs, WebAssembly, `@jsquash/*`, libheif, FFmpeg |
 | 다운로드·오프라인 | JSZip, Service Worker |
 
-`packages/app`에는 화면과 사진·동영상 도구, `packages/worker`에는 이미지 처리와 Worker, `packages/codecs`에는 인코더 어댑터와 설정이 있습니다. 실제 서비스의 이미지 압축은 **Compat** 엔진을 사용하며, wasm-vips는 실험 단계입니다.
+`packages/app`에는 화면과 사진·동영상 도구, `packages/worker`에는 이미지 처리와 Worker, `packages/codecs`에는 인코더 어댑터와 설정이 있습니다. 이미지 압축은 **Compat** 엔진을 사용합니다.
 
 변경 후 다음 명령을 실행하세요.
 

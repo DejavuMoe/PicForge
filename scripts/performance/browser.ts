@@ -5,13 +5,10 @@ import {
   createImageProcessor,
   decodeImage,
   resizeImage,
-  ImageEngineError,
   WorkerPool,
   type ImageEngine,
   type ImageProcessRequest,
-  type ImageRuntimeCapabilities,
 } from '../../packages/worker/src/index';
-import { vipsImageEngine } from '../../packages/worker/src/vips/VipsImageEngine';
 import { animationEngine } from '../../packages/app/src/animation/engine';
 import {
   getImageSafetyLimits,
@@ -288,8 +285,8 @@ export async function run(
 //
 // The legacy run() below keeps its own decode -> resize -> pool pipeline and
 // historical fields. This layer drives the real createImageProcessor with the
-// shared Compat/Vips/animation engines, records the actual engine and any
-// fallback, and returns only small summaries (never large buffers) to Node.
+// shared Compat/animation engines, records the actual engine, and returns only
+// small summaries (never large buffers) to Node.
 // ---------------------------------------------------------------------------
 
 // Literal GIF89a: two 1x1 frames (red, blue), 100 ms each. Same bytes animationProbe decodes.
@@ -558,28 +555,11 @@ function longTaskSummary(
   };
 }
 
-function trackEngine(
-  engine: ImageEngine,
-  attempts: EngineAttempt[],
-  forceRuntimeFail = false,
-): ImageEngine {
-  let forced = false;
+function trackEngine(engine: ImageEngine, attempts: EngineAttempt[]): ImageEngine {
   return {
     kind: engine.kind,
-    supports: (request: ImageProcessRequest, capabilities: ImageRuntimeCapabilities) =>
-      engine.supports(request, capabilities),
+    supports: (request: ImageProcessRequest) => engine.supports(request),
     process: async (request: ImageProcessRequest, signal?: AbortSignal) => {
-      if (forceRuntimeFail && !forced) {
-        forced = true;
-        attempts.push({
-          id: request.id,
-          engine: engine.kind,
-          status: 'error',
-          error: 'forced runtime fault (harness fallback self-test)',
-          ms: 0,
-        });
-        throw new ImageEngineError('forced runtime fault (harness fallback self-test)', 'runtime');
-      }
       const started = performance.now();
       try {
         const result = await engine.process(request, signal);
@@ -805,7 +785,7 @@ async function cancelMainThreadLoad(pool: WorkerPool, request: ImageProcessReque
     },
   });
   try {
-    await processor.process(request, controller.signal, 'compat');
+    await processor.process(request, controller.signal);
   } catch (error) {
     caught = error;
   } finally {
@@ -854,7 +834,7 @@ async function cancelWorkerDecode(
     terminate.call(this);
   };
   try {
-    await processor.process(request, controller.signal, 'compat');
+    await processor.process(request, controller.signal);
   } catch (error) {
     caught = error;
   } finally {
@@ -879,11 +859,11 @@ async function cancelDuringDecode(
 ) {
   const worker = await cancelWorkerDecode(processor, pool, request);
   const main = await cancelMainThreadLoad(pool, { ...request, id: request.id + '-main' });
-  const retry = await processor.process(
-    { ...request, id: request.id + '-retry', onProgress: undefined },
-    undefined,
-    'compat',
-  );
+  const retry = await processor.process({
+    ...request,
+    id: request.id + '-retry',
+    onProgress: undefined,
+  });
   return {
     loadStarts: worker.starts + main.starts,
     cleanup: worker.cleanup && main.cleanup,
@@ -893,12 +873,8 @@ async function cancelDuringDecode(
   };
 }
 
-export async function engineRun(
-  spec: any,
-  options: { repeats: number; policy?: string; forceVipsRuntimeFail?: boolean },
-) {
+export async function engineRun(spec: any, options: { repeats: number }) {
   const repeats = options.repeats;
-  const policy = (options.policy ?? 'auto') as 'auto' | 'compat' | 'vips';
   const limits = getImageSafetyLimits();
   const pool = new WorkerPool();
   const attempts: EngineAttempt[] = [];
@@ -907,7 +883,6 @@ export async function engineRun(
       createCompatImageEngine(() => pool),
       attempts,
     ),
-    trackEngine(vipsImageEngine, attempts, options.forceVipsRuntimeFail === true),
     trackEngine(animationEngine, attempts),
   );
 
@@ -915,7 +890,6 @@ export async function engineRun(
     if (spec.mode === 'batch') {
       return await runEngineBatch(spec, {
         repeats,
-        policy,
         pool,
         processor,
         limits,
@@ -974,11 +948,12 @@ export async function engineRun(
             status = 'rejected';
             errorMessage = sourceError ?? targetError ?? undefined;
           } else {
-            result = await processor.process(
-              { id: spec.id, source: file, settings, onProgress: recordProgress },
-              undefined,
-              policy,
-            );
+            result = await processor.process({
+              id: spec.id,
+              source: file,
+              settings,
+              onProgress: recordProgress,
+            });
           }
         }
       } catch (error) {
@@ -995,9 +970,6 @@ export async function engineRun(
       );
       const attemptsThis = attempts.filter((attempt) => attempt.id === spec.id);
       const actualEngine = result?.engine ?? null;
-      const fellBack =
-        attemptsThis.some((a) => a.engine === 'vips' && a.status === 'error') &&
-        actualEngine === 'compat';
       if (status === 'ok' && result?.buffer) lastEngineBuffer = result.buffer;
 
       const sample: any = {
@@ -1007,9 +979,7 @@ export async function engineRun(
         error: errorMessage ?? null,
         errorName,
         cancelCheck,
-        requestedEngine: policy,
         actualEngine,
-        fallback: fellBack,
         attempts: attemptsThis,
         preflightMs,
         processMs: status === 'ok' ? Number((ended - started - preflightMs).toFixed(3)) : null,
@@ -1090,7 +1060,6 @@ export async function engineRun(
     return {
       ...base,
       mode: spec.mode,
-      policy,
       repeats,
       expected: spec.expected ?? null,
       orientation: spec.orientation ?? null,
@@ -1108,7 +1077,6 @@ async function runEngineBatch(
   spec: any,
   options: {
     repeats: number;
-    policy: 'auto' | 'compat' | 'vips';
     pool: WorkerPool;
     processor: ReturnType<typeof createImageProcessor>;
     limits: ReturnType<typeof getImageSafetyLimits>;
@@ -1116,7 +1084,7 @@ async function runEngineBatch(
     attempts: EngineAttempt[];
   },
 ) {
-  const { repeats, policy, limits, base, attempts, processor } = options;
+  const { repeats, limits, base, attempts, processor } = options;
   const prepared = [];
   for (const item of spec.sources as any[]) {
     const blob = await engineFixture(item);
@@ -1153,18 +1121,18 @@ async function runEngineBatch(
           });
           return;
         }
-        const result = await processor.process(
-          { id: item.spec.id, source: item.file, settings: item.settings, onProgress: () => {} },
-          undefined,
-          policy,
-        );
+        const result = await processor.process({
+          id: item.spec.id,
+          source: item.file,
+          settings: item.settings,
+          onProgress: () => {},
+        });
         if (firstResultMs === null) firstResultMs = performance.now() - started;
         // Attribute attempts by request id, never by a shared-array index range.
         results.push({
           id: item.spec.id,
           status: 'ok',
           engine: result.engine,
-          requestedEngine: policy,
           width: result.width,
           height: result.height,
           dimensionsOk:
@@ -1216,7 +1184,6 @@ async function runEngineBatch(
   return {
     ...base,
     mode: 'batch',
-    policy,
     repeats,
     expectedTasks: (spec.sources ?? []).map((source: any) => source.id),
     inputs: prepared.map((item) => ({
@@ -1343,13 +1310,11 @@ export async function codecViewCheck() {
     resizableSupported,
     results,
     pass: results.every((result) => result.pass),
-    blocked: sharedSupported ? [] : ['SharedArrayBuffer unavailable'],
+    // Production is not cross-origin isolated, so a SharedArrayBuffer view is only
+    // exercised where the runtime offers one.
+    sharedArrayBuffer: sharedSupported,
+    blocked: [],
   };
-}
-
-/** Dispose the shared Vips qualification session. Only call when no Vips task is active. */
-export function disposeVips() {
-  vipsImageEngine.dispose();
 }
 
 async function animationProbe() {
@@ -1372,7 +1337,6 @@ Object.assign(window, {
     animationProbe,
     engineRun,
     codecViewCheck,
-    disposeVips,
     defaults: DEFAULT_OPTIONS,
   },
 });

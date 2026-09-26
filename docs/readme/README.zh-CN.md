@@ -93,7 +93,7 @@ pnpm dev
 | 媒体处理 | Canvas、Web Workers、WebCodecs、WebAssembly、`@jsquash/*`、libheif、FFmpeg |
 | 下载与离线 | JSZip、Service Worker |
 
-`packages/app` 包含界面和媒体工具，`packages/worker` 负责图片处理与 Worker，`packages/codecs` 提供编码器适配和参数定义。生产压缩使用 **Compat** 引擎，wasm-vips 仍处于实验阶段。
+`packages/app` 包含界面和媒体工具，`packages/worker` 负责图片处理与 Worker，`packages/codecs` 提供编码器适配和参数定义。压缩使用 **Compat** 引擎。
 
 修改后运行：
 

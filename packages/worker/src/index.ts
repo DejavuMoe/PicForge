@@ -21,12 +21,10 @@ export type { ResizeTargetLimits } from './imageProcessor';
 export { buildEncoderOptions } from './encoderOptions';
 export { createCompatImageEngine } from './compatImageEngine';
 export type { CompatImageEngineDeps } from './compatImageEngine';
-export { createImageProcessor, getImageRuntimeCapabilities, ImageEngineError } from './imageEngine';
+export { createImageProcessor } from './imageEngine';
 export type {
   ImageEngine,
   ImageEngineKind,
-  ImageEnginePolicy,
-  ImageRuntimeCapabilities,
   ImageProcessRequest,
   ImageProcessResult,
 } from './imageEngine';

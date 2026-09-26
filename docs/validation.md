@@ -42,7 +42,7 @@ build-mode jobs against the same project or copy `.git` into the mirror.
 | Processing, settings or scheduling | Affected unit tests; lint, unit tests, typecheck and build at a coherent implementation boundary |
 | UI | [Desktop/mobile checklist](QA_CHECKLIST.md) and selected [UI automation](QA_CHECKLIST.md#current-ui-automation), including keyboard focus |
 | Media or shared Worker/FFmpeg runtime | Browser/media acceptance and the affected cancellation, timing or geometry cases |
-| Vite, WASM, SW or headers | Dev/production loading, HTTP 304, no-isolation behavior and cached offline operation |
+| Vite, WASM, SW or headers | Dev/production loading, HTTP 304 and cached offline operation |
 | Engine performance or default selection | [Same-host measurement](performance/README.md) plus semantic and real-application checks |
 
 Reuse a current build and supported subsets when possible. Expand coverage for a
@@ -88,23 +88,6 @@ audio-bearing WebCodecs output as explicit acceptance checks. These remain
 verification gaps until the complete relevant harness/UI checks pass on the target
 runtime; a standalone successful conversion is insufficient. See the
 [player behavior](UI_DESIGN.md) for bounded preview reload recovery.
-
-## Experimental Vips
-
-Production static processing registers Compat only. These commands build isolated temporary apps:
-
-```sh
-pnpm test:vips
-pnpm test:vips:engine
-```
-
-The probe harness supports Chromium/Firefox and checks initialization, failure
-recovery, compatibility with and without isolation headers, and Chromium offline
-behavior. The engine harness supports Chromium/Firefox/WebKit and checks transforms,
-colour/alpha, options, cancellation, crashes, timeouts and engine asset behavior.
-It requires ImageMagick and sRGB/Display P3 ICC profiles; set
-`PICFORGE_SRGB_PROFILE` and `PICFORGE_P3_PROFILE` outside macOS.
-These checks do not select Vips for production or prove a performance advantage.
 
 ## CI and publication
 

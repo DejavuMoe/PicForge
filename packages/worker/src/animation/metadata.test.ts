@@ -142,7 +142,7 @@ describe('animation container contract', () => {
     expect(inspectAnimation(source)).toBe(first);
     expect((await first)?.ends).toEqual([70, 200, 440]);
   });
-  it('never routes animation failures to a static engine, even under compat policy', async () => {
+  it('never routes animation failures to a static engine', async () => {
     const compat = { kind: 'compat', supports: () => true, process: vi.fn() } as ImageEngine;
     const animated = {
       kind: 'animation',
@@ -155,7 +155,7 @@ describe('animation container contract', () => {
       settings: { outputFormat: 'webp' as const, quality: 75 },
     };
     await expect(
-      createImageProcessor(compat, undefined, animated).process(request, undefined, 'compat'),
+      createImageProcessor(compat, animated).process(request),
     ).rejects.toThrow('decode failed');
     await expect(createImageProcessor(compat).process(request)).rejects.toThrow(
       'Animation: unsupported',

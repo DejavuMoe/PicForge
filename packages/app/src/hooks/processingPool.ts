@@ -30,9 +30,8 @@ export function setPoolForTests(next: WorkerPool | null): void {
   pool = next;
 }
 
-// Session lifetime; Phase 4 can supply a qualified preferred engine here.
+// Session lifetime.
 export const imageProcessor = createImageProcessor(
   createCompatImageEngine(getPool),
-  undefined,
   animationEngine,
 );

@@ -186,7 +186,6 @@ test('corrupt input with an unrelated reason fails', () => {
         error: 'Failed to read image dimensions',
         attempts: [],
         actualEngine: null,
-        fallback: false,
       },
     ],
   };
@@ -449,7 +448,6 @@ test('corrupt fixture accepts only its exact preflight input failure, never infr
     error: 'Failed to read image dimensions',
     attempts: [],
     actualEngine: null,
-    fallback: false,
   };
   const validate = (sample) => validateEngineResult(spec, { samples: [sample] }, { repeats: 0 });
   assert.deepEqual(validate(good), []);
@@ -469,7 +467,6 @@ test('corrupt fixture accepts only its exact preflight input failure, never infr
     { attempts: [{ engine: 'compat', status: 'error' }] },
     { attempts: undefined },
     { actualEngine: 'compat' },
-    { fallback: true },
   ]) {
     assert.ok(validate({ ...good, ...change }).length, JSON.stringify(change));
   }

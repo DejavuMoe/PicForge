@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
@@ -51,7 +50,8 @@ function rss() {
 try {
   await page.goto(base);
   await page.waitForLoadState('networkidle');
-  for (const engine of ['animation', 'vips']) {
+  const engine = 'animation';
+  {
     for (let iteration = 0; iteration < 4; iteration++) {
       const beforeMiB = rss();
       let peakMiB = beforeMiB;
@@ -61,7 +61,7 @@ try {
       let result;
       try {
         result = await page.evaluate(
-          async ({ engine, input, probePath }) => {
+          async ({ input }) => {
             const source = new Blob([new Uint8Array(input)]),
               longTasks = [];
             const observer = new PerformanceObserver((list) =>
@@ -69,41 +69,13 @@ try {
             );
             observer.observe({ entryTypes: ['longtask'] });
             const start = performance.now();
-            let buffer;
             try {
-              if (engine === 'animation') {
-                const { imageProcessor } = await import('/src/hooks/processingPool.ts');
-                buffer = (
-                  await imageProcessor.process({
-                    id: 'benchmark',
-                    source,
-                    settings: { outputFormat: 'webp', quality: 80, advanced: { method: 4 } },
-                  })
-                ).buffer;
-              } else {
-                // A real module URL gives Vips pthread Workers the correct base URL.
-                const url = new URL('/@fs' + probePath, location.origin);
-                buffer = await new Promise((resolve, reject) => {
-                  const worker = new Worker(url, { type: 'module' });
-                  const timer = setTimeout(() => {
-                    worker.terminate();
-                    reject(new Error('Vips timed out'));
-                  }, 120_000);
-                  const finish = () => {
-                    clearTimeout(timer);
-                    worker.terminate();
-                  };
-                  worker.onmessage = ({ data }) => {
-                    finish();
-                    data.error ? reject(new Error(data.error)) : resolve(data.bytes.buffer);
-                  };
-                  worker.onerror = (e) => {
-                    finish();
-                    reject(new Error(e.message));
-                  };
-                  worker.postMessage(new Uint8Array(input));
-                });
-              }
+              const { imageProcessor } = await import('/src/hooks/processingPool.ts');
+              const { buffer } = await imageProcessor.process({
+                id: 'benchmark',
+                source,
+                settings: { outputFormat: 'webp', quality: 80, advanced: { method: 4 } },
+              });
               return {
                 ms: performance.now() - start,
                 longTasks,
@@ -113,11 +85,7 @@ try {
               observer.disconnect();
             }
           },
-          {
-            engine,
-            input: Array.from(input),
-            probePath: fileURLToPath(new URL('./vipsProbe.mjs', import.meta.url)),
-          },
+          { input: Array.from(input) },
         );
       } finally {
         clearInterval(timer);
@@ -143,7 +111,7 @@ try {
     });
   const reference = decode(inputPath),
     quality = {};
-  for (const engine of ['animation', 'vips']) {
+  {
     const decoded = decode(resolve(output, `${engine}.webp`));
     assert.equal(decoded.length, reference.length);
     let squaredError = 0;
@@ -156,7 +124,7 @@ try {
   const report = {
     browser: browser.version(),
     sourceSHA256: createHash('sha256').update(input).digest('hex'),
-    note: 'Same input and Q80/effort4, not equal quality. Fresh Worker each task; local HTTP, iteration0 first load. RSS sums shared pages and is affected by allocator/cache retention.',
+    note: 'Q80/effort4 animated WebP. Local HTTP, iteration 0 is the first load. RSS sums shared pages and is affected by allocator/cache retention.',
     cases,
     quality,
   };

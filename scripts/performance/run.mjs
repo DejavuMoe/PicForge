@@ -27,11 +27,6 @@ assert(
   ['chromium', 'firefox', 'webkit'].includes(engine),
   `Unknown PICFORGE_BROWSER: ${engine} (chromium|firefox|webkit)`,
 );
-const policy = process.env.PICFORGE_BENCH_ENGINE || 'compat';
-assert(
-  ['auto', 'compat', 'vips'].includes(policy),
-  `Unknown PICFORGE_BENCH_ENGINE: ${policy} (auto|compat|vips)`,
-);
 const repeats = Number(process.env.PICFORGE_BENCH_REPEATS || 3);
 assert(Number.isInteger(repeats) && repeats >= 1 && repeats <= 20, 'Repeats must be 1–20');
 const requestedCases = process.env.PICFORGE_BENCH_CASES
@@ -426,7 +421,6 @@ const engineCases = [
   {
     id: 'S08-cancel',
     mode: 'cancel',
-    policy: 'compat',
     width: 4000,
     height: 3000,
     mime: 'image/jpeg',
@@ -491,8 +485,6 @@ const selectedIds = new Set([
 const skipped = requestedCases ? requestedCases.filter((id) => !selectedIds.has(id)) : [];
 const execution = {
   layers: [runLegacy && 'legacy', runEngine && 'engine', runCodec && 'codec'].filter(Boolean),
-  vipsProbe: process.env.PICFORGE_BENCH_VIPS_PROBE === '1',
-  vipsFallbackSelfTest: process.env.PICFORGE_BENCH_FORCE_VIPS_FAIL === '1',
 };
 
 execFileSync(process.execPath, [resolve(root, 'packages/app/scripts/prepare-codecs.mjs')], {
@@ -528,7 +520,6 @@ const report = {
   node: process.version,
   layer,
   engine,
-  policy,
   cpu: cpus()[0]?.model,
   logicalCpus: cpus().length,
   systemMemoryBytes: totalmem(),
@@ -647,9 +638,8 @@ try {
       }
       const wasmBefore = requestedWasm.length;
       const result = await page.evaluate(
-        async ({ spec, repeats, policy }) =>
-          window.baseline.engineRun(spec, { repeats, policy: spec.policy ?? policy }),
-        { spec, repeats, policy },
+        async ({ spec, repeats }) => window.baseline.engineRun(spec, { repeats }),
+        { spec, repeats },
       );
       result.wasmRequests = [...new Set(requestedWasm.slice(wasmBefore))];
       report.engineCases.push(result);
@@ -666,52 +656,6 @@ try {
     if (validationFailures.length > 0) {
       throw new Error(
         `Engine validation failed:\n${validationFailures.map((failure) => `  - ${failure}`).join('\n')}`,
-      );
-    }
-
-    // Vips availability is opt-in only; it must never expand a selected run.
-    if (execution.vipsProbe) {
-      const vipsProbe = await page.evaluate(
-        async ({ spec, repeats }) =>
-          window.baseline.engineRun(spec, { repeats: Math.min(repeats, 1), policy: 'vips' }),
-        { spec: s02, repeats },
-      );
-      const first = vipsProbe.samples?.[0];
-      report.vipsProbe = {
-        requested: 'vips',
-        actual: first?.actualEngine ?? null,
-        fallback: first?.fallback ?? false,
-        attempts: first?.attempts ?? [],
-        status: vipsProbe.status,
-      };
-      console.log(
-        `engine vips-probe: requested=vips actual=${report.vipsProbe.actual} fallback=${report.vipsProbe.fallback}`,
-      );
-    }
-
-    // Harness self-test for the runtime-fault fallback recording. This injects an
-    // explicit runtime fault so the requested/actual/fallback fields are exercised;
-    // it is not a product measurement and never labels a fallback as Vips.
-    if (execution.vipsFallbackSelfTest) {
-      const selfTest = await page.evaluate(
-        async ({ spec }) =>
-          window.baseline.engineRun(spec, {
-            repeats: 0,
-            policy: 'vips',
-            forceVipsRuntimeFail: true,
-          }),
-        { spec: s02 },
-      );
-      const first = selfTest.samples?.[0];
-      report.vipsFallbackSelfTest = {
-        requested: 'vips',
-        actual: first?.actualEngine ?? null,
-        fallback: first?.fallback ?? false,
-        attempts: first?.attempts ?? [],
-        status: selfTest.status,
-      };
-      console.log(
-        `engine vips-fallback-self-test: requested=vips actual=${report.vipsFallbackSelfTest.actual} fallback=${report.vipsFallbackSelfTest.fallback}`,
       );
     }
   }
@@ -731,12 +675,6 @@ try {
   await writeFile(resolve(output, 'results.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(`PASS: layer=${layer}; results: ${output}`);
 } finally {
-  try {
-    if (page) {
-      await page.evaluate(() => window.baseline?.disposeVips?.()).catch(() => {});
-    }
-  } finally {
-    await browser?.close();
-    await new Promise((resolveClosed) => server.httpServer.close(resolveClosed));
-  }
+  await browser?.close();
+  await new Promise((resolveClosed) => server.httpServer.close(resolveClosed));
 }

@@ -5,5 +5,5 @@
     "types": ["node"],
     "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"]
   },
-  "include": ["browser.ts", "../../packages/worker/src/vips/assets.d.ts"]
+  "include": ["browser.ts"]
 }

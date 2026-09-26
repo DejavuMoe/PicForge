@@ -93,7 +93,7 @@ Open [127.0.0.1:5173](http://127.0.0.1:5173). Use `pnpm build` to build and `pnp
 | Media | Canvas, Web Workers, WebCodecs, WebAssembly, `@jsquash/*`, libheif, FFmpeg |
 | Downloads and offline use | JSZip, Service Worker |
 
-`packages/app` contains the interface and media tools, `packages/worker` the image pipeline and workers, and `packages/codecs` the encoder adapters and settings. Production compression uses the **Compat** engine; wasm-vips remains experimental.
+`packages/app` contains the interface and media tools, `packages/worker` the image pipeline and workers, and `packages/codecs` the encoder adapters and settings. Compression uses the **Compat** engine.
 
 For changes, run:
 

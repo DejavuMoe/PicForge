@@ -91,14 +91,10 @@ function validatePositive(spec, samples, fail) {
       );
       continue;
     }
-    if (!['compat', 'vips', 'animation'].includes(sample.actualEngine))
+    if (!['compat', 'animation'].includes(sample.actualEngine))
       fail(`iteration ${sample.iteration} invalid actualEngine`);
-    if (
-      sample.requestedEngine === 'compat' &&
-      spec.mode !== 'animation' &&
-      sample.actualEngine !== 'compat'
-    )
-      fail('Compat policy did not use Compat');
+    if (spec.mode !== 'animation' && sample.actualEngine !== 'compat')
+      fail('static image did not use Compat');
     if (!isPositiveInt(sample.width) || !isPositiveInt(sample.height))
       fail('invalid output dimensions');
     if (!isPositiveInt(sample.outputBytes)) {
@@ -188,8 +184,7 @@ function validateNegative(spec, samples, fail) {
       sample.error !== CORRUPT_INPUT_ERROR ||
       !Array.isArray(sample.attempts) ||
       sample.attempts.length !== 0 ||
-      sample.actualEngine !== null ||
-      sample.fallback !== false
+      sample.actualEngine !== null
     ) {
       fail(`iteration ${sample.iteration} unexpected corrupt-input reason: ${sample.error}`);
     }

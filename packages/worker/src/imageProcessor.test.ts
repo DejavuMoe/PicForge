@@ -3,6 +3,9 @@ import {
   PERMANENT_IMAGE_ERROR_PREFIX,
   calculateResizeGeometry,
   decodeAndResizeImage,
+  downscaleScratchPixels,
+  downscaleSteps,
+  drawScaled,
   resizeImage,
   resolveResizeGeometry,
   validateResizeOptions,
@@ -345,7 +348,8 @@ describe('decodeAndResizeImage allocation boundary', () => {
       enabled({ mode: 'percentage', percentage: 33.5 }),
     );
     expect(percentage.width).toBeGreaterThan(0);
-    expect(canvases).toHaveLength(4);
+    // Four targets plus halving steps: contain/stretch 99 -> 49 rows and the percentage case.
+    expect(canvases).toHaveLength(7);
     // URL and canvas cleanup runs on success.
     expect(canvases.every((canvas) => canvas.width === 0 && canvas.height === 0)).toBe(true);
   });
@@ -369,5 +373,81 @@ describe('decodeAndResizeImage allocation boundary', () => {
     expect(canvases).toHaveLength(1);
     expect(canvases[0].width).toBe(0);
     expect(canvases[0].height).toBe(0);
+  });
+});
+
+describe('stepped downscale', () => {
+  function recorder() {
+    const draws: unknown[][] = [];
+    const canvases: Array<{ width: number; height: number }> = [];
+    const context = () => ({
+      imageSmoothingEnabled: false,
+      imageSmoothingQuality: 'medium',
+      drawImage: (...args: unknown[]) => draws.push(args),
+    });
+    const stepContexts: Array<ReturnType<typeof context>> = [];
+    const createCanvas = (width: number, height: number) => {
+      const step = context();
+      stepContexts.push(step);
+      const canvas = { width, height, getContext: () => step };
+      canvases.push(canvas);
+      return canvas as unknown as HTMLCanvasElement;
+    };
+    return { draws, canvases, stepContexts, ctx: context(), createCanvas };
+  }
+
+  it('halves each axis until the final draw is at most 2:1', () => {
+    expect(downscaleSteps(4000, 3000, 500, 375)).toEqual([
+      { width: 2000, height: 1500 },
+      { width: 1000, height: 750 },
+    ]);
+    expect(downscaleSteps(4000, 3000, 2000, 1500)).toEqual([]);
+    expect(downscaleSteps(100, 100, 400, 400)).toEqual([]);
+    // Stretch can step one axis only.
+    expect(downscaleSteps(1000, 1000, 1000, 100)).toEqual([
+      { width: 1000, height: 500 },
+      { width: 1000, height: 250 },
+      { width: 1000, height: 125 },
+    ]);
+    expect(downscaleScratchPixels(4000, 3000, 500, 375)).toBe(2000 * 1500 + 1000 * 750);
+    expect(downscaleScratchPixels(4000, 3000, 2000, 1500)).toBe(0);
+  });
+
+  it('keeps the crop rectangle and target, then releases every scratch canvas', () => {
+    const { draws, canvases, stepContexts, ctx, createCanvas } = recorder();
+    const source = { id: 'source' } as unknown as CanvasImageSource;
+    const geometry = {
+      targetWidth: 500,
+      targetHeight: 500,
+      sourceX: 500,
+      sourceY: 0,
+      sourceWidth: 3000,
+      sourceHeight: 3000,
+    };
+    drawScaled(ctx as never, source, geometry, createCanvas);
+    expect(draws).toHaveLength(3);
+    expect(draws[0]).toEqual([source, 500, 0, 3000, 3000, 0, 0, 1500, 1500]);
+    expect(draws[1].slice(1)).toEqual([0, 0, 1500, 1500, 0, 0, 750, 750]);
+    expect(draws[2].slice(1)).toEqual([0, 0, 750, 750, 0, 0, 500, 500]);
+    // Exact halvings average 2x2 pixels bilinearly; only the final draw uses 'high'.
+    expect(stepContexts.map((step) => step.imageSmoothingQuality)).toEqual(['low', 'low']);
+    expect(stepContexts.every((step) => step.imageSmoothingEnabled)).toBe(true);
+    expect(ctx.imageSmoothingEnabled).toBe(true);
+    expect(ctx.imageSmoothingQuality).toBe('high');
+    expect(canvases.every((canvas) => canvas.width === 0 && canvas.height === 0)).toBe(true);
+  });
+
+  it('draws once without scratch canvases for the direct strategy', () => {
+    const { draws, canvases, ctx, createCanvas } = recorder();
+    const source = { id: 'source' } as unknown as CanvasImageSource;
+    drawScaled(
+      ctx as never,
+      source,
+      { targetWidth: 500, targetHeight: 375, sourceX: 0, sourceY: 0, sourceWidth: 4000, sourceHeight: 3000 },
+      createCanvas,
+      'direct',
+    );
+    expect(draws).toEqual([[source, 0, 0, 4000, 3000, 0, 0, 500, 375]]);
+    expect(canvases).toHaveLength(0);
   });
 });

@@ -1,8 +1,7 @@
 /**
- * Core image processing pipeline — runs in the main thread.
- *
- * Uses WASM codecs (via @jsquash/*) for mozjpeg/webp/oxipng encoding.
- * Falls back to Canvas API for browser-native formats (browser-*).
+ * Shared resize geometry, safety limits and the scaling draw used by both decode
+ * paths. `decodeAndResizeImage` is the main-thread Canvas decoder, used when the
+ * encoding Worker cannot decode a file (see workerDecode.ts).
  */
 
 import type { ResizeOptions } from '@pic-forge/codecs';
@@ -108,12 +107,118 @@ export interface DecodedImage {
   originalHeight: number;
 }
 
+/**
+ * `stepped` halves the image until the last draw is at most 2:1. A single large
+ * reduction samples too few source pixels where smoothing is not mipmapped
+ * (Firefox, WebKit), which aliases fine detail and inflates file size. Each halving
+ * uses `low` (bilinear) smoothing: at 2:1 that is an exact 2x2 average, whereas a
+ * sharper `high` filter without prefiltering aliases (WebKit). The final draw uses
+ * `high`. `direct` is the previous single draw.
+ */
+export type DownscaleStrategy = 'direct' | 'stepped';
+
+type Context2D = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+type ScratchCanvas = HTMLCanvasElement | OffscreenCanvas;
+
+/**
+ * Intermediate sizes of a `stepped` downscale: each axis is halved while it is
+ * more than twice its target, so the final draw reduces by at most 2:1.
+ */
+export function downscaleSteps(
+  width: number,
+  height: number,
+  targetWidth: number,
+  targetHeight: number,
+): Array<{ width: number; height: number }> {
+  const steps: Array<{ width: number; height: number }> = [];
+  for (;;) {
+    const nextWidth = width > targetWidth * 2 ? Math.floor(width / 2) : width;
+    const nextHeight = height > targetHeight * 2 ? Math.floor(height / 2) : height;
+    if (nextWidth === width && nextHeight === height) return steps;
+    steps.push({ width: nextWidth, height: nextHeight });
+    width = nextWidth;
+    height = nextHeight;
+  }
+}
+
+/** Most scratch pixels alive at once: each step holds its predecessor while drawing. */
+export function downscaleScratchPixels(
+  width: number,
+  height: number,
+  targetWidth: number,
+  targetHeight: number,
+): number {
+  let previous = 0;
+  let peak = 0;
+  for (const step of downscaleSteps(width, height, targetWidth, targetHeight)) {
+    const pixels = step.width * step.height;
+    peak = Math.max(peak, previous + pixels);
+    previous = pixels;
+  }
+  return peak;
+}
+
+/**
+ * Draw `geometry`'s source rectangle into the whole target context. Only the
+ * scale path changes between strategies: the full source rectangle always maps
+ * onto the full target, so crop and dimensions are identical.
+ */
+export function drawScaled(
+  ctx: Context2D,
+  source: CanvasImageSource,
+  geometry: ResizeGeometry,
+  createCanvas: (width: number, height: number) => ScratchCanvas,
+  strategy: DownscaleStrategy = 'stepped',
+): void {
+  let image: CanvasImageSource = source;
+  let x = geometry.sourceX;
+  let y = geometry.sourceY;
+  let width = geometry.sourceWidth;
+  let height = geometry.sourceHeight;
+  let scratch: ScratchCanvas | undefined;
+  const release = (canvas?: ScratchCanvas) => {
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
+  };
+  try {
+    const steps =
+      strategy === 'stepped'
+        ? downscaleSteps(width, height, geometry.targetWidth, geometry.targetHeight)
+        : [];
+    for (const next of steps) {
+      const step = createCanvas(next.width, next.height);
+      const stepCtx = step.getContext('2d') as Context2D | null;
+      if (!stepCtx) {
+        release(step);
+        break;
+      }
+      stepCtx.imageSmoothingEnabled = true;
+      stepCtx.imageSmoothingQuality = 'low';
+      stepCtx.drawImage(image, x, y, width, height, 0, 0, next.width, next.height);
+      release(scratch);
+      scratch = step;
+      image = step;
+      x = 0;
+      y = 0;
+      ({ width, height } = next);
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(image, x, y, width, height, 0, 0, geometry.targetWidth, geometry.targetHeight);
+  } finally {
+    release(scratch);
+  }
+}
+
 export interface DecodeAndResizeHooks {
   signal?: AbortSignal;
   /** Fired once the source image is loaded and normalized dimensions are known. */
   onDecoded?: () => void;
   /** Fired once the target RGBA has been read back from the target canvas. */
   onResized?: () => void;
+  downscale?: DownscaleStrategy;
 }
 
 /**
@@ -127,7 +232,7 @@ export async function decodeAndResizeImage(
   resize?: ResizeOptions,
   hooks: DecodeAndResizeHooks = {},
 ): Promise<DecodedImage> {
-  const { signal, onDecoded, onResized } = hooks;
+  const { signal, onDecoded, onResized, downscale } = hooks;
   signal?.throwIfAborted();
   const optionsError = validateResizeOptions(resize);
   if (optionsError) throw new Error(optionsError);
@@ -162,18 +267,17 @@ export async function decodeAndResizeImage(
     canvas.height = geometry.targetHeight;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) throw new Error('Failed to get 2D canvas context');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(
+    drawScaled(
+      ctx,
       img,
-      geometry.sourceX,
-      geometry.sourceY,
-      geometry.sourceWidth,
-      geometry.sourceHeight,
-      0,
-      0,
-      geometry.targetWidth,
-      geometry.targetHeight,
+      geometry,
+      (width, height) => {
+        const step = document.createElement('canvas');
+        step.width = width;
+        step.height = height;
+        return step;
+      },
+      downscale,
     );
     signal?.throwIfAborted();
 

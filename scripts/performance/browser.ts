@@ -769,11 +769,14 @@ async function rawTargetParity(source: Blob, resize: ResizeOptions | undefined) 
   };
 }
 
-/** Exercise the real Image load listener, then retry the unchanged source Blob. */
-async function cancelDuringImageLoad(
-  processor: ReturnType<typeof createImageProcessor>,
-  request: ImageProcessRequest,
-) {
+/**
+ * Abort while the main-thread fallback is loading the Blob into an Image, and
+ * check that the listeners and object URL are released.
+ */
+async function cancelMainThreadLoad(pool: WorkerPool, request: ImageProcessRequest) {
+  const processor = createImageProcessor(
+    createCompatImageEngine(() => pool, { canDecodeInWorker: () => false }),
+  );
   const controller = new AbortController();
   const descriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src')!;
   const create = URL.createObjectURL;
@@ -812,19 +815,80 @@ async function cancelDuringImageLoad(
   }
   if (!(caught instanceof Error) || caught.name !== 'AbortError')
     throw caught ?? new Error('Load cancellation unexpectedly completed');
-  const cleanup =
-    urls.size === 0 &&
-    images.every(
-      (img) => img.onload === null && img.onerror === null && img.getAttribute('src') === '',
-    );
+  return {
+    starts: images.length,
+    cleanup:
+      urls.size === 0 &&
+      images.every(
+        (img) => img.onload === null && img.onerror === null && img.getAttribute('src') === '',
+      ),
+  };
+}
+
+/**
+ * Abort right after the original Blob is posted to a Worker for decoding. The
+ * busy Worker must be terminated and no task may remain queued or active.
+ */
+async function cancelWorkerDecode(
+  processor: ReturnType<typeof createImageProcessor>,
+  pool: WorkerPool,
+  request: ImageProcessRequest,
+) {
+  if (typeof OffscreenCanvas !== 'function' || typeof createImageBitmap !== 'function')
+    return { supported: false, starts: 0, terminated: 0, cleanup: true };
+  const controller = new AbortController();
+  const post = Worker.prototype.postMessage;
+  const terminate = Worker.prototype.terminate;
+  let starts = 0;
+  let terminated = 0;
+  let caught: unknown;
+  Worker.prototype.postMessage = function (this: Worker, message: any, ...rest: any[]) {
+    (post as (...args: unknown[]) => void).call(this, message, ...rest);
+    if (message?.type === 'task' && message.payload?.input === 'source') {
+      starts += 1;
+      queueMicrotask(() => controller.abort());
+    }
+  } as typeof Worker.prototype.postMessage;
+  Worker.prototype.terminate = function (this: Worker) {
+    terminated += 1;
+    terminate.call(this);
+  };
+  try {
+    await processor.process(request, controller.signal, 'compat');
+  } catch (error) {
+    caught = error;
+  } finally {
+    Worker.prototype.postMessage = post;
+    Worker.prototype.terminate = terminate;
+  }
+  if (!(caught instanceof Error) || caught.name !== 'AbortError')
+    throw caught ?? new Error('Worker decode cancellation unexpectedly completed');
+  return {
+    supported: true,
+    starts,
+    terminated,
+    cleanup: terminated > 0 && pool.activeCount === 0 && pool.queueSize === 0,
+  };
+}
+
+/** Cancel both decode paths, then retry the unchanged source Blob. */
+async function cancelDuringDecode(
+  processor: ReturnType<typeof createImageProcessor>,
+  pool: WorkerPool,
+  request: ImageProcessRequest,
+) {
+  const worker = await cancelWorkerDecode(processor, pool, request);
+  const main = await cancelMainThreadLoad(pool, { ...request, id: request.id + '-main' });
   const retry = await processor.process(
     { ...request, id: request.id + '-retry', onProgress: undefined },
     undefined,
     'compat',
   );
   return {
-    loadStarts: images.length,
-    cleanup,
+    loadStarts: worker.starts + main.starts,
+    cleanup: worker.cleanup && main.cleanup,
+    worker,
+    main,
     retry: { width: retry.width, height: retry.height, outputBytes: retry.buffer.byteLength },
   };
 }
@@ -889,11 +953,11 @@ export async function engineRun(
       let dims: { width: number; height: number } | undefined;
       let result: any;
       let preflightMs = 0;
-      let cancelCheck: Awaited<ReturnType<typeof cancelDuringImageLoad>> | null = null;
+      let cancelCheck: Awaited<ReturnType<typeof cancelDuringDecode>> | null = null;
 
       try {
         if (spec.mode === 'cancel') {
-          cancelCheck = await cancelDuringImageLoad(processor, {
+          cancelCheck = await cancelDuringDecode(processor, pool, {
             id: spec.id,
             source: file,
             settings,

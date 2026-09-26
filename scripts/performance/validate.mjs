@@ -157,6 +157,12 @@ function validateNegative(spec, samples, fail) {
         !isPositiveInt(sample.cancelCheck.retry?.outputBytes)
       )
         fail('load cancellation/cleanup/retry evidence missing');
+      // Runs recorded before Worker decoding have no per-path evidence.
+      const { worker, main } = sample.cancelCheck ?? {};
+      if (worker && (worker.cleanup !== true || (worker.supported !== false && !worker.starts)))
+        fail('Worker decode cancellation evidence missing');
+      if (worker && (!main?.starts || main.cleanup !== true))
+        fail('main-thread decode cancellation evidence missing');
       continue;
     }
     if (spec.mode === 'target') {

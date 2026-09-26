@@ -142,7 +142,7 @@ try {
 
       const nodeStart = Date.now();
       await page.evaluate(() => performance.mark('pf-start'));
-      await page.locator('.pf-demo figcaption button').click();
+      await page.locator('.pf-demo-footer button').click();
       await page.locator('.pf-file-status-text.is-done').first().waitFor({ timeout: 30000 });
       await page.evaluate(() => performance.mark('pf-first'));
       const nodeFirstResultMs = Date.now() - nodeStart;
@@ -217,7 +217,7 @@ try {
     try {
       await page.goto(origin);
       await page.locator('.pf-demo-image img').first().waitFor();
-      await page.locator('.pf-demo figcaption button').click();
+      await page.locator('.pf-demo-footer button').click();
       await page.locator('.pf-file-status-text.is-done').first().waitFor({ timeout: 30000 });
       const doneBeforeImport = await page.locator('.pf-file-status-text.is-done').count();
 

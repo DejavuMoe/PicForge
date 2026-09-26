@@ -13,14 +13,20 @@ class MockWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
   onerror: ((event: ErrorEvent) => void) | null = null;
   messages: unknown[] = [];
+  transfers: unknown[] = [];
   terminated = false;
 
   constructor() {
     MockWorker.instances.push(this);
   }
 
-  postMessage(message: unknown) {
+  postMessage(message: unknown, options?: { transfer?: unknown[] }) {
     this.messages.push(message);
+    this.transfers.push(options?.transfer);
+  }
+
+  emit(type: string, payload: Record<string, unknown>) {
+    this.onmessage?.({ data: { type, payload } } as MessageEvent);
   }
 
   terminate() {
@@ -206,7 +212,7 @@ describe('WorkerPool', () => {
     const onResult = vi.fn();
     pool.enqueue('big', new ArrayBuffer(4), 10, 10, 4, baseSettings, { onResult });
     MockWorker.instances[0].emitResult('big');
-    expect(onResult).toHaveBeenCalledWith('big', expect.any(ArrayBuffer), 1, 1);
+    expect(onResult).toHaveBeenCalledWith('big', expect.any(ArrayBuffer), 1, 1, undefined);
     expect(MockWorker.instances[0].terminated).toBe(true);
     expect(pool.liveWorkerCount).toBe(0);
 
@@ -282,6 +288,63 @@ describe('WorkerPool', () => {
     expect(pool.activeCount).toBe(1);
     MockWorker.instances[0].emitResult('b');
     expect(onResult).toHaveBeenCalledTimes(1);
+    pool.destroy();
+  });
+
+  it('clones a source Blob to the Worker instead of transferring it', () => {
+    const pool = new WorkerPool(1);
+    const source = new Blob(['jpeg'], { type: 'image/jpeg' });
+    const onResult = vi.fn();
+    pool.enqueueSource('s', source, baseSettings, { onResult }, { downscale: 'stepped' });
+    const worker = MockWorker.instances[0];
+    const message = worker.messages[0] as { payload: Record<string, unknown> };
+    expect(message.payload).toMatchObject({ id: 's', input: 'source', source, downscale: 'stepped' });
+    expect(message.payload.originalSize).toBe(source.size);
+    expect(worker.transfers[0]).toEqual([]);
+
+    const size = { width: 4, height: 3, originalWidth: 8, originalHeight: 6 };
+    worker.emit('decoded', { id: 's', ...size });
+    worker.emit('result', {
+      id: 's',
+      resultBuffer: new ArrayBuffer(2),
+      originalSize: 4,
+      compressedSize: 2,
+      size,
+    });
+    expect(onResult).toHaveBeenCalledWith('s', expect.any(ArrayBuffer), 4, 2, size);
+    pool.destroy();
+  });
+
+  it('restarts the watchdog and sizes recycling from the decoded target', () => {
+    vi.useFakeTimers();
+    const pool = new WorkerPool({ poolSize: 1, recyclePixels: 20_000_000 });
+    const onError = vi.fn();
+    const onResult = vi.fn();
+    pool.enqueueSource('big', new Blob(['x']), baseSettings, { onError, onResult });
+    const worker = MockWorker.instances[0];
+    // Decoding took most of the base window; the encode gets a full target-sized one.
+    vi.advanceTimersByTime(40_000);
+    worker.emit('decoded', {
+      id: 'big',
+      width: 5000,
+      height: 10_000,
+      originalWidth: 5000,
+      originalHeight: 10_000,
+    });
+    vi.advanceTimersByTime(99_999);
+    expect(onError).not.toHaveBeenCalled();
+    worker.emit('result', {
+      id: 'big',
+      resultBuffer: new ArrayBuffer(1),
+      originalSize: 1,
+      compressedSize: 1,
+    });
+    expect(onResult).toHaveBeenCalledTimes(1);
+    expect(worker.terminated).toBe(true);
+
+    pool.enqueueSource('stuck', new Blob(['x']), baseSettings, { onError });
+    vi.advanceTimersByTime(getTaskTimeoutMs('mozjpeg'));
+    expect(onError).toHaveBeenCalledWith('stuck', 'Task timed out after 45s');
     pool.destroy();
   });
 

@@ -14,6 +14,7 @@
  */
 
 import type { OutputFormat } from '@pic-forge/codecs';
+import { downscaleScratchPixels } from '@pic-forge/worker';
 
 const MB = 1024 * 1024;
 const BYTES_PER_PIXEL = 4;
@@ -109,15 +110,22 @@ const ENCODER_FACTOR: Record<OutputFormat, number> = {
   avif: 6,
 };
 
-/** Browser-decoded source bitmap plus target RGBA and encoder memory. */
+/**
+ * Browser-decoded source bitmap, the halving scratch canvases of a large
+ * downscale (sized from the whole source, so crops are overestimated), target
+ * RGBA and encoder memory.
+ */
 export function estimateCompressionCost(
   source: { width: number; height: number },
   target: { width: number; height: number },
   format: OutputFormat,
 ): number {
   const sourceBytes = source.width * source.height * BYTES_PER_PIXEL;
+  const scratchBytes =
+    downscaleScratchPixels(source.width, source.height, target.width, target.height) *
+    BYTES_PER_PIXEL;
   const targetBytes = target.width * target.height * BYTES_PER_PIXEL;
-  return sourceBytes + targetBytes * (1 + (ENCODER_FACTOR[format] ?? 6));
+  return sourceBytes + scratchBytes + targetBytes * (1 + (ENCODER_FACTOR[format] ?? 6));
 }
 
 /** FFmpeg core heap and code, independent of the input. */

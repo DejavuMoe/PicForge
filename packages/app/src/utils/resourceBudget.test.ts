@@ -89,6 +89,20 @@ describe('ResourceBudget', () => {
     expect(estimateHeicCost(3 * MB, 24_000_000)).toBeGreaterThan(24_000_000 * 4 * 3);
   });
 
+  it('adds the halving scratch canvases only when a downscale steps', () => {
+    const source = { width: 4000, height: 3000 };
+    const direct = (target: { width: number; height: number }) =>
+      source.width * source.height * 4 + target.width * target.height * 4 * 4;
+    // 4000x3000 -> 2000x1500 -> 1000x750 -> final 500x375: the first two coexist.
+    expect(estimateCompressionCost(source, { width: 500, height: 375 }, 'mozjpeg')).toBe(
+      direct({ width: 500, height: 375 }) + (2000 * 1500 + 1000 * 750) * 4,
+    );
+    // At most 2:1 is one final draw with no scratch.
+    expect(estimateCompressionCost(source, { width: 2000, height: 1500 }, 'mozjpeg')).toBe(
+      direct({ width: 2000, height: 1500 }),
+    );
+  });
+
   it('uses a smaller budget on low-resource devices', () => {
     expect(getBudgetCapacity({ hardwareConcurrency: 4, deviceMemory: 8 })).toBe(384 * MB);
     expect(getBudgetCapacity({ hardwareConcurrency: 8, deviceMemory: 8 })).toBe(1024 * MB);

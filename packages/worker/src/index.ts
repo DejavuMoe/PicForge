@@ -6,7 +6,8 @@
 
 export { WorkerPool, getFormatConcurrencyLimit, getRecommendedWorkerPoolSize } from './workerPool';
 export type { TaskCallbacks, WorkerPoolOptions } from './workerPool';
-export { decodeImage, resizeImage } from './imageProcessor';
+export { decodeImage, downscaleScratchPixels, resizeImage } from './imageProcessor';
+export type { DownscaleStrategy } from './imageProcessor';
 export {
   DEFAULT_MAX_PIXELS,
   MAX_CANVAS_DIMENSION,

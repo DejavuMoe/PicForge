@@ -132,6 +132,37 @@ test('ordinary Error instead of cancellation fails', () => {
   assert.deepEqual(validateEngineResult(spec, good, { repeats: 0 }), []);
 });
 
+test('cancellation needs evidence from both decode paths once recorded', () => {
+  const spec = { id: 'S08-cancel', mode: 'cancel' };
+  const sample = (cancelCheck) => ({
+    samples: [
+      {
+        iteration: 0,
+        status: 'cancelled',
+        error: null,
+        errorName: 'AbortError',
+        cancelCheck: { loadStarts: 2, cleanup: true, retry: { outputBytes: 10 }, ...cancelCheck },
+      },
+    ],
+  });
+  const main = { starts: 1, cleanup: true };
+  const worker = { supported: true, starts: 1, terminated: 1, cleanup: true };
+  assert.deepEqual(validateEngineResult(spec, sample({ worker, main }), { repeats: 0 }), []);
+  // A runtime without OffscreenCanvas legitimately records no Worker start.
+  const unsupported = { supported: false, starts: 0, terminated: 0, cleanup: true };
+  assert.deepEqual(
+    validateEngineResult(spec, sample({ worker: unsupported, main }), { repeats: 0 }),
+    [],
+  );
+  for (const bad of [
+    { worker: { ...worker, starts: 0 }, main },
+    { worker: { ...worker, cleanup: false }, main },
+    { worker, main: { starts: 0, cleanup: true } },
+    { worker, main: { starts: 1, cleanup: false } },
+  ])
+    assert.ok(validateEngineResult(spec, sample(bad), { repeats: 0 }).length > 0);
+});
+
 test('unrelated error instead of target rejection fails', () => {
   const spec = { id: 'S08-target', mode: 'target' };
   const bad = { samples: [{ iteration: 0, status: 'error', error: 'Failed to decode image' }] };

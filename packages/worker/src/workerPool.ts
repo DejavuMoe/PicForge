@@ -2,9 +2,9 @@
  * Worker pool for concurrent WASM encoding.
  *
  * Architecture:
- * - Main thread: decode (Canvas API) + resize (Canvas API)
- * - Worker: WASM encoding only
- * - Transfer: ImageData buffer → Worker → result ArrayBuffer back
+ * - `source` tasks: the Worker decodes/resizes the original Blob and encodes it
+ * - `rgba` tasks: main-thread fallback pixels (Canvas API) → Worker encoding
+ * - Transfer: pixel buffers are transferred; source Blobs are cloned, never detached
  *
  * Workers are created on demand. A WASM heap only grows, so a Worker that has
  * encoded a large image is retired afterwards, and idle Workers are released
@@ -13,10 +13,25 @@
 
 import type { CompressSettings } from '@pic-forge/codecs';
 import type { OutputFormat } from '@pic-forge/codecs';
+import type { DownscaleStrategy } from './imageProcessor';
+
+/** Dimensions a `source` task discovered while decoding in the Worker. */
+export interface TaskResultSize {
+  width: number;
+  height: number;
+  originalWidth: number;
+  originalHeight: number;
+}
 
 export interface TaskCallbacks {
   onProgress?: (taskId: string, progress: number) => void;
-  onResult?: (taskId: string, resultBuffer: ArrayBuffer, originalSize: number, compressedSize: number) => void;
+  onResult?: (
+    taskId: string,
+    resultBuffer: ArrayBuffer,
+    originalSize: number,
+    compressedSize: number,
+    size?: TaskResultSize,
+  ) => void;
   onError?: (taskId: string, error: string) => void;
 }
 
@@ -31,9 +46,10 @@ export interface WorkerPoolOptions {
 
 /**
  * `rgba`: raw target pixels. `png`: complete, already-sanitized PNG file bytes
- * that OxiPNG optimises without a decode/re-encode round trip.
+ * that OxiPNG optimises without a decode/re-encode round trip. `source`: the
+ * original image Blob, decoded and resized inside the Worker.
  */
-export type TaskInput = 'rgba' | 'png';
+export type TaskInput = 'rgba' | 'png' | 'source';
 
 export interface EnqueueOptions {
   input?: TaskInput;
@@ -41,7 +57,9 @@ export interface EnqueueOptions {
 
 interface PendingTask {
   id: string;
-  pixelBuffer: ArrayBuffer;
+  pixelBuffer?: ArrayBuffer;
+  source?: Blob;
+  downscale?: DownscaleStrategy;
   width: number;
   height: number;
   originalSize: number;
@@ -186,6 +204,23 @@ export class WorkerPool {
       return;
     }
 
+    if (type === 'decoded') {
+      // A source task now knows its target: size the encode watchdog and the
+      // recycling decision by it, exactly as for a main-thread-decoded task.
+      const active = this.activeTasks.get(payload.id);
+      if (!active) return;
+      clearTimeout(active.timeoutId);
+      active.pixels = payload.width * payload.height;
+      active.timeoutId = this.startWatchdog(
+        payload.id,
+        workerIndex,
+        active.outputFormat,
+        active.pixels,
+        active.callbacks,
+      );
+      return;
+    }
+
     if (type === 'result') {
       const active = this.activeTasks.get(payload.id);
       if (active) {
@@ -193,7 +228,13 @@ export class WorkerPool {
         this.activeTasks.delete(payload.id);
       }
       this.finishTask(workerIndex, active);
-      active?.callbacks.onResult?.(payload.id, payload.resultBuffer, payload.originalSize, payload.compressedSize);
+      active?.callbacks.onResult?.(
+        payload.id,
+        payload.resultBuffer,
+        payload.originalSize,
+        payload.compressedSize,
+        payload.size,
+      );
       this.processNext();
       return;
     }
@@ -238,18 +279,15 @@ export class WorkerPool {
       }
       this.workerBusy[assignedWorkerIndex] = true;
 
+      // Source tasks start with the base watchdog; `decoded` resizes it.
       const pixels = task.width * task.height;
-      const timeoutMs = getTaskTimeoutMs(task.settings.outputFormat, pixels);
-
-      // Set timeout to prevent permanent worker slot occupation
-      const timeoutId = setTimeout(() => {
-        console.warn(`Task ${task.id} timed out after ${timeoutMs}ms, terminating worker ${assignedWorkerIndex}`);
-        this.activeTasks.delete(task.id);
-        this.workerBusy[assignedWorkerIndex] = false;
-        this.retireWorker(assignedWorkerIndex);
-        task.callbacks.onError?.(task.id, `Task timed out after ${timeoutMs / 1000}s`);
-        this.processNext();
-      }, timeoutMs);
+      const timeoutId = this.startWatchdog(
+        task.id,
+        assignedWorkerIndex,
+        task.settings.outputFormat,
+        pixels,
+        task.callbacks,
+      );
 
       this.activeTasks.set(task.id, {
         id: task.id,
@@ -267,6 +305,8 @@ export class WorkerPool {
             payload: {
               id: task.id,
               pixelBuffer: task.pixelBuffer,
+              source: task.source,
+              downscale: task.downscale,
               width: task.width,
               height: task.height,
               originalSize: task.originalSize,
@@ -274,7 +314,7 @@ export class WorkerPool {
               input: task.input,
             },
           },
-          { transfer: [task.pixelBuffer] },
+          { transfer: task.pixelBuffer ? [task.pixelBuffer] : [] },
         );
       } catch (error) {
         clearTimeout(timeoutId);
@@ -285,6 +325,25 @@ export class WorkerPool {
 
       workerIndex = this.getFreeWorkerIndex();
     }
+  }
+
+  /** Prevent a stuck encode from occupying its Worker slot permanently. */
+  private startWatchdog(
+    id: string,
+    workerIndex: number,
+    format: OutputFormat,
+    pixels: number,
+    callbacks: TaskCallbacks,
+  ): ReturnType<typeof setTimeout> {
+    const timeoutMs = getTaskTimeoutMs(format, pixels);
+    return setTimeout(() => {
+      console.warn(`Task ${id} timed out after ${timeoutMs}ms, terminating worker ${workerIndex}`);
+      this.activeTasks.delete(id);
+      this.workerBusy[workerIndex] = false;
+      this.retireWorker(workerIndex);
+      callbacks.onError?.(id, `Task timed out after ${timeoutMs / 1000}s`);
+      this.processNext();
+    }, timeoutMs);
   }
 
   /** Release every Worker once nothing is queued or running for a while. */
@@ -340,6 +399,32 @@ export class WorkerPool {
       settings,
       callbacks,
       input: options.input ?? 'rgba',
+    });
+    this.processNext();
+  }
+
+  /**
+   * Enqueue the original image; the Worker decodes, resizes and encodes it. The
+   * Blob is structured-cloned, so the caller's copy stays readable for a retry.
+   */
+  enqueueSource(
+    id: string,
+    source: Blob,
+    settings: CompressSettings,
+    callbacks: TaskCallbacks,
+    options: { downscale?: DownscaleStrategy } = {},
+  ): void {
+    if (this.destroyed) throw new Error('WorkerPool has been destroyed');
+    this.taskQueue.push({
+      id,
+      source,
+      downscale: options.downscale,
+      width: 0,
+      height: 0,
+      originalSize: source.size,
+      settings,
+      callbacks,
+      input: 'source',
     });
     this.processNext();
   }

@@ -82,6 +82,9 @@ fallback there; the browser HEIC decode needs real Safari. Each converted still 
 decode/encode times. For an A/B check on one device, set
 `localStorage['picforge.heicDecoder'] = 'libheif'` to skip the browser decoder.
 
+Each video logs `[PicForge] Live Photo video` at debug level with the engine,
+latency mode, any stall and the time; failed jobs log a warning with the error.
+
 WebCodecs availability depends on the actual browser, hardware and source codecs.
 Check the path that ran and its fallback rather than inferring hardware acceleration
 from an API name. Playback, audio/video sync and colour on real Safari/iPhone and

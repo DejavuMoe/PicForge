@@ -226,6 +226,7 @@ export default function MotionWorkspace({
             : error instanceof Error
               ? error.message
               : 'engineFailed';
+          if (!active.signal.aborted) console.warn(`[PicForge] ${item.name} failed`, error);
           setJobs((previous) => ({
             ...previous,
             [item.id]: { status: 'error', progress: 0, error: key },

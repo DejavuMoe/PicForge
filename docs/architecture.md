@@ -105,7 +105,15 @@ other half and produces one terminal outcome.
   failure use FFmpeg from the original File via WORKERFS. The clean-aperture adapter
   remains required for the pinned FFmpeg core.
 - WebCodecs uses one dedicated Worker per conversion. Two runtime failures disable
-  it for the page session; unsupported input does not. Cancellation rejects without
+  it for the page session; unsupported input does not. The Worker treats 5 s
+  without decoder/encoder output while waiting on it (including `flush()`) as a
+  stall; a stalled `quality`-mode encoder retries once in `realtime` mode, which
+  the session then keeps. This works around macOS 27 Safari, whose software H.264
+  encoder holds up to 16 frames while WebKit passes it only 4
+  ([WebKit PR 74602](https://github.com/WebKit/WebKit/pull/74602), bug 324827);
+  keep it until shipping Safari includes the fix and a device check passes without
+  it. The page watchdog fires after 30 s without Worker messages, excluding the
+  FFmpeg audio helper, which is aborted when the attempt ends. Cancellation rejects without
   fallback. The video paths must preserve frame count, PTS, geometry and colour
   semantics; their encoded pixels and output sizes need not be identical.
 

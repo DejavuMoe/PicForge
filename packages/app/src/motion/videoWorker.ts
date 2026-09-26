@@ -19,15 +19,27 @@ import {
 import { muxMp4, type MuxAudioTrack, type MuxSample } from './mp4Mux';
 import { avcCodecs, colourCodes, colourSpaceInit, planFrames, transformFrame } from './videoFrames';
 
+/** Encoder latency mode; `realtime` is the session's fallback after a stalled `quality` run. */
+export type VideoLatency = 'quality' | 'realtime';
+
 export type VideoWorkerRequest =
-  { type: 'start'; video: File; settings: MotionSettings } | { type: 'audio'; m4a: ArrayBuffer };
+  | { type: 'start'; video: File; settings: MotionSettings; latency: VideoLatency }
+  | { type: 'audio'; m4a: ArrayBuffer };
 
 export type AudioMode = 'none' | 'copy' | 'ffmpeg';
 
 export type VideoWorkerResponse =
   | { type: 'needAudio' }
   | { type: 'progress'; value: number }
-  | { type: 'done'; mp4: Blob; codec: string; audio: AudioMode }
+  | {
+      type: 'done';
+      mp4: Blob;
+      codec: string;
+      audio: AudioMode;
+      latency: VideoLatency;
+      /** Why the requested latency mode was abandoned for `realtime`. */
+      stalled?: string;
+    }
   | { type: 'unsupported'; reason: string }
   | { type: 'error'; message: string };
 
@@ -40,8 +52,22 @@ const BITS_PER_PIXEL: Record<MotionSettings['preset'], number> = {
 const MAX_READ_BYTES = 16 * 1024 * 1024;
 /** Frames and chunks in flight; hardware decoders stall when outputs are not closed. */
 const QUEUE_LIMIT = 4;
+/**
+ * No decoder or encoder output for this long while waiting on it is a stall. The
+ * macOS 27 Safari software H.264 encoder holds up to 16 frames in `quality` mode
+ * but WebKit passes it only 4, so neither side ever moves (WebKit bug 324827).
+ */
+const STALL_MS = 5_000;
 
 class Unsupported extends Error {}
+class Stalled extends Error {
+  constructor(
+    readonly stage: 'decoder' | 'encoder',
+    detail: string,
+  ) {
+    super(`${stage} stalled (${detail})`);
+  }
+}
 const unsupported = (reason: string): never => {
   throw new Unsupported(reason);
 };
@@ -58,7 +84,7 @@ self.onmessage = async ({ data }: MessageEvent<VideoWorkerRequest>) => {
     return;
   }
   try {
-    const result = await convert(data.video, data.settings);
+    const result = await convert(data.video, data.settings, data.latency);
     post({ type: 'done', ...result });
   } catch (error) {
     if (error instanceof Unsupported) post({ type: 'unsupported', reason: error.message });
@@ -117,7 +143,7 @@ async function copyAac(source: Blob, track: MovieTrack): Promise<MuxAudioTrack> 
   };
 }
 
-async function convert(file: File, settings: MotionSettings) {
+async function convert(file: File, settings: MotionSettings, latency: VideoLatency) {
   if (
     typeof VideoDecoder !== 'function' ||
     typeof VideoEncoder !== 'function' ||
@@ -130,8 +156,9 @@ async function convert(file: File, settings: MotionSettings) {
   if (!moov) unsupported('noMovie');
   const movie = parseMovie(moov!);
   // FFmpeg maps the first video stream; auxiliary video comes after the main track.
-  const track = movie.tracks.find((entry) => entry.handler === 'vide' || entry.handler === 'auxv');
-  if (!track || track.handler !== 'vide') return unsupported('noVideo');
+  const first = movie.tracks.find((entry) => entry.handler === 'vide' || entry.handler === 'auxv');
+  if (!first || first.handler !== 'vide') return unsupported('noVideo');
+  const track: MovieTrack = first;
   const info = videoTrackInfo(track);
   if (info.bitDepth !== 8) unsupported('bitDepth');
   if (info.colour && [16, 18].includes(info.colour.transfer)) unsupported('hdr');
@@ -167,25 +194,25 @@ async function convert(file: File, settings: MotionSettings) {
   const bitrate = Math.round(
     plan.width * plan.height * framerate * BITS_PER_PIXEL[settings.preset],
   );
-  let encoderConfig: VideoEncoderConfig | undefined;
-  for (const codec of avcCodecs(plan.width, plan.height)) {
-    const config: VideoEncoderConfig = {
-      codec,
-      width: plan.width,
-      height: plan.height,
-      bitrate,
-      framerate,
-      bitrateMode: 'variable',
-      latencyMode: 'quality',
-      hardwareAcceleration: 'no-preference',
-      avc: { format: 'avc' },
-    };
-    const support = await VideoEncoder.isConfigSupported(config).catch(() => undefined);
-    if (support?.supported) {
-      encoderConfig = config;
-      break;
+  const findEncoder = async (latencyMode: VideoLatency) => {
+    for (const codec of avcCodecs(plan.width, plan.height)) {
+      const config: VideoEncoderConfig = {
+        codec,
+        width: plan.width,
+        height: plan.height,
+        bitrate,
+        framerate,
+        bitrateMode: 'variable',
+        latencyMode,
+        hardwareAcceleration: 'no-preference',
+        avc: { format: 'avc' },
+      };
+      const support = await VideoEncoder.isConfigSupported(config).catch(() => undefined);
+      if (support?.supported) return config;
     }
-  }
+    return undefined;
+  };
+  const encoderConfig = await findEncoder(latency);
   if (!encoderConfig) return unsupported('encoder');
 
   // AAC is copied. Anything else (iPhone PCM) is encoded by the FFmpeg path's own AAC
@@ -215,124 +242,23 @@ async function convert(file: File, settings: MotionSettings) {
   pendingAudio.catch(() => undefined);
 
   const data = await readSamples(file, table);
-  let failure: unknown;
-  const frames: VideoFrame[] = [];
-  const chunks: MuxSample[] = [];
-  let avcC: Uint8Array | undefined;
-  const decoder = new VideoDecoder({
-    output: (frame) => frames.push(frame),
-    error: (error) => (failure ??= error),
-  });
-  const encoder = new VideoEncoder({
-    output: (chunk, metadata) => {
-      const config = metadata?.decoderConfig?.description;
-      if (config && !avcC) avcC = copyDescription(config);
-      const pts = ptsByMicros.get(chunk.timestamp);
-      if (pts === undefined) failure ??= new Error('timestamp');
-      const bytes = new Uint8Array(chunk.byteLength);
-      chunk.copyTo(bytes);
-      chunks.push({ data: bytes, pts: pts ?? 0, sync: chunk.type === 'key' });
-    },
-    error: (error) => (failure ??= error),
-  });
-  let output: Uint8Array | undefined;
-  let codes: ReturnType<typeof colourCodes>;
-  let tagFrames = true;
+  let used = latency;
+  let stalled: string | undefined;
+  let result: Awaited<ReturnType<typeof transcode>>;
   try {
-    decoder.configure(decoderConfig);
-    encoder.configure(encoderConfig);
-    let fed = 0;
-    let processed = 0;
-    let flushed = false;
-    let lastKey = -Infinity;
-    let flushing: Promise<void> | undefined;
-    while (processed < table.count) {
-      if (failure) throw failure;
-      const frame = frames.shift();
-      if (frame) {
-        try {
-          if (frame.format !== 'I420' && frame.format !== 'NV12') throw new Error('frameFormat');
-          if (
-            frame.visibleRect?.width !== track.width ||
-            frame.visibleRect?.height !== track.height
-          )
-            throw new Error('frameSize');
-          const pts = ptsByMicros.get(frame.timestamp);
-          if (pts === undefined) throw new Error('timestamp');
-          const bytes = new Uint8Array(frame.allocationSize());
-          const layout = await frame.copyTo(bytes);
-          codes ??= colourCodes(info.colour, frame.colorSpace?.toJSON());
-          output = transformFrame(
-            plan,
-            {
-              format: frame.format,
-              data: bytes,
-              layout,
-              fullRange: frame.colorSpace?.fullRange ?? info.colour?.fullRange ?? false,
-            },
-            output,
-          );
-          const init: VideoFrameBufferInit = {
-            format: 'I420',
-            codedWidth: plan.width,
-            codedHeight: plan.height,
-            timestamp: frame.timestamp,
-            ...(frame.duration ? { duration: frame.duration } : {}),
-          };
-          let encoded: VideoFrame | undefined;
-          // Tagged frames let the encoder write matching VUI; the MP4 colr box is
-          // written either way. A runtime without a newer colour name rejects it.
-          if (codes && tagFrames)
-            try {
-              encoded = new VideoFrame(output, { ...init, colorSpace: colourSpaceInit(codes) });
-            } catch (error) {
-              if (!(error instanceof TypeError)) throw error;
-              tagFrames = false;
-            }
-          encoded ??= new VideoFrame(output, init);
-          const keyFrame = pts - lastKey >= track.timescale;
-          if (keyFrame) lastKey = pts;
-          encoder.encode(encoded, { keyFrame });
-          encoded.close();
-        } finally {
-          frame.close();
-        }
-        processed += 1;
-        post({ type: 'progress', value: processed / table.count });
-        while (encoder.encodeQueueSize > QUEUE_LIMIT && !failure) await tick();
-        continue;
-      }
-      if (fed < table.count) {
-        if (decoder.decodeQueueSize < QUEUE_LIMIT) {
-          decoder.decode(
-            new EncodedVideoChunk({
-              type: table.sync[fed] ? 'key' : 'delta',
-              timestamp: micros(table.pts[fed]),
-              duration: micros(table.durations[fed]),
-              data: data[fed],
-            }),
-          );
-          fed += 1;
-          continue;
-        }
-      } else if (!flushing) {
-        flushing = decoder.flush().then(
-          () => void (flushed = true),
-          (error) => void (failure ??= error),
-        );
-        continue;
-      } else if (flushed && !frames.length) throw new Error('frameCount');
-      await tick();
-    }
-    await flushing;
-    await encoder.flush();
-    if (failure) throw failure;
-  } finally {
-    for (const frame of frames) frame.close();
-    if (decoder.state !== 'closed') decoder.close();
-    if (encoder.state !== 'closed') encoder.close();
+    result = await transcode(encoderConfig);
+  } catch (error) {
+    // A stalled quality-mode encoder retries once in realtime mode, which the
+    // caller then keeps for the session. Dropped frames still fail the frame count.
+    if (!(error instanceof Stalled) || error.stage !== 'encoder' || latency === 'realtime')
+      throw error;
+    const realtime = await findEncoder('realtime');
+    if (!realtime) throw error;
+    stalled = error.message;
+    used = 'realtime';
+    result = await transcode(realtime);
   }
-  if (chunks.length !== table.count || !avcC) throw new Error('frameCount');
+  const { chunks, avcC, codes, codec } = result;
   const audio = await pendingAudio;
   const mp4 = muxMp4(
     {
@@ -350,7 +276,164 @@ async function convert(file: File, settings: MotionSettings) {
   // A Blob is passed to the page by reference, without another copy of the bytes.
   return {
     mp4: new Blob([mp4], { type: 'video/mp4' }),
-    codec: encoderConfig.codec,
+    codec,
     audio: audioMode,
+    latency: used,
+    ...(stalled ? { stalled } : {}),
   };
+
+  /** Decode, transform and encode every frame once with a fresh decoder/encoder pair. */
+  async function transcode(encoderConfig: VideoEncoderConfig) {
+    let failure: unknown;
+    let progressAt = performance.now();
+    const stats = { fed: 0, decoded: 0, encoded: 0 };
+    const stallCheck = (stage: 'decoder' | 'encoder') => {
+      if (performance.now() - progressAt > STALL_MS)
+        throw new Stalled(
+          stage,
+          `fed ${stats.fed}, decoded ${stats.decoded}, encoded ${stats.encoded}, queues ${decoder.decodeQueueSize}/${encoder.encodeQueueSize}`,
+        );
+    };
+    const frames: VideoFrame[] = [];
+    const chunks: MuxSample[] = [];
+    let avcC: Uint8Array | undefined;
+    const decoder = new VideoDecoder({
+      output: (frame) => {
+        stats.decoded += 1;
+        progressAt = performance.now();
+        frames.push(frame);
+      },
+      error: (error) => (failure ??= error),
+    });
+    const encoder = new VideoEncoder({
+      output: (chunk, metadata) => {
+        stats.encoded += 1;
+        progressAt = performance.now();
+        const config = metadata?.decoderConfig?.description;
+        if (config && !avcC) avcC = copyDescription(config);
+        const pts = ptsByMicros.get(chunk.timestamp);
+        if (pts === undefined) failure ??= new Error('timestamp');
+        const bytes = new Uint8Array(chunk.byteLength);
+        chunk.copyTo(bytes);
+        chunks.push({ data: bytes, pts: pts ?? 0, sync: chunk.type === 'key' });
+      },
+      error: (error) => (failure ??= error),
+    });
+    let output: Uint8Array | undefined;
+    let codes: ReturnType<typeof colourCodes>;
+    let tagFrames = true;
+    try {
+      decoder.configure(decoderConfig);
+      encoder.configure(encoderConfig);
+      let fed = 0;
+      let processed = 0;
+      let flushed = false;
+      let lastKey = -Infinity;
+      let flushing: Promise<void> | undefined;
+      while (processed < table.count) {
+        if (failure) throw failure;
+        const frame = frames.shift();
+        if (frame) {
+          try {
+            if (frame.format !== 'I420' && frame.format !== 'NV12') throw new Error('frameFormat');
+            if (
+              frame.visibleRect?.width !== track.width ||
+              frame.visibleRect?.height !== track.height
+            )
+              throw new Error('frameSize');
+            const pts = ptsByMicros.get(frame.timestamp);
+            if (pts === undefined) throw new Error('timestamp');
+            const bytes = new Uint8Array(frame.allocationSize());
+            const layout = await frame.copyTo(bytes);
+            codes ??= colourCodes(info.colour, frame.colorSpace?.toJSON());
+            output = transformFrame(
+              plan,
+              {
+                format: frame.format,
+                data: bytes,
+                layout,
+                fullRange: frame.colorSpace?.fullRange ?? info.colour?.fullRange ?? false,
+              },
+              output,
+            );
+            const init: VideoFrameBufferInit = {
+              format: 'I420',
+              codedWidth: plan.width,
+              codedHeight: plan.height,
+              timestamp: frame.timestamp,
+              ...(frame.duration ? { duration: frame.duration } : {}),
+            };
+            let encoded: VideoFrame | undefined;
+            // Tagged frames let the encoder write matching VUI; the MP4 colr box is
+            // written either way. A runtime without a newer colour name rejects it.
+            if (codes && tagFrames)
+              try {
+                encoded = new VideoFrame(output, { ...init, colorSpace: colourSpaceInit(codes) });
+              } catch (error) {
+                if (!(error instanceof TypeError)) throw error;
+                tagFrames = false;
+              }
+            encoded ??= new VideoFrame(output, init);
+            const keyFrame = pts - lastKey >= track.timescale;
+            if (keyFrame) lastKey = pts;
+            encoder.encode(encoded, { keyFrame });
+            encoded.close();
+          } finally {
+            frame.close();
+          }
+          processed += 1;
+          post({ type: 'progress', value: processed / table.count });
+          while (encoder.encodeQueueSize > QUEUE_LIMIT && !failure) {
+            stallCheck('encoder');
+            await tick();
+          }
+          continue;
+        }
+        if (fed < table.count) {
+          if (decoder.decodeQueueSize < QUEUE_LIMIT) {
+            decoder.decode(
+              new EncodedVideoChunk({
+                type: table.sync[fed] ? 'key' : 'delta',
+                timestamp: micros(table.pts[fed]),
+                duration: micros(table.durations[fed]),
+                data: data[fed],
+              }),
+            );
+            fed += 1;
+            stats.fed = fed;
+            continue;
+          }
+        } else if (!flushing) {
+          flushing = decoder.flush().then(
+            () => void (flushed = true),
+            (error) => void (failure ??= error),
+          );
+          continue;
+        } else if (flushed && !frames.length) throw new Error('frameCount');
+        stallCheck('decoder');
+        await tick();
+      }
+      await flushing;
+      // flush() itself never settles when the encoder holds frames it does not release.
+      let drained = false;
+      encoder.flush().then(
+        () => void (drained = true),
+        (error) => {
+          failure ??= error;
+          drained = true;
+        },
+      );
+      while (!drained) {
+        stallCheck('encoder');
+        await tick();
+      }
+      if (failure) throw failure;
+    } finally {
+      for (const frame of frames) frame.close();
+      if (decoder.state !== 'closed') decoder.close();
+      if (encoder.state !== 'closed') encoder.close();
+    }
+    if (chunks.length !== table.count || !avcC) throw new Error('frameCount');
+    return { chunks, avcC, codes, codec: encoderConfig.codec };
+  }
 }

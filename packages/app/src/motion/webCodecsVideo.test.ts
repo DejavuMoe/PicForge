@@ -30,8 +30,16 @@ class MockWorker {
 const video = new File([new Uint8Array(8)], 'IMG.MOV', { type: 'video/quicktime' });
 const run = (
   signal = new AbortController().signal,
-  helper = vi.fn(async () => new ArrayBuffer(4)),
+  helper = vi.fn(async (_signal: AbortSignal) => new ArrayBuffer(4)),
 ) => convertWithWebCodecs(video, defaultMotionSettings, signal, vi.fn(), helper);
+const done = (latency: 'quality' | 'realtime' = 'quality') =>
+  ({
+    type: 'done',
+    mp4: new Blob([new Uint8Array(1)]),
+    codec: 'avc1.4d0029',
+    audio: 'copy',
+    latency,
+  }) as const;
 
 describe('convertWithWebCodecs', () => {
   beforeEach(() => {
@@ -54,12 +62,14 @@ describe('convertWithWebCodecs', () => {
       type: 'start',
       video,
       settings: defaultMotionSettings,
+      latency: 'quality',
     });
     worker.reply({
       type: 'done',
       mp4: new Blob([new Uint8Array(3)]),
       codec: 'avc1.640032',
       audio: 'copy',
+      latency: 'quality',
     });
     const converted = await result;
     expect(converted).toMatchObject({ codec: 'avc1.640032', audio: 'copy' });
@@ -85,10 +95,15 @@ describe('convertWithWebCodecs', () => {
     expect(webCodecsVideoAvailable()).toBe(false);
   });
 
-  it('treats a stalled conversion as a runtime failure', async () => {
+  it('treats a silent Worker as a stalled runtime failure', async () => {
     vi.useFakeTimers();
     const result = run();
-    vi.advanceTimersByTime(120_000);
+    // Every message restarts the inactivity watchdog.
+    for (let frame = 1; frame <= 5; frame += 1) {
+      vi.advanceTimersByTime(20_000);
+      MockWorker.last.reply({ type: 'progress', value: frame / 10 });
+    }
+    vi.advanceTimersByTime(30_000);
     await expect(result).resolves.toBeUndefined();
     expect(MockWorker.last.terminated).toBe(true);
     const next = run();
@@ -119,8 +134,40 @@ describe('convertWithWebCodecs', () => {
       mp4: new Blob([new Uint8Array(1)]),
       codec: 'avc1.4d0029',
       audio: 'ffmpeg',
+      latency: 'quality',
     });
     await expect(result).resolves.toMatchObject({ audio: 'ffmpeg' });
+  });
+
+  it('pauses the watchdog for the audio helper and aborts it when the attempt fails', async () => {
+    vi.useFakeTimers();
+    let helperSignal: AbortSignal | undefined;
+    const helper = vi.fn((signal: AbortSignal) => {
+      helperSignal = signal;
+      return new Promise<ArrayBuffer>(() => undefined);
+    });
+    const result = run(undefined, helper);
+    const worker = MockWorker.last;
+    worker.reply({ type: 'needAudio' });
+    vi.advanceTimersByTime(120_000);
+    expect(worker.terminated).toBe(false);
+    worker.reply({ type: 'error', message: 'encoder stalled' });
+    await expect(result).resolves.toBeUndefined();
+    expect(helperSignal?.aborted).toBe(true);
+  });
+
+  it('keeps realtime mode for the session after a stalled quality encoder', async () => {
+    const first = run();
+    MockWorker.last.reply({ ...done('realtime'), stalled: 'encoder stalled (fed 8)' });
+    await expect(first).resolves.toMatchObject({
+      latency: 'realtime',
+      stalled: 'encoder stalled (fed 8)',
+    });
+    expect(webCodecsVideoAvailable()).toBe(true);
+    const second = run();
+    expect(MockWorker.last.messages[0].message).toMatchObject({ latency: 'realtime' });
+    MockWorker.last.reply(done('realtime'));
+    await second;
   });
 
   it('falls back when the audio helper fails', async () => {

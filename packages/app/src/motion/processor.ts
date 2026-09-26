@@ -189,18 +189,35 @@ async function convertVideo(
   // Budget before the lane: the lane holder must never wait for memory. The FFmpeg
   // estimate also covers the WebCodecs path, its audio helper and a fallback.
   const release = await getProcessingBudget().acquire(estimateVideoCost(video.size), signal);
+  const started = performance.now();
   try {
     if (webCodecsVideoAvailable()) {
-      const converted = await convertWithWebCodecs(video, settings, signal, progress, async () => {
-        const m4a = await runFFmpeg(
-          video,
-          async (input) => audioArguments(input),
-          'audio.m4a',
-          signal,
-        );
-        return m4a.buffer.slice(m4a.byteOffset, m4a.byteOffset + m4a.byteLength) as ArrayBuffer;
-      });
-      if (converted) return { video: converted.video, engine: 'webcodecs' };
+      const converted = await convertWithWebCodecs(
+        video,
+        settings,
+        signal,
+        progress,
+        async (helperSignal) => {
+          const m4a = await runFFmpeg(
+            video,
+            async (input) => audioArguments(input),
+            'audio.m4a',
+            helperSignal,
+          );
+          return m4a.buffer.slice(m4a.byteOffset, m4a.byteOffset + m4a.byteLength) as ArrayBuffer;
+        },
+      );
+      if (converted) {
+        console.debug('[PicForge] Live Photo video', {
+          engine: 'webcodecs',
+          codec: converted.codec,
+          audio: converted.audio,
+          latency: converted.latency,
+          ...(converted.stalled ? { stalled: converted.stalled } : {}),
+          ms: Math.round(performance.now() - started),
+        });
+        return { video: converted.video, engine: 'webcodecs' };
+      }
       signal.throwIfAborted();
     }
     const data = await runFFmpeg(
@@ -213,6 +230,10 @@ async function convertVideo(
       signal,
       progress,
     );
+    console.debug('[PicForge] Live Photo video', {
+      engine: 'ffmpeg',
+      ms: Math.round(performance.now() - started),
+    });
     return {
       video: new Blob([data as Uint8Array<ArrayBuffer>], { type: 'video/mp4' }),
       engine: 'ffmpeg',

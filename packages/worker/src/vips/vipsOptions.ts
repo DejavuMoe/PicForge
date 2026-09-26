@@ -1,5 +1,5 @@
 import type Vips from 'wasm-vips';
-import { DEFAULT_OPTIONS, type CompressSettings } from '@pic-forge/codecs';
+import { DEFAULT_OPTIONS, sanitizeAdvancedOptions, type CompressSettings } from '@pic-forge/codecs';
 import { buildEncoderOptions } from '../encoderOptions';
 
 export type VipsEncoderOptions =
@@ -36,7 +36,7 @@ export function mapVipsEncoderOptions(settings: CompressSettings): VipsEncoderOp
   if (format !== 'mozjpeg' && format !== 'webp') return null;
   const defaults = DEFAULT_OPTIONS[format] as Record<string, unknown>;
   const mapped = format === 'mozjpeg' ? jpegKeys : webpKeys;
-  for (const [key, value] of Object.entries(settings.advanced ?? {})) {
+  for (const [key, value] of Object.entries(sanitizeAdvancedOptions(format, settings.advanced))) {
     if (!mapped.has(key) && (!(key in defaults) || value !== defaults[key])) return null;
   }
   const options = buildEncoderOptions(settings);

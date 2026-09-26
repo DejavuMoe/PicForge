@@ -16,7 +16,7 @@ Compress images, split Android Motion Photos, and convert iOS Live Photos. An op
 | --- | --- | --- |
 | **Image compression** | Batch compression, format conversion and resizing. Accepts JPEG, PNG, WebP, AVIF, GIF, BMP and SVG, subject to browser decoding support. | JPEG, WebP, PNG or AVIF |
 | **Android Motion Photos** | Splits a JPG containing an appended video into its original photo and video, without re-encoding. | Original JPG + MP4 |
-| **iOS Live Photos** | Pairs HEIC/HEIF and MOV by filename and converts them for sharing. Individual photos or videos also work; JPEG and MP4 inputs are accepted too. | JPEG + H.264 MP4, with optional AAC audio |
+| **iOS Live Photos** | Pairs HEIC/HEIF and MOV using Apple's Live Photo identifier, or by filename when a file lacks it, and converts them for sharing. Individual photos or videos also work; JPEG and MP4 inputs are accepted too. | JPEG + H.264 MP4, with optional AAC audio |
 
 ### Image compression
 
@@ -56,13 +56,13 @@ Everything runs locally. No account, media upload, processing server or API key 
 | --- | --- |
 | Images | Browser decoding and Canvas resizing, then a Web Worker encodes with `@jsquash/*`. |
 | Android | Validate the embedded MP4 structure, then split the original file into JPG and MP4 byte ranges. |
-| iOS | Group matching filenames. libheif decodes HEIC and MozJPEG encodes JPEG; FFmpeg converts video to H.264/AAC MP4. |
+| iOS | Pair by Apple's Live Photo identifier, otherwise by matching filenames. libheif decodes HEIC, colours are converted to sRGB and MozJPEG encodes JPEG; FFmpeg converts video to H.264/AAC MP4. |
 
 Results stay in browser memory until you download them. Switching tools, returning home and using Back/Forward keep your queues. **Reloading or closing the page clears files and results.**
 
 ## Before you start
 
-- **Live Photo pairing uses filenames**, not Apple's asset identifiers. Keep the originals: JPEG/MP4 exports do not preserve HEIC's HDR, metadata or auxiliary images as an archive.
+- **Live Photo pairing checks Apple's identifier when both files contain it**; files without it are paired by filename only. Keep the originals: JPEG/MP4 exports are converted to sRGB and do not preserve HEIC's HDR, metadata or auxiliary images as an archive.
 - **Browser support varies.** Image decoding and video preview depend on the browser and codec. An extracted video can still be downloaded if it cannot play in the preview. Large files may hit memory or size limits.
 - **Offline use needs a first load.** The app can work from its cache; conversion engines must also have loaded and cached successfully. Your first conversion may need a connection.
 

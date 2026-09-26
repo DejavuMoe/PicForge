@@ -2,6 +2,7 @@ import {
   DEFAULT_MAX_PIXELS,
   MAX_CANVAS_DIMENSION,
   PERMANENT_IMAGE_ERROR_PREFIX,
+  getRecommendedWorkerPoolSize,
   inspectAnimation,
   resolveResizeGeometry,
   validateResizeOptions,
@@ -30,12 +31,18 @@ interface DeviceHints {
 const BYTES_PER_PIXEL = 4;
 const LOW_RESOURCE_MAX_PIXELS = 24_000_000;
 
+/**
+ * Maximum compression tasks in flight at once. On capable devices this matches
+ * the encoder Worker pool so every Worker can be used; the shared memory budget
+ * (resourceBudget.ts), not this count, keeps large images from running together.
+ * Low-resource devices keep one task at a time.
+ */
 export function getMainPipelineConcurrency(device: DeviceHints = getNavigatorHints()): number {
   const cores = device.hardwareConcurrency ?? 4;
   const memory = device.deviceMemory ?? 8;
 
   if (cores <= 4 || memory <= 4) return 1;
-  return 2;
+  return getRecommendedWorkerPoolSize(cores);
 }
 
 export function getImageSafetyLimits(device: DeviceHints = getNavigatorHints()): ImageSafetyLimits {
@@ -100,10 +107,57 @@ export function validateImageTarget(
   });
 }
 
+/**
+ * How an error should be handled:
+ * - input: the source itself is unusable or out of bounds; never retried automatically.
+ * - settings: caused by the current settings; reprocessed when the settings change.
+ * - timeout: exceeded a watchdog; not repeated automatically, reprocessed when settings
+ *   change (a smaller target or faster format may fit) and on explicit retry.
+ * - runtime: engine/infrastructure failure; retried a bounded number of times.
+ */
+export type ImageErrorClass = 'input' | 'settings' | 'runtime' | 'timeout';
+
+const SETTINGS_LIMIT_DETAILS = [
+  ': target ',
+  ': could not determine target dimensions',
+  ': invalid resize ',
+  ': unsupported resize ',
+];
+
+/**
+ * Classify an engine or preflight error message. `phase` distinguishes an animation
+ * limit found while reading the source (input) from one caused by the requested
+ * output size during processing (settings).
+ */
+export function classifyImageError(
+  error?: string,
+  phase: 'preflight' | 'process' = 'process',
+): ImageErrorClass {
+  if (!error) return 'runtime';
+  if (error.startsWith(PERMANENT_IMAGE_ERROR_PREFIX)) {
+    const detail = error.slice(PERMANENT_IMAGE_ERROR_PREFIX.length);
+    return SETTINGS_LIMIT_DETAILS.some((prefix) => detail.startsWith(prefix)) ? 'settings' : 'input';
+  }
+  if (error.startsWith('Animation: ')) {
+    const code = error.slice('Animation: '.length);
+    if (code === 'format' || code === 'settings') return 'settings';
+    if (code === 'limit') return phase === 'preflight' ? 'input' : 'settings';
+    if (code === 'timeout') return 'timeout';
+    if (code === 'engine') return 'runtime';
+    return 'input';
+  }
+  if (/^Task timed out after /.test(error)) return 'timeout';
+  return 'runtime';
+}
+
+/** Error classes that a later settings change may resolve. */
+export function isSettingsRecoverable(errorClass: ImageErrorClass): boolean {
+  return errorClass === 'settings' || errorClass === 'timeout';
+}
+
+/** Whether an error must not be retried automatically. */
 export function isPermanentImageError(error?: string): boolean {
-  return (
-    !!error && (error.startsWith(PERMANENT_IMAGE_ERROR_PREFIX) || error.startsWith('Animation: '))
-  );
+  return !!error && classifyImageError(error) !== 'runtime';
 }
 
 export async function readImageDimensions(file: File): Promise<ImageDimensions> {
@@ -122,6 +176,10 @@ export async function readImageDimensions(file: File): Promise<ImageDimensions> 
   }
 }
 
+/**
+ * Fixed-count concurrency, used by the performance harness to replay batches.
+ * The app's controller additionally applies the shared memory budget.
+ */
 export async function runWithConcurrency<T>(
   items: T[],
   limit: number,

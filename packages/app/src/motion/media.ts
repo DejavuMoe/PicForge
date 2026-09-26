@@ -1,3 +1,5 @@
+import { getRelativePath } from '../utils/fileUtils';
+
 export interface MediaItem {
   id: string;
   name: string;
@@ -23,7 +25,18 @@ export const defaultMotionSettings: MotionSettings = {
   audio: true,
 };
 
-export function groupMedia(files: File[], android: boolean): MediaItem[] {
+/**
+ * Group Live Photo halves. Files pair by folder-relative basename; when Apple's
+ * content identifier is known for both halves it is checked, and a lone still
+ * and a lone video that share one identifier are paired even if renamed.
+ * Unsupported files (for example .AAE edit sidecars) are listed on their own
+ * and never block the pair they sit next to.
+ */
+export function groupMedia(
+  files: File[],
+  android: boolean,
+  identifiers?: ReadonlyMap<File, string | undefined>,
+): MediaItem[] {
   if (android)
     return files.map((image, i) => ({
       id: String(i),
@@ -33,21 +46,52 @@ export function groupMedia(files: File[], android: boolean): MediaItem[] {
     }));
   const groups = new Map<string, MediaItem>();
   for (const file of files) {
-    const path = file.webkitRelativePath || file.name;
+    const path = getRelativePath(file);
     const name = file.name.replace(/\.[^.]+$/, '');
     const key = path.replace(/\.[^.]+$/, '').toLowerCase();
-    const item = groups.get(key) ?? { id: key, name };
     const slot = /\.(heic|heif|jpe?g)$/i.test(file.name)
       ? 'image'
       : /\.(mov|mp4)$/i.test(file.name)
         ? 'video'
         : null;
-    if (!slot) item.issue = 'unsupported';
-    else if (item[slot]) item.issue = 'ambiguous';
+    if (!slot) {
+      const id = `${path.toLowerCase()}\u0000unsupported`;
+      if (!groups.has(id)) groups.set(id, { id, name: file.name, issue: 'unsupported' });
+      continue;
+    }
+    const item = groups.get(key) ?? { id: key, name };
+    if (item[slot]) item.issue = 'ambiguous';
     else item[slot] = file;
     groups.set(key, item);
   }
-  return [...groups.values()];
+  const items = [...groups.values()];
+  if (!identifiers) return items;
+
+  const idOf = (file?: File) => (file ? identifiers.get(file) : undefined);
+  for (const item of items) {
+    const [image, video] = [idOf(item.image), idOf(item.video)];
+    if (!item.issue && image && video && image !== video) item.issue = 'mismatch';
+  }
+  // Pair renamed halves only when exactly one lone still and one lone video share an identifier.
+  const lone = (slot: 'image' | 'video') => {
+    const byId = new Map<string, MediaItem[]>();
+    for (const item of items) {
+      const other = slot === 'image' ? item.video : item.image;
+      const id = idOf(item[slot]);
+      if (item.issue || other || !id) continue;
+      byId.set(id, [...(byId.get(id) ?? []), item]);
+    }
+    return byId;
+  };
+  const [stills, videos] = [lone('image'), lone('video')];
+  const merged = new Set<MediaItem>();
+  for (const [id, [still, ...extraStills]] of stills) {
+    const [video, ...extraVideos] = videos.get(id) ?? [];
+    if (!video || extraStills.length || extraVideos.length) continue;
+    still.video = video.video;
+    merged.add(video);
+  }
+  return items.filter((item) => !merged.has(item));
 }
 
 // MotionFlow's binary split, with full top-level box validation before accepting ftyp.
@@ -105,13 +149,17 @@ export function splitMotionPhoto(buffer: ArrayBuffer, source?: Blob): MediaOutpu
   throw new Error('invalidMotion');
 }
 
-export function videoArguments(settings: MotionSettings, aperture?: string[]): string[] {
+export function videoArguments(
+  settings: MotionSettings,
+  aperture?: string[],
+  input = 'input.mov',
+): string[] {
   const edge = settings.preset === 'compact' ? 1280 : 1920;
   const crf = { balanced: 23, quality: 20, compact: 26 }[settings.preset];
   const scale = `scale=w='min(iw,${edge})':h='min(ih,${edge})':force_original_aspect_ratio=decrease:force_divisible_by=2`;
   return [
     '-i',
-    'input.mov',
+    input,
     '-map',
     '0:v:0',
     ...(settings.audio ? ['-map', '0:a:0?'] : ['-an']),

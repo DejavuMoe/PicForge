@@ -16,10 +16,11 @@ import {
   FiTrash2,
 } from 'react-icons/fi';
 import { saveAs } from 'file-saver';
-import { formatFileSize } from '../utils/fileUtils';
+import { collectDroppedFiles, formatFileSize } from '../utils/fileUtils';
 import { getRangeProgressStyle } from '../utils/rangeProgress';
 import { defaultMotionSettings, groupMedia, type MediaOutput, type MotionSettings } from './media';
 import { processMedia } from './processor';
+import { readLivePhotoIdentifier } from './appleIdentifier';
 
 interface Job {
   status: 'processing' | 'done' | 'error';
@@ -144,9 +145,17 @@ export default function MotionWorkspace({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<'list' | 'preview'>('list');
   const [confirmReset, setConfirmReset] = useState(false);
+  // Apple content identifiers read from added iOS files; pairing waits for them.
+  const [identifiers, setIdentifiers] = useState<ReadonlyMap<File, string | undefined>>(
+    () => new Map(),
+  );
+  const [scanning, setScanning] = useState(0);
   const controller = useRef<AbortController | null>(null);
   const input = useRef<HTMLInputElement>(null);
-  const items = groupMedia(files, android);
+  // Folder drops resolve asynchronously; check limits against the latest queue.
+  const filesRef = useRef(files);
+  filesRef.current = files;
+  const items = groupMedia(files, android, android ? undefined : identifiers);
   const done = Object.values(jobs).filter((job) => job.status === 'done').length;
   useEffect(() => () => controller.current?.abort(), []);
 
@@ -158,21 +167,36 @@ export default function MotionWorkspace({
   const batchMegabytes = android ? 1024 : 256;
   const add = (incoming: File[]) => {
     if (controller.current || exporting || done > 0) return;
+    const queued = filesRef.current;
     if (
-      files.length + incoming.length > 100 ||
-      [...files, ...incoming].reduce((sum, file) => sum + file.size, 0) >
+      queued.length + incoming.length > 100 ||
+      [...queued, ...incoming].reduce((sum, file) => sum + file.size, 0) >
         batchMegabytes * 1024 * 1024
     ) {
       setNotice('batchLimit');
       return;
     }
+    filesRef.current = [...queued, ...incoming];
     setFiles((previous) => [...previous, ...incoming]);
     setMobileView('list');
     setJobs({});
     setNotice('');
+    if (android) return;
+    setScanning((count) => count + 1);
+    void Promise.all(
+      incoming.map(async (file) => [file, await readLivePhotoIdentifier(file)] as const),
+    )
+      .then((entries) =>
+        setIdentifiers((previous) => {
+          const next = new Map(previous);
+          for (const [file, identifier] of entries) next.set(file, identifier);
+          return next;
+        }),
+      )
+      .finally(() => setScanning((count) => count - 1));
   };
   const run = async () => {
-    if (controller.current) return;
+    if (controller.current || scanning > 0) return;
     const active = new AbortController();
     controller.current = active;
     setBusy(true);
@@ -261,6 +285,7 @@ export default function MotionWorkspace({
     setMobileView('list');
     setConfirmReset(false);
     setJobs({});
+    setIdentifiers(new Map());
     setNotice('');
   };
   const selected = items.find((item) => item.id === selectedId) ?? items[0];
@@ -354,7 +379,8 @@ export default function MotionWorkspace({
       onDrop={(event) => {
         event.preventDefault();
         setDragging(false);
-        add(Array.from(event.dataTransfer.files));
+        // Entries are read synchronously here; folders are expanded afterwards.
+        void collectDroppedFiles(event.dataTransfer).then(add);
       }}
     >
       <div
@@ -431,7 +457,7 @@ export default function MotionWorkspace({
             <progress max={100} value={selectedJob.progress} aria-label={t('motion.processing')} />
           )}
           {!busy && !selected?.issue && selectedJob?.error && (
-            <button className="pf-button" onClick={run}>
+            <button className="pf-button" disabled={scanning > 0} onClick={run}>
               {t('workbench.retryUnfinished')}
             </button>
           )}
@@ -628,7 +654,7 @@ export default function MotionWorkspace({
                 {pending > 0 && (
                   <button
                     className={`pf-button${hasResults ? '' : ' is-primary'}`}
-                    disabled={exporting}
+                    disabled={exporting || scanning > 0}
                     onClick={run}
                   >
                     {t(android ? 'workbench.extractFiles' : 'motion.start')}

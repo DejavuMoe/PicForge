@@ -83,39 +83,58 @@ export function revokePreviewUrl(url: string): void {
   URL.revokeObjectURL(url);
 }
 
-/**
- * Extract all image files from a FileList, including from dropped folders.
- */
-export async function extractFiles(fileList: FileList | File[]): Promise<File[]> {
-  const files: File[] = [];
-  const entries: FileSystemEntry[] = [];
+/** Relative paths of files read from dropped folders (File.webkitRelativePath stays empty). */
+const droppedPaths = new WeakMap<File, string>();
 
-  for (const file of Array.from(fileList)) {
-    // Check if this file has a webkitGetAsEntry (drag-and-drop)
-    const entry = (file as { _entry?: FileSystemEntry })._entry;
-    if (entry) {
-      entries.push(entry);
-    } else if (isSupportedImage(file)) {
-      files.push(file);
+/** Folder-relative path of a picked or dropped file, falling back to its name. */
+export function getRelativePath(file: File): string {
+  return file.webkitRelativePath || droppedPaths.get(file) || file.name;
+}
+
+/** Upper bound on files collected from one drop, so a huge folder cannot stall the page. */
+const MAX_DROPPED_FILES = 10_000;
+
+/**
+ * Collect every file of a drop, descending into dropped folders. Entries must be
+ * taken from `dataTransfer.items` synchronously, during the drop event itself; the
+ * returned promise then reads folders. Callers filter by type.
+ */
+export function collectDroppedFiles(dataTransfer: DataTransfer): Promise<File[]> {
+  const entries: FileSystemEntry[] = [];
+  const direct: File[] = [];
+  for (const item of Array.from(dataTransfer.items ?? [])) {
+    if (item.kind !== 'file') continue;
+    const entry = item.webkitGetAsEntry?.();
+    if (entry) entries.push(entry);
+    else {
+      const file = item.getAsFile();
+      if (file) direct.push(file);
     }
   }
-
-  // Process folder entries recursively
-  for (const entry of entries) {
-    const entryFiles = await readEntry(entry);
-    files.push(...entryFiles);
+  if (entries.length === 0 && direct.length === 0) {
+    return Promise.resolve(Array.from(dataTransfer.files ?? []));
   }
-
-  return files;
+  return (async () => {
+    const files = [...direct];
+    for (const entry of entries) {
+      if (files.length >= MAX_DROPPED_FILES) break;
+      // An unreadable entry (permissions, vanished file) must not discard the rest.
+      files.push(...(await readEntry(entry, MAX_DROPPED_FILES - files.length).catch(() => [])));
+    }
+    return files.slice(0, MAX_DROPPED_FILES);
+  })();
 }
 
 /**
  * Recursively read files from a FileSystemEntry.
  */
-async function readEntry(entry: FileSystemEntry): Promise<File[]> {
+async function readEntry(entry: FileSystemEntry, limit: number): Promise<File[]> {
   if (entry.isFile) {
     const file = await readFileEntry(entry as FileSystemFileEntry);
-    return file && isSupportedImage(file) ? [file] : [];
+    if (!file) return [];
+    // fullPath is "/folder/name"; keep it relative like webkitRelativePath.
+    if (entry.fullPath.includes('/', 1)) droppedPaths.set(file, entry.fullPath.replace(/^\//, ''));
+    return [file];
   }
 
   if (entry.isDirectory) {
@@ -123,8 +142,8 @@ async function readEntry(entry: FileSystemEntry): Promise<File[]> {
     const entries = await readAllEntries(dirReader);
     const files: File[] = [];
     for (const childEntry of entries) {
-      const childFiles = await readEntry(childEntry);
-      files.push(...childFiles);
+      if (files.length >= limit) break;
+      files.push(...(await readEntry(childEntry, limit - files.length).catch(() => [])));
     }
     return files;
   }

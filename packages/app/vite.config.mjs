@@ -17,6 +17,29 @@ function isReactVendor(id) {
   );
 }
 
+/**
+ * Production Content Security Policy. Media never leaves the device, and this
+ * makes the browser enforce that: fetch/XHR/WebSocket/beacons, images, media,
+ * fonts, styles, frames and forms may only use this origin (plus local blob:/data:
+ * previews). script-src is left open for broad WebAssembly compatibility:
+ * browsers without 'wasm-unsafe-eval' would otherwise refuse to compile codecs.
+ * Injected only into built HTML because the dev server relies on inline scripts.
+ */
+export const CONTENT_SECURITY_POLICY = [
+  // blob:/data: are local object URLs, never network destinations.
+  "connect-src 'self' blob: data:",
+  "img-src 'self' blob: data:",
+  "media-src 'self' blob:",
+  "font-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+
 const isolationHeaders = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Embedder-Policy': 'require-corp',
@@ -45,6 +68,20 @@ export default defineConfig({
       },
       configurePreviewServer(server) {
         preserveIsolationHeaders(server, server.config.preview.headers);
+      },
+    },
+    {
+      name: 'picforge-content-security-policy',
+      apply: 'build',
+      transformIndexHtml: {
+        order: 'pre',
+        handler: () => [
+          {
+            tag: 'meta',
+            attrs: { 'http-equiv': 'Content-Security-Policy', content: CONTENT_SECURITY_POLICY },
+            injectTo: 'head-prepend',
+          },
+        ],
       },
     },
     {

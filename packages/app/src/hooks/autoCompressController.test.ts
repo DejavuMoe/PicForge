@@ -9,7 +9,8 @@ import {
   type AutoCompressDeps as ControllerDeps,
 } from './autoCompressController';
 import { setPoolForTests, getPool as defaultGetPool } from './processingPool';
-import { PERMANENT_IMAGE_ERROR_PREFIX } from '../utils/processingGuards';
+import { PERMANENT_IMAGE_ERROR_PREFIX, isPermanentImageError } from '../utils/processingGuards';
+import { ResourceBudget } from '../utils/resourceBudget';
 
 type AutoCompressDeps = ControllerDeps & CompatImageEngineDeps;
 
@@ -820,5 +821,199 @@ describe('auto-compress settings invalidation and abort', () => {
     pool.complete(id);
     await retryRun;
     expect(useFileStore.getState().files[0].status).toBe('done');
+  });
+});
+
+describe('auto-compress budget, priority and error classes', () => {
+  let pool: ControllablePool;
+
+  function createController(overrides: Partial<AutoCompressDeps> = {}) {
+    return createAutoCompressController({
+      getPool: () => pool as unknown as WorkerPool,
+      decodeAndResizeImage: async () => pixels(),
+      readImageDimensions: async () => ({ width: 2, height: 2 }),
+      validateImageDimensions: () => null,
+      getMainPipelineConcurrency: () => 1,
+      debounceMs: 0,
+      isPermanentImageError: () => false,
+      ...overrides,
+    });
+  }
+
+  function addFiles(...names: string[]) {
+    useFileStore
+      .getState()
+      .addFiles(names.map((name) => new File([new ArrayBuffer(32)], name, { type: 'image/jpeg' })));
+    return useFileStore.getState().files.map((file) => file.id);
+  }
+
+  beforeEach(() => {
+    uuidCounter = 0;
+    pool = new ControllablePool();
+    setPoolForTests(pool as unknown as WorkerPool);
+    useFileStore.setState({ files: [] });
+    useSettingsStore.setState({ settings: { ...baseSettings, resize: { ...baseSettings.resize! } } });
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    setPoolForTests(null);
+  });
+
+  it('processes the selected file first', async () => {
+    const [a, b, c] = addFiles('a.jpg', 'b.jpg', 'c.jpg');
+    const controller = createController();
+    controller.setPriority(c);
+    const running = controller.run();
+    await waitUntil(() => pool.enqueued.length === 1, 'first enqueue');
+    expect(pool.enqueued[0].id).toBe(c);
+    pool.complete(c);
+    await waitUntil(() => pool.enqueued.length === 1 && pool.enqueued[0].id === a, 'a');
+    pool.complete(a);
+    await waitUntil(() => pool.enqueued.length === 1 && pool.enqueued[0].id === b, 'b');
+    pool.complete(b);
+    await running;
+  });
+
+  it('reprocesses the selected file after a settings change before the rest of the batch', async () => {
+    const [a, b, c] = addFiles('a.jpg', 'b.jpg', 'c.jpg');
+    const controller = createController();
+    controller.setPriority(a);
+    const running = controller.run();
+    await waitUntil(() => pool.enqueued[0]?.id === a, 'a first');
+    pool.complete(a);
+    await waitUntil(() => pool.enqueued[0]?.id === b, 'b');
+
+    useSettingsStore.getState().setQuality(40);
+    controller.schedule();
+    // b is invalidated by the change; the selected file a is taken again next.
+    await waitUntil(
+      () => pool.enqueued.some((task) => task.id === a && task.settings.quality === 40),
+      'selected re-entry',
+    );
+    pool.complete(a);
+    await waitUntil(() => pool.enqueued.some((task) => task.id === c), 'c');
+    pool.complete(c);
+    // The follow-up run picks up the invalidated b with the new quality.
+    await waitUntil(() => pool.enqueued.some((task) => task.id === b), 'b rerun');
+    expect(pool.enqueued.find((task) => task.id === b)?.settings.quality).toBe(40);
+    pool.complete(b);
+    await running;
+    expect(useFileStore.getState().files.every((file) => file.status === 'done')).toBe(true);
+    expect(useFileStore.getState().getFile(a)?.lastProcessedSettingsHash).toBe(
+      getSettingsHash(useSettingsStore.getState().settings),
+    );
+  });
+
+  it('runs small tasks together but holds a task that does not fit the budget', async () => {
+    const [a, b, c] = addFiles('a.jpg', 'b.jpg', 'c.jpg');
+    const budget = new ResourceBudget(100);
+    const costs: Record<string, number> = { 'a.jpg': 40, 'b.jpg': 40, 'c.jpg': 40 };
+    const controller = createController({
+      getMainPipelineConcurrency: () => 3,
+      getBudget: () => budget,
+      estimateTaskCost: async (file) => costs[file.name],
+    });
+    const running = controller.run();
+    await waitUntil(() => pool.enqueued.length === 2, 'two within budget');
+    expect(pool.enqueued.map((task) => task.id).sort()).toEqual([a, b].sort());
+    expect(budget.pendingCount).toBe(1);
+    pool.complete(a);
+    await waitUntil(() => pool.enqueued.some((task) => task.id === c), 'third after release');
+    pool.complete(b);
+    pool.complete(c);
+    await running;
+    expect(budget.usedBytes).toBe(0);
+  });
+
+  it('releases a waiting reservation when its file is cancelled', async () => {
+    const [a, b] = addFiles('a.jpg', 'b.jpg');
+    const budget = new ResourceBudget(100);
+    const controller = createController({
+      getMainPipelineConcurrency: () => 2,
+      getBudget: () => budget,
+      estimateTaskCost: async () => 80,
+    });
+    const running = controller.run();
+    await waitUntil(() => pool.enqueued.length === 1 && budget.pendingCount === 1, 'b waits');
+    useFileStore.getState().cancelFile(b);
+    await waitUntil(() => budget.pendingCount === 0, 'waiter removed');
+    pool.complete(a);
+    await running;
+    expect(pool.enqueued).toHaveLength(0);
+    expect(useFileStore.getState().getFile(b)?.status).toBe('cancelled');
+    expect(budget.usedBytes).toBe(0);
+  });
+
+  it('records the error class and recovers a target error after a settings change', async () => {
+    const [id] = addFiles('a.jpg');
+    useSettingsStore.getState().updateSettings({
+      resize: { ...baseSettings.resize!, enabled: true, maxWidth: 20_000, method: 'stretch' },
+    });
+    const controller = createController({
+      readImageDimensions: async () => ({ width: 100, height: 100 }),
+    });
+    await controller.run();
+    expect(useFileStore.getState().getFile(id)).toMatchObject({
+      status: 'error',
+      errorClass: 'settings',
+    });
+
+    useSettingsStore.getState().updateSettings({
+      resize: { ...baseSettings.resize!, enabled: true, maxWidth: 1000, method: 'stretch' },
+    });
+    expect(useFileStore.getState().getFile(id)?.status).toBe('pending');
+    const rerun = controller.run();
+    await waitUntil(() => pool.enqueued.some((task) => task.id === id), 'recovered enqueue');
+    pool.complete(id);
+    await rerun;
+    expect(useFileStore.getState().getFile(id)?.status).toBe('done');
+  });
+
+  it('processes a file retried while its cancelled task is still decoding', async () => {
+    const [id] = addFiles('a.jpg');
+    const decodeGate = createGate(pixels());
+    let decodes = 0;
+    const controller = createController({
+      decodeAndResizeImage: async () => {
+        decodes += 1;
+        return decodes === 1 ? decodeGate.wait() : pixels();
+      },
+    });
+    const first = controller.run();
+    await waitUntil(() => decodeGate.hasEntered(), 'slow decode');
+
+    controller.abortAll();
+    useFileStore.getState().retryFile(id);
+    // The retry run skips the file: its cancelled task has not finished yet.
+    await controller.run();
+    expect(pool.enqueued).toHaveLength(0);
+
+    decodeGate.release();
+    await first;
+    // The stale task's end reschedules through the (0 ms) debounce timer.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitUntil(() => pool.enqueued.some((task) => task.id === id), 'deferred retry enqueue');
+    pool.complete(id);
+    await waitUntil(() => useFileStore.getState().getFile(id)?.status === 'done', 'done');
+  });
+
+  it('does not repeat a timed-out task automatically', async () => {
+    const [id] = addFiles('a.jpg');
+    const controller = createController({
+      isPermanentImageError,
+    });
+    const running = controller.run();
+    await waitUntil(() => pool.enqueued.length === 1, 'enqueue');
+    pool.enqueued[0].callbacks.onError?.(id, 'Task timed out after 45s');
+    pool.enqueued.splice(0, 1);
+    await running;
+    expect(useFileStore.getState().getFile(id)).toMatchObject({
+      status: 'error',
+      errorClass: 'timeout',
+    });
+    controller.schedule();
+    await Promise.resolve();
+    expect(pool.enqueued).toHaveLength(0);
   });
 });

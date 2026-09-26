@@ -5,7 +5,8 @@
  * Provides codec loading and encoding functions.
  */
 
-export { encodeImage } from './codecLoader';
+export { encodeImage, optimisePng } from './codecLoader';
+import type { EncoderOptions, OutputFormat } from './types';
 
 export type {
   OutputFormat,
@@ -90,3 +91,30 @@ export const DEFAULT_OPTIONS = {
     optimizeAlpha: false,
   },
 } as const;
+
+/**
+ * Advanced options that belong to each output format. Settings keep one flat
+ * `advanced` object, so anything outside the active format's keys is stale state
+ * from another format and must never reach its encoder (for example WebP
+ * `lossless` would switch jSquash AVIF to lossless mode).
+ */
+export const ADVANCED_OPTION_KEYS: Record<OutputFormat, ReadonlySet<string>> = {
+  mozjpeg: new Set(Object.keys(DEFAULT_OPTIONS.mozjpeg)),
+  webp: new Set(Object.keys(DEFAULT_OPTIONS.webp)),
+  avif: new Set(Object.keys(DEFAULT_OPTIONS.avif)),
+  oxipng: new Set(Object.keys(DEFAULT_OPTIONS.oxipng)),
+};
+
+/** Keep only the active format's advanced options; unknown formats keep nothing. */
+export function sanitizeAdvancedOptions(
+  format: OutputFormat,
+  advanced: Partial<EncoderOptions> | undefined,
+): Partial<EncoderOptions> {
+  const allowed = ADVANCED_OPTION_KEYS[format];
+  const result: Record<string, unknown> = {};
+  if (!allowed || !advanced) return result;
+  for (const [key, value] of Object.entries(advanced)) {
+    if (allowed.has(key) && value !== undefined) result[key] = value;
+  }
+  return result as Partial<EncoderOptions>;
+}

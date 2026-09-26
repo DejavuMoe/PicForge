@@ -177,11 +177,11 @@
     "jpegQuality": "JPEG quality",
     "audio": "Keep audio",
     "androidNote": "Original JPG and MP4 bytes are preserved. Video playback depends on the source codec.",
-    "iosNote": "Output does not preserve HEIC metadata, HDR or auxiliary images. Limit: 100 MB per file and 50 MP per HEIC.",
+    "iosNote": "Output is converted to sRGB and does not preserve HEIC metadata, HDR or auxiliary images. Limit: 100 MB per file and 50 MP per HEIC.",
     "offline": "Conversion engines must load and cache before offline use.",
     "drop": "Add original files",
     "select": "Choose files",
-    "pairing": "Pairing uses matching filenames, not Apple identifiers. Add the photo and video together. Single files are supported; duplicate names must be resolved.",
+    "pairing": "Pairs use Apple's Live Photo identifier when both files contain it, otherwise matching filenames. Add the photo and video together. Single files are supported; duplicate names must be resolved.",
     "count": "{{done}} / {{total}} completed",
     "clear": "Clear queue",
     "newBatch": "New batch",
@@ -203,6 +203,7 @@
     "errors": {
       "unsupported": "Unsupported file type.",
       "ambiguous": "Multiple files share this name. Clear the batch and choose one matching pair.",
+      "mismatch": "This photo and video belong to different Live Photos (their Apple identifiers differ). Remove one, or choose the matching pair.",
       "invalidMotion": "No embedded video found. Use the original camera file; shared copies may have lost the video.",
       "invalidHeic": "Unable to decode this HEIC image.",
       "tooManyPixels": "HEIC exceeds the 50 megapixel safety limit.",
@@ -302,6 +303,7 @@
     "settings": "For animations, use quality, lossless and method settings. Other non-default advanced settings are not supported.",
     "decode": "The animation could not be decoded or encoded.",
     "output": "The output animation could not be verified. No file was exported.",
-    "timeout": "Animation processing timed out. Try a smaller image or fewer frames."
+    "timeout": "Animation processing timed out. Try a smaller image or fewer frames.",
+    "engine": "The animation engine could not be loaded. Check your connection, then retry."
   }
 }

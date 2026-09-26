@@ -85,6 +85,41 @@ describe('motion tools', () => {
     );
   });
 
+  it('lists unsupported sidecars separately without blocking their pair', () => {
+    const items = groupMedia([file('IMG_1.HEIC'), file('IMG_1.MOV'), file('IMG_1.AAE')], false);
+    expect(items).toHaveLength(2);
+    expect(items[0].name).toBe('IMG_1');
+    expect(items[0].issue).toBeUndefined();
+    expect(items[0].image?.name).toBe('IMG_1.HEIC');
+    expect(items[0].video?.name).toBe('IMG_1.MOV');
+    expect(items[1]).toMatchObject({ name: 'IMG_1.AAE', issue: 'unsupported' });
+  });
+
+  it('checks and uses Apple content identifiers when they are known', () => {
+    const [still, video, other] = [file('IMG_2.HEIC'), file('IMG_2.MOV'), file('IMG_3.MOV')];
+    expect(
+      groupMedia([still, video], false, new Map([[still, 'A'], [video, 'B']]))[0].issue,
+    ).toBe('mismatch');
+    expect(
+      groupMedia([still, video], false, new Map([[still, 'A'], [video, 'A']]))[0].issue,
+    ).toBeUndefined();
+
+    // A renamed video pairs with its still; the basename-only item disappears.
+    const renamed = groupMedia([still, other], false, new Map([[still, 'A'], [other, 'A']]));
+    expect(renamed).toHaveLength(1);
+    expect(renamed[0].image).toBe(still);
+    expect(renamed[0].video).toBe(other);
+
+    // Never guess when the identifier is not unique.
+    const second = file('copy.HEIC');
+    const unclear = groupMedia(
+      [still, second, other],
+      false,
+      new Map([[still, 'A'], [second, 'A'], [other, 'A']]),
+    );
+    expect(unclear).toHaveLength(3);
+  });
+
   it('extracts Android motion photo with byte-identical reconstruction', async () => {
     const source = createSyntheticMotionPhoto();
     const buffer = new Uint8Array(source).buffer;

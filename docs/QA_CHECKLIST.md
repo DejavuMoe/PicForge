@@ -4,7 +4,7 @@ This checklist captures the main manual and browser-based checks for each releas
 
 ## Core Flow
 
-- Empty state shows the drop zone and accepts click, drag-and-drop, and paste.
+- Empty state shows the drop zone and accepts click, drag-and-drop, and paste. Dropping a folder adds its supported images (including subfolders).
 - File queue stays usable with 1, 10, 50, and 100 images.
 - Processing continues when one image fails, and failed images can be retried.
 - Global settings changes reprocess global files without overwriting custom image snapshots.
@@ -55,6 +55,7 @@ This checklist captures the main manual and browser-based checks for each releas
 - Production build registers `/sw.js`.
 - App installs with the PicForge name and icon.
 - After the first online load, refresh works offline.
+- With a newer build deployed, an open page keeps working (including tools not yet opened) until "Refresh" is chosen; the prompt then activates the update and reloads once. Cached FFmpeg/HEIF engines survive the update.
 - WASM and built assets are served from cache when offline; no unused fonts are precached.
 - A service worker version change removes old PicForge caches.
 - A service worker version change shows the in-app new-version refresh prompt.
@@ -67,7 +68,8 @@ This checklist captures the main manual and browser-based checks for each releas
 
 - Run `pnpm test` and `pnpm test:browser` (when test media is supplied).
 - Android exports reconstruct source bytes; no HEIC/FFmpeg engine loads for extraction.
-- Apple pairing handles lone files and duplicate basenames explicitly.
+- Apple pairing handles lone files and duplicate basenames explicitly; identifier mismatches are flagged, renamed halves with one shared identifier pair, and `.AAE` sidecars appear as separate unsupported rows without blocking their pair.
+- Display P3 HEIC exports look the same as the original in a colour-managed viewer (sRGB output, no ICC).
 - Check clean aperture, orientation, primary track, audio and per-frame PTS in the actual WASM output.
 - Cancel/retry retains completed results; ZIP members equal individual downloads.
 - Unsupported native video playback shows a static fallback and download message.

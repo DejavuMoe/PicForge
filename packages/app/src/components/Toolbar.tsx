@@ -12,7 +12,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useFileStore } from '../stores/fileStore';
 import { PRESETS } from '../stores/presets';
 import { FORMAT_OPTIONS, type ImageFile } from '../types';
-import { cloneSettings } from '../utils/settingsUtils';
+import { applyPresetSettings, cloneSettings } from '../utils/settingsUtils';
 import { formatFileSize, compressionRatio } from '../utils/fileUtils';
 import { getOutputName, isResultExportable } from '../utils/exportManifest';
 import { getRangeProgressStyle } from '../utils/rangeProgress';
@@ -35,6 +35,7 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
   const { t } = useTranslation();
   const global = useSettingsStore((state) => state.settings);
   const updateGlobal = useSettingsStore((state) => state.updateSettings);
+  const replaceGlobal = useSettingsStore((state) => state.replaceSettings);
   const resetGlobal = useSettingsStore((state) => state.resetToDefaults);
   const hasCustomFiles = useFileStore((state) =>
     state.files.some((item) => item.settingsMode === 'custom'),
@@ -51,6 +52,11 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
     if (scope === 'file' && file)
       useFileStore.getState().updateFileCustomSettings(file.id, partial);
     else updateGlobal(partial);
+  };
+  const applyPreset = (preset: (typeof PRESETS)[number]) => {
+    const next = applyPresetSettings(settings, preset.settings);
+    if (scope === 'file' && file) useFileStore.getState().setFileCustomSettings(file.id, next);
+    else replaceGlobal(next);
   };
   const chooseFile = () => {
     if (!file) return;
@@ -140,7 +146,7 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
               key={preset.id}
               className="pf-button"
               data-tooltip={t(preset.descriptionKey)}
-              onClick={() => updateSettings(preset.settings)}
+              onClick={() => applyPreset(preset)}
             >
               {t(preset.labelKey)}
             </button>
@@ -416,7 +422,7 @@ function AdvancedControls({ settings, updateSettings }: SettingsFieldsProps) {
             tooltip={t('tooltips.adv.alphaCompression')}
           >
             <SwitchControl
-              checked={advanced.alpha_compression === 1}
+              checked={numberValue('alpha_compression', 1) === 1}
               ariaLabel={t('settings.adv.alphaCompression')}
               onChange={(checked) => updateAdvanced('alpha_compression', checked ? 1 : 0)}
             />

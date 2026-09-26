@@ -1,4 +1,6 @@
 import { apng, variableFrames } from './animation/fixtures.mjs';
+import { decodePngSamples, encodePng, pngChunk, pngChunkTypes } from './png-fixtures.mjs';
+import { srgbIccProfile } from './icc-fixtures.mjs';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -94,6 +96,19 @@ try {
     await page.evaluate(async () => {
       const cache = await caches.open('picforge-v0.17.0-runtime');
       await cache.put('/wasm/heif-1.23.2/libheif-bundle.mjs', new Response('obsolete'));
+      // An older release: its current-version engine entry must move to the engine
+      // cache, its app shell must survive one update, obsolete engines must go.
+      const older = await caches.open('picforge-v0.0.1-runtime');
+      await older.put('/wasm/ffmpeg-0.12.10/migration-probe.txt', new Response('engine'));
+      const oldShell = await caches.open('picforge-v0.0.1-app-shell');
+      await oldShell.put('/assets/previous-release-chunk.js', new Response('previous'));
+      // Fixed URLs of an old shell must never shadow this version's files.
+      await oldShell.put('/wasm/mozjpeg_enc.wasm', new Response('stale codec'));
+      await oldShell.put('/index.html', new Response('stale page'));
+      await (await caches.open('picforge-engine-heif-1.23.2')).put(
+        '/wasm/heif-1.23.2/libheif.wasm',
+        new Response('obsolete'),
+      );
     });
   }
   await page.goto('http://127.0.0.1:4187');
@@ -111,8 +126,50 @@ try {
       ),
       false,
     );
-    console.log('PASS: previous HEIF cache evicted');
+    const cachePolicy = await page.evaluate(async () => ({
+      keys: await caches.keys(),
+      migrated: await (
+        await (await caches.open('picforge-engine-ffmpeg-0.12.10')).match(
+          '/wasm/ffmpeg-0.12.10/migration-probe.txt',
+        )
+      )?.text(),
+      previousShell: !!(await caches.match('/assets/previous-release-chunk.js')),
+      staleFixed: (await (await caches.open('picforge-v0.0.1-app-shell')).keys()).map(
+        (request) => new URL(request.url).pathname,
+      ),
+      codecBytes: (await (await fetch('/wasm/mozjpeg_enc.wasm')).arrayBuffer()).byteLength,
+      waiting: !!(await navigator.serviceWorker.getRegistration())?.waiting,
+    }));
+    assert.equal(cachePolicy.migrated, 'engine', 'Cached engines survive an app update');
+    assert(!cachePolicy.keys.includes('picforge-v0.0.1-runtime'));
+    assert(!cachePolicy.keys.includes('picforge-engine-heif-1.23.2'), 'Obsolete engine evicted');
+    assert(cachePolicy.previousShell, 'Previous app shell kept for tabs still running it');
+    assert.deepEqual(cachePolicy.staleFixed, ['/assets/previous-release-chunk.js']);
+    assert(cachePolicy.codecBytes > 1000, 'Codec WASM comes from this version, not an old shell');
+    assert(!cachePolicy.waiting);
+    console.log('PASS: previous HEIF cache evicted; engine caches and previous shell retained');
   }
+  // The production CSP must stop network egress to other origins.
+  const blocked = await page.evaluate(async () => {
+    const policy = document
+      .querySelector('meta[http-equiv="Content-Security-Policy"]')
+      ?.getAttribute('content');
+    const violations = [];
+    const listener = (event) => violations.push(event.effectiveDirective);
+    document.addEventListener('securitypolicyviolation', listener);
+    await fetch('https://example.invalid/upload', { method: 'POST', body: 'x' }).catch(() => {});
+    const image = new Image();
+    image.src = 'https://example.invalid/pixel.png';
+    await image.decode().catch(() => {});
+    navigator.sendBeacon?.('https://example.invalid/beacon', 'x');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    document.removeEventListener('securitypolicyviolation', listener);
+    return { policy, violations };
+  });
+  assert.match(blocked.policy ?? '', /connect-src 'self'/);
+  assert(blocked.violations.includes('connect-src'), 'CSP blocks cross-origin fetch');
+  assert(blocked.violations.includes('img-src'), 'CSP blocks cross-origin images');
+  console.log('PASS: production CSP blocks cross-origin requests');
   const brand = await page.evaluate(async () => {
     const content = (selector) => document.querySelector(selector)?.getAttribute('content');
     const localPath = (value) => {
@@ -407,6 +464,34 @@ try {
     console.log('PASS: production static compression, download dimensions, mobile width');
   }
   assert.deepEqual(errors, []);
+  // Opaque PNG → PNG without resizing optimises the original image data: 16-bit samples
+  // survive exactly (an 8-bit Canvas round trip would not) and no metadata is exported.
+  const pngPage = await context.newPage();
+  pngPage.on('pageerror', (error) => errors.push(error.message));
+  const pngSamples = [
+    0x1234, 0xfedc, 0x0102, 0x8001, 0x7ffe, 0x00ff, 0xabcd, 0x1111, 0x2222, 0x0001, 0xffff, 0x8000,
+  ];
+  const pngSource = encodePng(2, 2, 2, 16, pngSamples, [
+    pngChunk('tEXt', Buffer.from('Author\0private', 'latin1')),
+    pngChunk('tIME', Buffer.alloc(7)),
+  ]);
+  await pngPage.goto('http://127.0.0.1:4187/?tool=compression');
+  await pngPage.getByRole('combobox', { name: 'Format', exact: true }).click();
+  await pngPage.getByRole('option', { name: 'PNG', exact: true }).click();
+  await pngPage
+    .getByTestId('file-input')
+    .setInputFiles({ name: 'deep.png', mimeType: 'image/png', buffer: pngSource });
+  await pngPage.getByText('1 / 1 completed', { exact: true }).waitFor();
+  const pngDownload = pngPage.waitForEvent('download');
+  await pngPage.locator('.pf-download-current').click();
+  await (await pngDownload).saveAs(resolve(output, 'passthrough.png'));
+  const pngOutput = await readFile(resolve(output, 'passthrough.png'));
+  assert.deepEqual(pngChunkTypes(pngOutput), ['IHDR', 'IDAT', 'IEND'], 'No metadata chunks');
+  const deep = decodePngSamples(pngOutput);
+  assert.equal(deep.depth, 16, 'PNG export keeps 16-bit samples');
+  assert.deepEqual(deep.samples, pngSamples, 'PNG export keeps exact samples');
+  await pngPage.close();
+  console.log('PASS: opaque PNG passthrough keeps exact 16-bit samples and strips metadata');
   // Exercise the production controller/worker/download path, including recovery
   // from a static-output setting. Separate page keeps Android lazy-load evidence scoped.
   const animationPage = await context.newPage();
@@ -615,6 +700,11 @@ try {
   assert.equal(primary.width, expectedWidth, 'Source crop/rotation/resize width');
   assert.equal(primary.height, expectedHeight, 'Source crop/rotation/resize height');
   assert(!primary.side_data_list?.some((side) => side.rotation));
+  // Colour tags of the source video must survive the H.264 conversion.
+  for (const key of ['color_primaries', 'color_transfer', 'color_space']) {
+    if (sourcePrimary[key] && sourcePrimary[key] !== 'unknown')
+      assert.equal(primary[key], sourcePrimary[key], `Video ${key}`);
+  }
   assert.equal(video.find((stream) => stream.codec_type === 'audio').codec_name, 'aac');
   const pts = (path) =>
     JSON.parse(
@@ -658,6 +748,24 @@ try {
     expectedStill,
     'Native primary HEIC display dimensions',
   );
+  if (!syntheticMedia) {
+    // Compare with an independent colour-managed conversion of the HEIC's own profile.
+    const srgb = resolve(output, 'srgb-reference.icc');
+    await writeFile(srgb, srgbIccProfile());
+    const thumbnail = (...args) =>
+      execFileSync('magick', [...args, '-resize', '24x32!', '-depth', '8', 'rgb:-'], {
+        maxBuffer: 1 << 20,
+      });
+    const exported = thumbnail(resolve(output, 'ios.jpg'));
+    const reference = thumbnail(`${originals[0]}[0]`, '-profile', srgb);
+    const unmanaged = thumbnail(`${originals[0]}[0]`, '+profile', '*');
+    const meanDifference = (a, b) => a.reduce((sum, value, i) => sum + Math.abs(value - b[i]), 0) / a.length;
+    const managed = meanDifference(exported, reference);
+    const naive = meanDifference(exported, unmanaged);
+    console.log(`HEIC colour: mean |Δ| vs sRGB reference ${managed.toFixed(2)}, vs unconverted ${naive.toFixed(2)}`);
+    assert(managed < naive, 'HEIC export is converted to sRGB');
+    assert(managed <= 2.5, 'HEIC export matches the colour-managed reference');
+  }
   if (syntheticMedia) {
     const rgb = await page.evaluate(
       async (base64) => {

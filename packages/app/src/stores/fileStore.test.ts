@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { CompressSettings } from '@pic-forge/codecs';
 import { getSettingsHash } from '../utils/settingsUtils';
+import { PERMANENT_IMAGE_ERROR_PREFIX } from '../utils/processingGuards';
 
 // Mock browser APIs not available in Node
 vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
@@ -231,7 +232,7 @@ describe('fileStore', () => {
     });
   });
 
-  describe('resetAllToPending', () => {
+  describe('resetGlobalToPending', () => {
     it('resets done files to pending', () => {
       useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
       const id = useFileStore.getState().files[0].id;
@@ -239,7 +240,7 @@ describe('fileStore', () => {
       useFileStore.getState().updateFile(id, { status: 'done' });
       expect(useFileStore.getState().files[0].status).toBe('done');
 
-      useFileStore.getState().resetAllToPending();
+      useFileStore.getState().resetGlobalToPending('s-new');
       expect(useFileStore.getState().files[0].status).toBe('pending');
     });
 
@@ -257,7 +258,7 @@ describe('fileStore', () => {
       });
 
       vi.clearAllMocks();
-      useFileStore.getState().resetAllToPending();
+      useFileStore.getState().resetGlobalToPending('s-new');
 
       const file = useFileStore.getState().files[0];
       expect(file.status).toBe('pending');
@@ -266,13 +267,48 @@ describe('fileStore', () => {
       expect(URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:reset-result');
     });
 
-    it('does not reset error files', () => {
+    it('does not requeue source or engine errors', () => {
+      useFileStore
+        .getState()
+        .addFiles([createMockFile('a.jpg', 'image/jpeg'), createMockFile('b.jpg', 'image/jpeg')]);
+      const [sourceId, engineId] = useFileStore.getState().files.map((file) => file.id);
+
+      useFileStore.getState().updateFile(sourceId, {
+        status: 'error',
+        error: `${PERMANENT_IMAGE_ERROR_PREFIX}: 60MP is above the 50MP limit for this device.`,
+        errorClass: 'input',
+      });
+      useFileStore.getState().updateFile(engineId, { status: 'error', error: 'Codec failed' });
+      useFileStore.getState().resetGlobalToPending('s-new');
+      expect(useFileStore.getState().files.map((file) => file.status)).toEqual(['error', 'error']);
+    });
+
+    it('requeues a target-size error once the settings change', () => {
       useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
       const id = useFileStore.getState().files[0].id;
+      useFileStore.getState().updateFile(id, {
+        status: 'error',
+        error: `${PERMANENT_IMAGE_ERROR_PREFIX}: target 20000x100 is larger than the 16384px per-side canvas limit.`,
+        errorClass: 'settings',
+      });
 
-      useFileStore.getState().updateFile(id, { status: 'error' });
-      useFileStore.getState().resetAllToPending();
-      expect(useFileStore.getState().files[0].status).toBe('error');
+      useFileStore.getState().resetGlobalToPending('s-new');
+      expect(useFileStore.getState().files[0]).toMatchObject({
+        status: 'pending',
+        error: undefined,
+        errorClass: undefined,
+      });
+    });
+
+    it('derives the class of an unclassified target error and requeues it', () => {
+      useFileStore.getState().addFiles([createMockFile('a.jpg', 'image/jpeg')]);
+      const id = useFileStore.getState().files[0].id;
+      useFileStore.getState().updateFile(id, {
+        status: 'error',
+        error: `${PERMANENT_IMAGE_ERROR_PREFIX}: target 51MP is above the 50MP limit for this device.`,
+      });
+      useFileStore.getState().resetGlobalToPending('s-new');
+      expect(useFileStore.getState().files[0].status).toBe('pending');
     });
   });
 
@@ -479,6 +515,16 @@ describe('fileStore', () => {
       expect(files.find((file) => file.id === errorId)?.status).toBe('cancelled');
       expect(files.find((file) => file.id === doneId)?.status).toBe('done');
       expect(files.find((file) => file.id === doneId)?.result?.previewUrl).toBe('blob:done-keep');
+    });
+
+    it('keeps permanent failures visible when the batch is cancelled', () => {
+      useFileStore.getState().addFiles([createMockFile('huge.jpg', 'image/jpeg')]);
+      const id = useFileStore.getState().files[0].id;
+      const error = `${PERMANENT_IMAGE_ERROR_PREFIX}: 60MP is above the 50MP limit for this device.`;
+      useFileStore.getState().updateFile(id, { status: 'error', error, errorClass: 'input' });
+
+      useFileStore.getState().cancelIncompleteFiles();
+      expect(useFileStore.getState().files[0]).toMatchObject({ status: 'error', error });
     });
   });
 

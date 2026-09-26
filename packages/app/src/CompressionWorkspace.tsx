@@ -26,7 +26,7 @@ export default function CompressionWorkspace({ active }: { active: boolean }) {
   );
   const [missingFeatures] = useState(() => getMissingBrowserFeatures());
 
-  const { abortAll } = useAutoCompress();
+  const { abortAll } = useAutoCompress(selectedId);
 
   const hasFiles = files.length > 0;
 

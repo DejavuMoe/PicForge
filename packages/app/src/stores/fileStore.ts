@@ -6,8 +6,14 @@ import { create } from 'zustand';
 import type { CompressSettings } from '@pic-forge/codecs';
 import type { ImageFile } from '../types';
 import { generateId, createPreviewUrl, revokePreviewUrl, isSupportedImage } from '../utils/fileUtils';
-import { cloneSettings, getSettingsHash, mergeSettings } from '../utils/settingsUtils';
+import {
+  cloneSettings,
+  getSettingsHash,
+  mergeSettings,
+  normalizeSettings,
+} from '../utils/settingsUtils';
 import { abortAllProcessing, abortFileProcessing } from '../hooks/processingPool';
+import { classifyImageError, isSettingsRecoverable } from '../utils/processingGuards';
 
 interface FileStore {
   /** All image files in the queue */
@@ -40,9 +46,6 @@ interface FileStore {
   /** Invalidate in-flight global-mode work after global settings changes */
   resetGlobalToPending: (nextSettingsHash?: string) => void;
 
-  /** Reset all done/processing/pending files to pending */
-  resetAllToPending: () => void;
-
   /** User cancel: stop auto-scheduling until explicit retry */
   cancelFile: (id: string) => void;
 
@@ -57,9 +60,11 @@ function bumpEpoch(file: ImageFile): number {
   return (file.taskEpoch ?? 0) + 1;
 }
 
+/** Settings changes requeue live work and errors that the settings may have caused. */
 function canReprocess(file: ImageFile): boolean {
-  return ['pending', 'processing', 'done'].includes(file.status) ||
-    (file.status === 'error' && ['Animation: format', 'Animation: settings'].includes(file.error ?? ''));
+  if (['pending', 'processing', 'done'].includes(file.status)) return true;
+  if (file.status !== 'error') return false;
+  return isSettingsRecoverable(file.errorClass ?? classifyImageError(file.error));
 }
 
 function markForReprocess(file: ImageFile, nextSettingsHash?: string): ImageFile {
@@ -74,6 +79,7 @@ function markForReprocess(file: ImageFile, nextSettingsHash?: string): ImageFile
       taskEpoch,
       progress: 0,
       error: undefined,
+      errorClass: undefined,
     };
   }
 
@@ -84,6 +90,7 @@ function markForReprocess(file: ImageFile, nextSettingsHash?: string): ImageFile
       status: 'done',
       progress: 100,
       error: undefined,
+      errorClass: undefined,
     };
   }
 
@@ -93,6 +100,7 @@ function markForReprocess(file: ImageFile, nextSettingsHash?: string): ImageFile
     status: 'pending',
     progress: 0,
     error: undefined,
+    errorClass: undefined,
   };
 }
 
@@ -165,7 +173,7 @@ export const useFileStore = create<FileStore>((set, get) => ({
   },
 
   setFileCustomSettings: (id, settings) => {
-    const customSettings = cloneSettings(settings);
+    const customSettings = normalizeSettings(cloneSettings(settings));
     const settingsHash = getSettingsHash(customSettings);
     set((state) => ({
       files: state.files.map((f) => {
@@ -223,15 +231,6 @@ export const useFileStore = create<FileStore>((set, get) => ({
     }));
   },
 
-  resetAllToPending: () => {
-    set((state) => ({
-      files: state.files.map((f) => {
-        if (!canReprocess(f)) return f;
-        return markForReprocess(f);
-      }),
-    }));
-  },
-
   cancelFile: (id) => {
     abortFileProcessing(id);
     set((state) => ({
@@ -243,6 +242,7 @@ export const useFileStore = create<FileStore>((set, get) => ({
           status: 'cancelled',
           progress: 0,
           error: undefined,
+          errorClass: undefined,
           taskEpoch: bumpEpoch(f),
         };
       }),
@@ -260,6 +260,7 @@ export const useFileStore = create<FileStore>((set, get) => ({
           status: 'pending',
           progress: 0,
           error: undefined,
+          errorClass: undefined,
           taskEpoch: bumpEpoch(f),
         };
       }),
@@ -270,12 +271,16 @@ export const useFileStore = create<FileStore>((set, get) => ({
     set((state) => ({
       files: state.files.map((f) => {
         if (f.status === 'done' || f.status === 'cancelled') return f;
+        // Keep permanent failures visible; only unfinished or auto-retryable work is cancelled.
+        if (f.status === 'error' && (f.errorClass ?? classifyImageError(f.error)) !== 'runtime')
+          return f;
         abortFileProcessing(f.id);
         return {
           ...f,
           status: 'cancelled' as const,
           progress: 0,
           error: undefined,
+          errorClass: undefined,
           taskEpoch: bumpEpoch(f),
         };
       }),

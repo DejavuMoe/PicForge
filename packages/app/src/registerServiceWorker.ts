@@ -1,6 +1,27 @@
 export const SERVICE_WORKER_UPDATE_EVENT = 'picforge-update-ready';
 
 let hasNotifiedUpdate = false;
+let activeRegistration: ServiceWorkerRegistration | null = null;
+
+/**
+ * Activate a waiting update and reload once it controls the page. The new
+ * worker never takes over on its own (no skipWaiting on install), so an open
+ * page keeps the modules it was built with until the user chooses to refresh.
+ */
+export function applyServiceWorkerUpdate(): void {
+  const waiting = activeRegistration?.waiting;
+  if (!waiting || !('serviceWorker' in navigator)) {
+    window.location.reload();
+    return;
+  }
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloaded) return;
+    reloaded = true;
+    window.location.reload();
+  });
+  waiting.postMessage({ type: 'SKIP_WAITING' });
+}
 
 function notifyUpdateReady(): void {
   if (hasNotifiedUpdate) return;
@@ -52,6 +73,7 @@ export function registerServiceWorker(): void {
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {
+        activeRegistration = registration;
         if (registration.waiting && navigator.serviceWorker.controller) {
           notifyUpdateReady();
         }

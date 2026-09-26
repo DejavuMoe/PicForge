@@ -3,6 +3,7 @@ import type { CompressSettings } from '@pic-forge/codecs';
 import {
   getFormatConcurrencyLimit,
   getRecommendedWorkerPoolSize,
+  getTaskTimeoutMs,
   WorkerPool,
 } from './workerPool';
 
@@ -187,6 +188,110 @@ describe('WorkerPool', () => {
     expect(pool.queueSize).toBe(0);
     expect(MockWorker.instances[1].messages).toHaveLength(1);
 
+    pool.destroy();
+  });
+
+  it('creates Workers only when a task needs one', () => {
+    const pool = new WorkerPool(3);
+    expect(MockWorker.instances).toHaveLength(0);
+    pool.enqueue('a', new ArrayBuffer(4), 1, 1, 4, baseSettings, {});
+    expect(MockWorker.instances).toHaveLength(1);
+    expect(pool.liveWorkerCount).toBe(1);
+    expect(pool.poolSize).toBe(3);
+    pool.destroy();
+  });
+
+  it('retires a Worker after a large task and starts a fresh one for the next', () => {
+    const pool = new WorkerPool({ poolSize: 1, recyclePixels: 100 });
+    const onResult = vi.fn();
+    pool.enqueue('big', new ArrayBuffer(4), 10, 10, 4, baseSettings, { onResult });
+    MockWorker.instances[0].emitResult('big');
+    expect(onResult).toHaveBeenCalledWith('big', expect.any(ArrayBuffer), 1, 1);
+    expect(MockWorker.instances[0].terminated).toBe(true);
+    expect(pool.liveWorkerCount).toBe(0);
+
+    pool.enqueue('small', new ArrayBuffer(4), 2, 2, 4, baseSettings, {});
+    expect(MockWorker.instances).toHaveLength(2);
+    MockWorker.instances[1].emitResult('small');
+    expect(MockWorker.instances[1].terminated).toBe(false);
+    pool.destroy();
+  });
+
+  it('releases idle Workers after the quiet period', () => {
+    vi.useFakeTimers();
+    const pool = new WorkerPool({ poolSize: 2, idleTimeoutMs: 1_000 });
+    pool.enqueue('a', new ArrayBuffer(4), 1, 1, 4, baseSettings, {});
+    pool.enqueue('b', new ArrayBuffer(4), 1, 1, 4, baseSettings, {});
+    MockWorker.instances[0].emitResult('a');
+    vi.advanceTimersByTime(5_000);
+    expect(MockWorker.instances[0].terminated).toBe(false);
+
+    MockWorker.instances[1].emitResult('b');
+    vi.advanceTimersByTime(999);
+    expect(pool.liveWorkerCount).toBe(2);
+    vi.advanceTimersByTime(1);
+    expect(pool.liveWorkerCount).toBe(0);
+    expect(MockWorker.instances.every((worker) => worker.terminated)).toBe(true);
+    pool.destroy();
+  });
+
+  it('ignores messages from a Worker that has already been retired', () => {
+    const pool = new WorkerPool(1);
+    const onResult = vi.fn();
+    const onError = vi.fn();
+    pool.enqueue('a', new ArrayBuffer(4), 1, 1, 4, baseSettings, { onResult, onError });
+    const first = MockWorker.instances[0];
+    pool.abortTask('a');
+    pool.enqueue('a', new ArrayBuffer(4), 1, 1, 4, baseSettings, { onResult, onError });
+    first.emitResult('a');
+    expect(onResult).not.toHaveBeenCalled();
+    MockWorker.instances[1].emitResult('a');
+    expect(onResult).toHaveBeenCalledTimes(1);
+    pool.destroy();
+  });
+
+  it('scales the watchdog with target pixels but never below the format base', () => {
+    expect(getTaskTimeoutMs('mozjpeg', 1)).toBe(45_000);
+    expect(getTaskTimeoutMs('mozjpeg', 12_000_000)).toBe(45_000);
+    expect(getTaskTimeoutMs('mozjpeg', 50_000_000)).toBe(100_000);
+    expect(getTaskTimeoutMs('oxipng', 1)).toBe(60_000);
+    expect(getTaskTimeoutMs('avif', 1)).toBe(120_000);
+    expect(getTaskTimeoutMs('avif', 50_000_000)).toBe(300_000);
+  });
+
+  it('fails only the affected task when a Worker cannot start', () => {
+    let failNext = true;
+    class FlakyWorker extends MockWorker {
+      constructor() {
+        if (failNext) {
+          failNext = false;
+          throw new Error('blocked');
+        }
+        super();
+      }
+    }
+    vi.stubGlobal('Worker', FlakyWorker);
+    const pool = new WorkerPool(1);
+    const onError = vi.fn();
+    const onResult = vi.fn();
+    pool.enqueue('a', new ArrayBuffer(4), 1, 1, 4, baseSettings, { onError });
+    expect(onError).toHaveBeenCalledWith('a', 'Worker error: blocked');
+    expect(pool.activeCount).toBe(0);
+
+    pool.enqueue('b', new ArrayBuffer(4), 1, 1, 4, baseSettings, { onResult });
+    expect(pool.activeCount).toBe(1);
+    MockWorker.instances[0].emitResult('b');
+    expect(onResult).toHaveBeenCalledTimes(1);
+    pool.destroy();
+  });
+
+  it('passes the task input kind to the Worker', () => {
+    const pool = new WorkerPool(1);
+    pool.enqueue('png', new ArrayBuffer(4), 1, 1, 4, { ...baseSettings, outputFormat: 'oxipng' }, {}, {
+      input: 'png',
+    });
+    const message = MockWorker.instances[0].messages[0] as { payload: { input: string } };
+    expect(message.payload.input).toBe('png');
     pool.destroy();
   });
 });

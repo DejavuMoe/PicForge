@@ -4,9 +4,13 @@
  * AVIF uses the current @jsquash/avif 0–100 `quality` contract. A leftover
  * subsample of 0 (old 4:4:4 UI value) is mapped to YUV444 (3); 0 would encode
  * a monochrome image.
+ *
+ * Only the output format's own advanced keys reach its encoder. Settings share
+ * one flat `advanced` object across formats, and jSquash encoders interpret
+ * foreign keys (AVIF treats a truthy WebP `lossless` as lossless mode).
  */
 
-import { AVIF_CHROMA_SUBSAMPLE, DEFAULT_OPTIONS } from '@pic-forge/codecs';
+import { AVIF_CHROMA_SUBSAMPLE, DEFAULT_OPTIONS, sanitizeAdvancedOptions } from '@pic-forge/codecs';
 import type { CompressSettings } from '@pic-forge/codecs';
 
 const AVIF_LEGACY_YUV444_SUBSAMPLE = 0;
@@ -17,7 +21,7 @@ export function buildEncoderOptions(settings: CompressSettings): Record<string, 
   const encoderOptions: Record<string, unknown> = {
     ...(defaults as Record<string, unknown> | undefined),
     quality,
-    ...(settings.advanced ?? {}),
+    ...sanitizeAdvancedOptions(settings.outputFormat, settings.advanced),
   };
 
   if (settings.outputFormat === 'avif' && encoderOptions.subsample === AVIF_LEGACY_YUV444_SUBSAMPLE) {

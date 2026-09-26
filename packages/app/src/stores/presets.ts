@@ -1,10 +1,9 @@
 /**
  * Compression presets for common use cases.
  *
- * Presets only control format + quality — NOT resize.
- * This ensures the comparison slider always shows same-dimension images,
- * and keeps presets simple and predictable.
- * Resize is a separate manual control users can toggle independently.
+ * Presets control format, quality and that format's advanced options — NOT
+ * resize. Applying one replaces the advanced options (see applyPresetSettings)
+ * and keeps the current resize, which is a separate manual control.
  *
  * Labels and descriptions are i18n keys — use t() to render.
  */
@@ -15,18 +14,8 @@ export interface Preset {
   id: string;
   labelKey: string;
   descriptionKey: string;
-  settings: CompressSettings;
+  settings: Pick<CompressSettings, 'outputFormat' | 'quality' | 'advanced'>;
 }
-
-/** Default resize config (disabled) shared across presets */
-const noResize = {
-  enabled: false,
-  mode: 'absolute' as const,
-  maxWidth: 1920,
-  maxHeight: 1080,
-  percentage: 50,
-  method: 'contain' as const,
-};
 
 export const PRESETS: Preset[] = [
   {
@@ -36,7 +25,6 @@ export const PRESETS: Preset[] = [
     settings: {
       outputFormat: 'webp',
       quality: 75,
-      resize: noResize,
       advanced: { method: 4, alpha_compression: 1 },
     },
   },
@@ -47,7 +35,6 @@ export const PRESETS: Preset[] = [
     settings: {
       outputFormat: 'mozjpeg',
       quality: 80,
-      resize: noResize,
       advanced: { progressive: true, chroma_subsample: 2 },
     },
   },
@@ -58,7 +45,6 @@ export const PRESETS: Preset[] = [
     settings: {
       outputFormat: 'oxipng',
       quality: 100,
-      resize: noResize,
       advanced: { level: 2, interlace: false },
     },
   },
@@ -69,7 +55,6 @@ export const PRESETS: Preset[] = [
     settings: {
       outputFormat: 'avif',
       quality: 50,
-      resize: noResize,
       advanced: { speed: 6, subsample: 1 },
     },
   },

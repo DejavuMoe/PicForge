@@ -85,3 +85,27 @@ export function cleanApertureFilters(buffer: ArrayBuffer): string[] | undefined 
     return [`crop=${crop.map(Math.floor).join(':')}`];
   }
 }
+
+/**
+ * Read only the top-level moov box from a video Blob (16-byte header reads), so
+ * the clean-aperture adapter does not need the whole file in memory. Returns the
+ * moov bytes, or undefined when the file has none; malformed top-level sizes
+ * fail like the in-memory parser.
+ */
+export async function readMovieBox(source: Blob): Promise<ArrayBuffer | undefined> {
+  for (let offset = 0, count = 0; offset + 8 <= source.size; count += 1) {
+    if (count > 10_000) throw new Error('videoFailed');
+    const view = new DataView(await source.slice(offset, offset + 16).arrayBuffer());
+    let size = view.getUint32(0);
+    const type = String.fromCharCode(view.getUint8(4), view.getUint8(5), view.getUint8(6), view.getUint8(7));
+    if (size === 1) {
+      if (view.byteLength < 16) throw new Error('videoFailed');
+      size = Number(view.getBigUint64(8));
+    } else if (size === 0) size = source.size - offset;
+    if (!Number.isSafeInteger(size) || size < 8 || offset + size > source.size)
+      throw new Error('videoFailed');
+    if (type === 'moov') return source.slice(offset, offset + size).arrayBuffer();
+    offset += size;
+  }
+  return undefined;
+}

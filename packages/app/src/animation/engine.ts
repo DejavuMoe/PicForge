@@ -1,5 +1,5 @@
 import { runInFFmpegLane } from '../utils/ffmpegLane';
-import { DEFAULT_OPTIONS, type CompressSettings } from '@pic-forge/codecs';
+import { DEFAULT_OPTIONS, sanitizeAdvancedOptions, type CompressSettings } from '@pic-forge/codecs';
 import {
   animationError,
   calculateResizeGeometry,
@@ -9,16 +9,23 @@ import {
   type ImageProcessResult,
 } from '@pic-forge/worker';
 
+/** Downloading and compiling the pinned core on a slow first visit. */
+const ENGINE_LOAD_TIMEOUT_MS = 300_000;
+/** Conversion watchdog once the core is running. */
+const CONVERSION_TIMEOUT_MS = 120_000;
+
 /** Same pinned, self-hosted, single-thread core as Live Photos; no new WASM copy. */
 export function animationArguments(meta: AnimationMetadata, settings: CompressSettings) {
   if (settings.outputFormat !== 'webp') animationError('format');
   if (meta.format === 'webp') animationError('unsupported');
   const defaults = DEFAULT_OPTIONS.webp as Record<string, unknown>;
-  for (const [key, value] of Object.entries(settings.advanced ?? {})) {
+  // Only WebP's own keys matter; leftovers from another format are not settings of this export.
+  const advanced = sanitizeAdvancedOptions('webp', settings.advanced);
+  for (const [key, value] of Object.entries(advanced)) {
     if (!['quality', 'lossless', 'method'].includes(key) && value !== defaults[key])
       animationError('settings');
   }
-  const options = { ...DEFAULT_OPTIONS.webp, quality: settings.quality, ...settings.advanced };
+  const options = { ...DEFAULT_OPTIONS.webp, quality: settings.quality, ...advanced };
   if (
     !Number.isFinite(options.quality) ||
     options.quality < 0 ||
@@ -143,13 +150,22 @@ async function convert(
       finish();
       reject(signal?.reason ?? new DOMException('Cancelled', 'AbortError'));
     };
-    const timer = setTimeout(() => {
+    // A slow engine download is an engine failure (retryable), not a conversion timeout.
+    let timer = setTimeout(() => {
       finish();
-      reject(new Error('Animation: timeout'));
-    }, 120_000);
+      reject(new Error('Animation: engine'));
+    }, ENGINE_LOAD_TIMEOUT_MS);
     signal?.addEventListener('abort', abort, { once: true });
     worker.onmessage = ({ data }) => {
       if (signal?.aborted) return;
+      if (data.loaded === true) {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          finish();
+          reject(new Error('Animation: timeout'));
+        }, CONVERSION_TIMEOUT_MS);
+        return;
+      }
       if (typeof data.progress === 'number') {
         request.onProgress?.(data.progress);
         return;

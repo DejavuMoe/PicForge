@@ -8,11 +8,18 @@
 import { create } from 'zustand';
 import type { CompressSettings, OutputFormat } from '@pic-forge/codecs';
 import { useFileStore } from './fileStore';
-import { cloneSettings, getSettingsHash, mergeSettings } from '../utils/settingsUtils';
+import {
+  cloneSettings,
+  getSettingsHash,
+  mergeSettings,
+  normalizeSettings,
+} from '../utils/settingsUtils';
 
 interface SettingsStore {
   settings: CompressSettings;
   updateSettings: (partial: Partial<CompressSettings>) => void;
+  /** Replace the whole snapshot, e.g. when applying a preset. */
+  replaceSettings: (settings: CompressSettings) => void;
   setOutputFormat: (format: OutputFormat) => void;
   setQuality: (quality: number) => void;
   resetToDefaults: () => void;
@@ -48,9 +55,14 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
     triggerRecompression();
   },
 
+  replaceSettings: (settings) => {
+    set({ settings: normalizeSettings(cloneSettings(settings)) });
+    triggerRecompression();
+  },
+
   setOutputFormat: (format) => {
     set((state) => ({
-      settings: { ...state.settings, outputFormat: format },
+      settings: mergeSettings(state.settings, { outputFormat: format }),
     }));
     triggerRecompression();
   },

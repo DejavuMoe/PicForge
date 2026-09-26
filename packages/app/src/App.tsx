@@ -5,7 +5,7 @@ import { ProjectInfo } from './components/ProjectInfo';
 import { Header } from './components/Header';
 import { FiLock } from 'react-icons/fi';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { SERVICE_WORKER_UPDATE_EVENT } from './registerServiceWorker';
+import { SERVICE_WORKER_UPDATE_EVENT, applyServiceWorkerUpdate } from './registerServiceWorker';
 import type { ToolId } from './types';
 
 function toolFromLocation(): ToolId {
@@ -150,7 +150,7 @@ export default function App() {
         {updateReady && (
           <div className="pf-update-toast" role="status">
             <span>{t('pwa.updateReady')}</span>
-            <button className="pf-update-button" onClick={() => window.location.reload()}>
+            <button className="pf-update-button" onClick={applyServiceWorkerUpdate}>
               {t('pwa.refresh')}
             </button>
           </div>

@@ -21,6 +21,18 @@ interface Core {
   reset(): void;
 }
 
+/** FFmpeg's own exec limit, below the 120 s conversion watchdog in engine.ts. */
+const EXEC_TIMEOUT_MS = 110_000;
+
+/** Run one FFmpeg command; a stop at the exec limit is a timeout, not a bad input. */
+function run(core: Core, args: string[]): void {
+  core.setTimeout(EXEC_TIMEOUT_MS);
+  const started = performance.now();
+  core.exec(...args);
+  if (core.ret !== 0)
+    animationError(performance.now() - started >= EXEC_TIMEOUT_MS - 1000 ? 'timeout' : 'decode');
+}
+
 self.onmessage = async ({
   data,
 }: MessageEvent<{
@@ -39,13 +51,14 @@ self.onmessage = async ({
     const core: Core = await createCore({
       mainScriptUrlOrBlob: `${coreURL}#${btoa(JSON.stringify({ wasmURL }))}`,
     });
+    // The conversion watchdog starts only once the engine is running.
+    self.postMessage({ loaded: true });
     let input: Uint8Array = new Uint8Array(await source.arrayBuffer());
     if (meta.normalizeRgba) {
       input = promoteApngRgba(input, (png) => {
         core.FS.writeFile('patch.png', png);
-        core.setTimeout(110_000);
         try {
-          core.exec(
+          run(core, [
             '-v',
             'error',
             '-xerror',
@@ -61,8 +74,7 @@ self.onmessage = async ({
             'png',
             '-y',
             'rgba.png',
-          );
-          if (core.ret !== 0) animationError('decode');
+          ]);
           return core.FS.readFile('rgba.png');
         } finally {
           core.reset();
@@ -84,9 +96,7 @@ self.onmessage = async ({
           10 + Math.min(0.99, Math.max(0, time / 1000 / meta.ends[meta.ends.length - 1])) * 85,
       }),
     );
-    core.setTimeout(110_000);
-    core.exec(...args);
-    if (core.ret !== 0) animationError('decode');
+    run(core, args);
     const output = core.FS.readFile('output.webp');
     if (!output.length || output.length > 100 * 1024 * 1024) animationError('output');
     const finalized = finishWebpTimeline(output, meta, width, height);

@@ -3,6 +3,7 @@ import {
   estimateDecodedBytes,
   getImageSafetyLimits,
   getMainPipelineConcurrency,
+  classifyImageError,
   isPermanentImageError,
   PERMANENT_IMAGE_ERROR_PREFIX,
   runWithConcurrency,
@@ -11,10 +12,12 @@ import {
 } from './processingGuards';
 
 describe('processingGuards', () => {
-  it('uses conservative main-thread concurrency for low-resource devices', () => {
+  it('runs one task on low-resource devices and fills the encoder pool otherwise', () => {
     expect(getMainPipelineConcurrency({ hardwareConcurrency: 2, deviceMemory: 8 })).toBe(1);
+    expect(getMainPipelineConcurrency({ hardwareConcurrency: 4, deviceMemory: 8 })).toBe(1);
     expect(getMainPipelineConcurrency({ hardwareConcurrency: 8, deviceMemory: 2 })).toBe(1);
-    expect(getMainPipelineConcurrency({ hardwareConcurrency: 8, deviceMemory: 8 })).toBe(2);
+    expect(getMainPipelineConcurrency({ hardwareConcurrency: 8, deviceMemory: 8 })).toBe(3);
+    expect(getMainPipelineConcurrency({ hardwareConcurrency: 16 })).toBe(3);
   });
 
   it('uses lower pixel limits for low-resource devices', () => {
@@ -183,5 +186,42 @@ describe('processingGuards', () => {
 
     expect(maxActive).toBeLessThanOrEqual(2);
     expect(visited.sort()).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('classifies source, settings, timeout and runtime failures', () => {
+    const limits = { maxDimension: 16_384, maxPixels: 50_000_000, maxDecodedBytes: 200_000_000 };
+    const target = validateImageTarget(
+      { width: 100, height: 100 },
+      {
+        enabled: true,
+        mode: 'absolute',
+        maxWidth: 20_000,
+        maxHeight: 100,
+        percentage: 50,
+        method: 'stretch',
+      },
+      limits,
+    )!;
+    expect(classifyImageError(target)).toBe('settings');
+    expect(
+      classifyImageError(`${PERMANENT_IMAGE_ERROR_PREFIX}: invalid resize maxWidth.`),
+    ).toBe('settings');
+    expect(
+      classifyImageError(validateImageDimensions({ width: 20_000, height: 10 }, limits)!),
+    ).toBe('input');
+    expect(classifyImageError(`${PERMANENT_IMAGE_ERROR_PREFIX}: 60MP is above the 50MP limit.`)).toBe(
+      'input',
+    );
+    expect(classifyImageError('Animation: format')).toBe('settings');
+    expect(classifyImageError('Animation: settings')).toBe('settings');
+    expect(classifyImageError('Animation: limit', 'preflight')).toBe('input');
+    expect(classifyImageError('Animation: limit')).toBe('settings');
+    expect(classifyImageError('Animation: invalid')).toBe('input');
+    expect(classifyImageError('Animation: timeout')).toBe('timeout');
+    expect(classifyImageError('Animation: engine')).toBe('runtime');
+    expect(classifyImageError('Task timed out after 45s')).toBe('timeout');
+    expect(classifyImageError('Worker error: out of memory')).toBe('runtime');
+    expect(isPermanentImageError('Task timed out after 45s')).toBe(true);
+    expect(isPermanentImageError('Animation: engine')).toBe(false);
   });
 });

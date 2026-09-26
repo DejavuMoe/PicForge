@@ -3,6 +3,7 @@
  */
 
 import type { CompressSettings, OutputFormat } from '@pic-forge/codecs';
+import type { ImageErrorClass } from '../utils/processingGuards';
 
 /**
  * Top-level toolbox view: the landing page or one of the three tools.
@@ -67,6 +68,8 @@ export interface ImageFile {
   outputMeta?: ImageOutputMeta;
   /** Error message (available when status is 'error') */
   error?: string;
+  /** How the error is handled; derived from `error` when absent */
+  errorClass?: ImageErrorClass;
 }
 
 /**

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFileStore } from '../stores/fileStore';
-import { extractFiles } from '../utils/fileUtils';
+import { collectDroppedFiles, isSupportedImage } from '../utils/fileUtils';
 
 export function DropZone() {
   const { t } = useTranslation();
@@ -49,13 +49,14 @@ export function DropZone() {
       event.stopPropagation();
       setIsDragging(false);
 
-      if (event.dataTransfer.files.length === 0) return;
+      if (event.dataTransfer.items.length === 0 && event.dataTransfer.files.length === 0) return;
 
-      const totalCount = event.dataTransfer.files.length;
-      const files = await extractFiles(event.dataTransfer.files);
+      // Read entries synchronously; the DataTransfer is emptied after this event.
+      const dropped = await collectDroppedFiles(event.dataTransfer);
+      const files = dropped.filter(isSupportedImage);
       if (files.length > 0) {
         addFiles(files);
-      } else if (totalCount > 0) {
+      } else if (dropped.length > 0) {
         showUnsupportedToast();
       }
     },

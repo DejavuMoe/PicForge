@@ -1,4 +1,12 @@
-import { encodeImage, DEFAULT_OPTIONS } from '@pic-forge/codecs';
+import { applyColorPlan, planColorConversion } from './colorProfile';
+import type { HeifColor } from './heif';
+
+/**
+ * Decode the primary HEIC image to sRGB RGBA. Encoding happens in a separate
+ * Worker: this one is terminated as soon as the pixels are transferred, so
+ * libheif's WASM heap (compressed input, decoded planes and RGBA) is released
+ * before MozJPEG allocates its own copy.
+ */
 
 interface HeifImage {
   get_width(): number;
@@ -10,7 +18,13 @@ interface HeifImage {
   ): void;
   free(): void;
 }
-self.onmessage = async ({ data }: MessageEvent<{ buffer: ArrayBuffer; quality: number }>) => {
+
+export type HeicWorkerRequest = { buffer: ArrayBuffer; color?: HeifColor };
+export type HeicWorkerResponse =
+  | { rgba: ArrayBuffer; width: number; height: number; icc?: Uint8Array }
+  | { error: string };
+
+self.onmessage = async ({ data }: MessageEvent<HeicWorkerRequest>) => {
   try {
     const url = new URL('/wasm/heif-1.23.4-de265-1.1.1/libheif.mjs', self.location.origin).href;
     const { default: createHeif } = await import(/* @vite-ignore */ url);
@@ -35,11 +49,15 @@ self.onmessage = async ({ data }: MessageEvent<{ buffer: ArrayBuffer; quality: n
           },
         );
       });
-      const output = await encodeImage('mozjpeg', rgba, width, height, {
-        ...DEFAULT_OPTIONS.mozjpeg,
-        quality: data.quality,
-      });
-      self.postMessage({ output }, { transfer: [output] });
+      const plan = planColorConversion(data.color);
+      applyColorPlan(plan, rgba);
+      const response: HeicWorkerResponse = {
+        rgba: rgba.buffer as ArrayBuffer,
+        width,
+        height,
+        ...(plan.kind === 'embed' ? { icc: plan.icc } : {}),
+      };
+      self.postMessage(response, { transfer: [rgba.buffer as ArrayBuffer] });
     } finally {
       images.forEach((image) => image.free());
     }

@@ -5,7 +5,7 @@
  * Decoding and resizing happen on the main thread (Canvas API).
  */
 
-import { encodeImage } from '@pic-forge/codecs';
+import { encodeImage, optimisePng, type OxipngOptions } from '@pic-forge/codecs';
 import { buildEncoderOptions } from './encoderOptions';
 
 self.onmessage = async (event: MessageEvent) => {
@@ -13,7 +13,7 @@ self.onmessage = async (event: MessageEvent) => {
 
   if (type !== 'task') return;
 
-  const { id, pixelBuffer, width, height, originalSize, settings } = payload;
+  const { id, pixelBuffer, width, height, originalSize, settings, input } = payload;
 
   try {
     // Report progress: starting encoding
@@ -21,20 +21,20 @@ self.onmessage = async (event: MessageEvent) => {
 
     const encoderOptions = buildEncoderOptions(settings);
 
-    // Reconstruct ImageData from transferred buffer
-    const pixelData = new Uint8ClampedArray(pixelBuffer);
-
     // Report progress: encoding
     self.postMessage({ type: 'progress', payload: { id, progress: 80 } });
 
-    // Encode using WASM codec
-    const resultBuffer = await encodeImage(
-      settings.outputFormat,
-      pixelData,
-      width,
-      height,
-      encoderOptions,
-    );
+    // Sanitized PNG bytes are optimised directly; everything else is target RGBA.
+    const resultBuffer =
+      input === 'png'
+        ? await optimisePng(pixelBuffer, encoderOptions as unknown as OxipngOptions)
+        : await encodeImage(
+            settings.outputFormat,
+            new Uint8ClampedArray(pixelBuffer),
+            width,
+            height,
+            encoderOptions,
+          );
 
     // Report completion
     self.postMessage(

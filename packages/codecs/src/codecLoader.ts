@@ -5,28 +5,12 @@
  * Vite dev mode URL resolution issues with import.meta.url.
  *
  * Each codec uses a Promise lock to prevent concurrent initialization.
+ * Encoding runs in Web Workers, so this module must not depend on window/document.
  */
 
 import type { MozjpegOptions, WebpOptions, OxipngOptions, AvifOptions } from './types';
 
 const WASM_BASE = '/wasm/';
-
-// Track loading state for progress indicator
-let loadingCount = 0;
-
-function notifyLoading() {
-  loadingCount++;
-  if (loadingCount === 1 && typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('wasm-loading', { detail: { loading: true } }));
-  }
-}
-
-function notifyLoaded() {
-  loadingCount--;
-  if (loadingCount === 0 && typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('wasm-loading', { detail: { loading: false } }));
-  }
-}
 
 // SIMD detection — cached after first check
 let simdSupported: boolean | null = null;
@@ -102,7 +86,7 @@ export async function encodeImage(
     case 'avif':
       return encodeAvif(imageDataObj, options as AvifOptions);
     default:
-      return encodeWithCanvas(view, width, height, 'image/png', options?.quality ?? 75);
+      throw new Error(`Unsupported output format: ${codecName}`);
   }
 }
 
@@ -111,13 +95,10 @@ async function encodeMozjpeg(imageData: ImageData, options: MozjpegOptions): Pro
     if (!jpegLock) {
       jpegLock = (async () => {
         try {
-          notifyLoading();
           const mod = await import('@jsquash/jpeg/encode');
           await mod.init({ locateFile: (path: string) => WASM_BASE + path });
           jpegEncode = mod.default;
-          notifyLoaded();
         } catch (err) {
-          notifyLoaded();
           jpegLock = null;
           throw err;
         }
@@ -134,7 +115,6 @@ async function encodeWebp(imageData: ImageData, options: WebpOptions): Promise<A
       webpLock = (async () => {
         try {
           const hasSimd = await detectSimd();
-          notifyLoading();
           const mod = await import('@jsquash/webp/encode');
           await mod.init({
             locateFile: (path: string) => {
@@ -146,9 +126,7 @@ async function encodeWebp(imageData: ImageData, options: WebpOptions): Promise<A
             },
           });
           webpEncode = mod.default;
-          notifyLoaded();
         } catch (err) {
-          notifyLoaded();
           webpLock = null;
           throw err;
         }
@@ -159,18 +137,15 @@ async function encodeWebp(imageData: ImageData, options: WebpOptions): Promise<A
   return webpEncode!(imageData, options);
 }
 
-async function encodeOxipng(imageData: ImageData, options: OxipngOptions): Promise<ArrayBuffer> {
+async function loadOxipng(): Promise<void> {
   if (!oxipngOptimise) {
     if (!oxipngLock) {
       oxipngLock = (async () => {
         try {
-          notifyLoading();
           const mod = await import('@jsquash/oxipng/optimise');
           await mod.init(WASM_BASE + 'oxipng.wasm');
           oxipngOptimise = mod.default;
-          notifyLoaded();
         } catch (err) {
-          notifyLoaded();
           oxipngLock = null;
           throw err;
         }
@@ -178,6 +153,10 @@ async function encodeOxipng(imageData: ImageData, options: OxipngOptions): Promi
     }
     await oxipngLock;
   }
+}
+
+async function encodeOxipng(imageData: ImageData, options: OxipngOptions): Promise<ArrayBuffer> {
+  await loadOxipng();
   return oxipngOptimise!(imageData, {
     level: options.level,
     interlace: options.interlace,
@@ -190,13 +169,10 @@ async function encodeAvif(imageData: ImageData, options: AvifOptions): Promise<A
     if (!avifLock) {
       avifLock = (async () => {
         try {
-          notifyLoading();
           const mod = await import('@jsquash/avif/encode');
           await mod.init({ locateFile: (path: string) => WASM_BASE + path });
           avifEncode = mod.default;
-          notifyLoaded();
         } catch (err) {
-          notifyLoaded();
           avifLock = null;
           throw err;
         }
@@ -207,35 +183,16 @@ async function encodeAvif(imageData: ImageData, options: AvifOptions): Promise<A
   return avifEncode!(imageData, options);
 }
 
-async function encodeWithCanvas(
-  imageData: Uint8ClampedArray<ArrayBuffer>,
-  width: number,
-  height: number,
-  mime: string,
-  quality: number,
-): Promise<ArrayBuffer> {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Failed to get 2D canvas context');
-  ctx.putImageData(new ImageData(imageData, width, height), 0, 0);
-  const q = quality / 100;
-
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        // Release canvas bitmap memory eagerly
-        canvas.width = 0;
-        canvas.height = 0;
-        if (!blob) {
-          reject(new Error('Canvas encoding failed'));
-          return;
-        }
-        blob.arrayBuffer().then(resolve).catch(reject);
-      },
-      mime,
-      q,
-    );
+/**
+ * Losslessly optimise complete PNG file bytes. The caller owns `png` and must
+ * already have removed every chunk whose metadata or colour semantics must not
+ * be exported; OxiPNG only re-filters and re-compresses what it receives.
+ */
+export async function optimisePng(png: ArrayBuffer, options: OxipngOptions): Promise<ArrayBuffer> {
+  await loadOxipng();
+  return oxipngOptimise!(png, {
+    level: options.level,
+    interlace: options.interlace,
+    optimiseAlpha: options.optimizeAlpha,
   });
 }

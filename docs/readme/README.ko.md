@@ -57,7 +57,7 @@ Android 파일을 분리할 때는 원본 바이트를 보존합니다. iOS 변�
 | --- | --- |
 | 이미지 | Compat는 보통 인코딩 Worker에서 `createImageBitmap`과 OffscreenCanvas로 원본 Blob을 디코딩·리사이즈한 뒤 `@jsquash/*`로 인코딩합니다. SVG나 Worker에서 디코딩할 수 없는 파일은 메인 스레드 Canvas를 사용합니다. |
 | Android | 내장 MP4 구조를 확인한 뒤, 원본 파일을 JPG와 MP4의 바이트 범위로 나눕니다. |
-| iOS | Apple Live Photo 식별자, 없으면 같은 파일 이름으로 묶습니다. libheif로 HEIC를 디코딩하고 지원하는 색상 프로필을 sRGB로 변환한 뒤 MozJPEG로 인코딩합니다. 조건에 맞는 원본 타이밍 영상은 WebCodecs, PCM 음성은 FFmpeg를 사용합니다. 영상 미지원·실패 시와 고정 30 fps 변환은 FFmpeg를 사용합니다. |
+| iOS | Apple Live Photo 식별자, 없으면 같은 파일 이름으로 묶습니다. 결과를 검증할 수 있으면 브라우저(Safari), 그렇지 않으면 libheif로 HEIC를 디코딩하고 지원하는 색상 프로필을 sRGB로 변환한 뒤 MozJPEG로 인코딩합니다. 조건에 맞는 원본 타이밍 영상은 WebCodecs, PCM 음성은 FFmpeg를 사용합니다. 영상 미지원·실패 시와 고정 30 fps 변환은 FFmpeg를 사용합니다. |
 
 다운로드 전까지 결과는 브라우저 메모리에 저장됩니다. 도구 전환, 홈으로 이동, 브라우저의 뒤로·앞으로 가기에서는 작업 목록이 유지됩니다. **페이지를 새로고침하거나 닫으면 파일과 결과가 사라지므로 먼저 다운로드하세요.**
 

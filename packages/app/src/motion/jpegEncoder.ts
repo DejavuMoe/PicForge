@@ -1,8 +1,10 @@
 /**
- * MozJPEG encoding for converted HEIC stills, in the same jSquash Worker as the
- * compressor but in a separate one-Worker pool: cancelling or clearing the
- * compression batch must never abort a Live Photo job, and vice versa. The pool
- * creates its Worker on demand and releases it when idle.
+ * MozJPEG encoding for converted HEIC stills, written as baseline (sequential)
+ * JPEG: on camera-sized stills that is about twice as fast as progressive for
+ * about 3% more bytes at the same measured quality. It runs in the same jSquash
+ * Worker as the compressor but in a separate one-Worker pool: cancelling or
+ * clearing the compression batch must never abort a Live Photo job, and vice
+ * versa. The pool creates its Worker on demand and releases it when idle.
  */
 
 import { WorkerPool } from '@pic-forge/worker';
@@ -41,7 +43,7 @@ export function encodeJpeg(
       width,
       height,
       rgba.byteLength,
-      { outputFormat: 'mozjpeg', quality, advanced: {} },
+      { outputFormat: 'mozjpeg', quality, advanced: { progressive: false } },
       {
         onResult: (_id, output) => {
           signal.removeEventListener('abort', abort);

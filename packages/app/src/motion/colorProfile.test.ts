@@ -2,13 +2,14 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   applyColorPlan,
+  browserDecodeMatches,
   embedIccProfile,
   parseMatrixProfile,
   planColorConversion,
   srgbDecode,
   srgbEncode,
 } from './colorProfile';
-import { findHeifMetaEnd, readHeifInfo } from './heif';
+import { displaySize, findHeifMetaEnd, readHeifInfo } from './heif';
 
 const sample = new URL('../../../../sample/ios/IMG_1539.HEIC', import.meta.url);
 
@@ -74,6 +75,10 @@ describe('HEIF metadata', () => {
     const bytes = new Uint8Array(readFileSync(sample));
     const info = readHeifInfo(bytes)!;
     expect(info.width! * info.height!).toBe(4284 * 5712);
+    // ispe is landscape; irot turns the displayed image to portrait.
+    expect([info.width, info.height]).toEqual([5712, 4284]);
+    expect(info.display).toEqual({ width: 4284, height: 5712 });
+    expect(browserDecodeMatches(info.color)).toBe(true);
     expect(info.color.icc).toBeDefined();
     expect(parseMatrixProfile(info.color.icc!)).not.toBeNull();
     const plan = planColorConversion(info.color);
@@ -89,6 +94,39 @@ describe('HEIF metadata', () => {
     const prefix = readHeifInfo(bytes.subarray(0, metaEnd), bytes.length)!;
     expect(prefix.exif).toEqual(info.exif);
     expect(prefix.color.icc).toEqual(info.color.icc);
+  });
+
+  it('applies clean aperture and rotation in declared order', () => {
+    const clap = {
+      type: 'clap' as const,
+      width: [4000, 1] as [number, number],
+      height: [2999, 2] as [number, number],
+    };
+    expect(displaySize(4032, 3024, [clap, { type: 'irot', angle: 1 }])).toEqual({
+      width: 1500,
+      height: 4000,
+    });
+    expect(displaySize(4032, 3024, [{ type: 'irot', angle: 3 }])).toEqual({
+      width: 3024,
+      height: 4032,
+    });
+    expect(displaySize(4032, 3024, [{ type: 'irot', angle: 2 }])).toEqual({
+      width: 4032,
+      height: 3024,
+    });
+    // After a quarter turn the aperture is measured on the rotated image.
+    const portrait = {
+      type: 'clap' as const,
+      width: [3000, 1] as [number, number],
+      height: [4000, 1] as [number, number],
+    };
+    expect(displaySize(4032, 3024, [{ type: 'irot', angle: 1 }, portrait])).toEqual({
+      width: 3000,
+      height: 4000,
+    });
+    expect(displaySize(4032, 3024, [portrait])).toBeUndefined();
+    const invalid = { ...clap, width: [1, 0] as [number, number] };
+    expect(displaySize(4032, 3024, [invalid])).toBeUndefined();
   });
 
   it('rejects non-HEIF and truncated input without throwing', () => {
@@ -146,6 +184,26 @@ describe('colour conversion to sRGB', () => {
     const lut = iccProfile(DISPLAY_P3);
     lut.set([...'rXYX'].map((c) => c.charCodeAt(0)), 132); // hide rXYZ: not matrix-shaper
     expect(planColorConversion({ icc: lut })).toEqual({ kind: 'embed', icc: lut });
+  });
+
+  it('accepts a browser decode only where its sRGB conversion matches this path', () => {
+    expect(browserDecodeMatches(undefined)).toBe(true);
+    expect(browserDecodeMatches({ icc: iccProfile(DISPLAY_P3) })).toBe(true);
+    const lut = iccProfile(DISPLAY_P3);
+    lut.set(
+      [...'rXYX'].map((c) => c.charCodeAt(0)),
+      132,
+    );
+    expect(browserDecodeMatches({ icc: lut })).toBe(false);
+    const nclx = (primaries: number, transfer: number) => ({
+      nclx: { primaries, transfer, matrix: 1, fullRange: true },
+    });
+    expect(browserDecodeMatches(nclx(1, 13))).toBe(true);
+    expect(browserDecodeMatches(nclx(12, 1))).toBe(true);
+    expect(browserDecodeMatches(nclx(1, 4))).toBe(false); // left unconverted here
+    expect(browserDecodeMatches(nclx(9, 16))).toBe(false); // PQ
+    expect(browserDecodeMatches(nclx(9, 18))).toBe(false); // HLG
+    expect(browserDecodeMatches(nclx(5, 13))).toBe(false); // primaries not converted here
   });
 
   it('round-trips the sRGB transfer functions', () => {

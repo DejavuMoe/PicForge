@@ -57,7 +57,7 @@ Android 拆分保留原始字节。iOS 转换会处理显示裁切和旋转，�
 | --- | --- |
 | 图片 | Compat 通常在编码 Worker 内用 `createImageBitmap` 和 OffscreenCanvas 解码、缩放原始 Blob，再调用 `@jsquash/*` 编码。SVG 或 Worker 无法解码的文件回退到主线程 Canvas。 |
 | Android | 验证内嵌 MP4 结构，再按字节范围拆出原始 JPG 和 MP4。 |
-| iOS | 按 Apple 实况照片标识配对，否则按同名文件分组。libheif 解码 HEIC，支持的颜色配置转换到 sRGB 后由 MozJPEG 编码。符合条件且保留源时间戳的视频使用 WebCodecs；PCM 音频交由 FFmpeg，视频不支持或失败时也回退到 FFmpeg。固定 30 fps 使用 FFmpeg。 |
+| iOS | 按 Apple 实况照片标识配对，否则按同名文件分组。HEIC 在结果可校验时由浏览器解码（Safari），否则由 libheif 解码；支持的颜色配置转换到 sRGB 后由 MozJPEG 编码。符合条件且保留源时间戳的视频使用 WebCodecs；PCM 音频交由 FFmpeg，视频不支持或失败时也回退到 FFmpeg。固定 30 fps 使用 FFmpeg。 |
 
 下载前，结果保存在浏览器内存中。切换工具、返回首页或使用浏览器前进／后退，都保留当前队列。**刷新或关闭页面会清除文件和结果，请先下载。**
 

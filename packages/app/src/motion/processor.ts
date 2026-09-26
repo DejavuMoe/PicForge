@@ -1,9 +1,9 @@
 import { runInFFmpegLane } from '../utils/ffmpegLane';
 import { estimateHeicCost, estimateVideoCost, getProcessingBudget } from '../utils/resourceBudget';
 import { cleanApertureFilters, readMovieBox } from './cleanAperture';
-import { embedIccProfile } from './colorProfile';
+import { browserDecodeMatches, embedIccProfile } from './colorProfile';
 import { readHeifInfo, type HeifColor } from './heif';
-import type { HeicWorkerRequest, HeicWorkerResponse } from './heicWorker';
+import type { HeicDecoder, HeicWorkerRequest, HeicWorkerResponse } from './heicWorker';
 import { encodeJpeg } from './jpegEncoder';
 import {
   audioArguments,
@@ -26,7 +26,24 @@ const VIDEO_TIMEOUT_MS = 300_000;
 const VIDEO_EXEC_TIMEOUT_MS = 240_000;
 const INPUT_DIRECTORY = '/input';
 
-function decodeHeic(buffer: ArrayBuffer, color: HeifColor | undefined, signal: AbortSignal) {
+/**
+ * Diagnostics for comparing decoders on one device:
+ * `localStorage['picforge.heicDecoder'] = 'libheif'` skips the browser decoder.
+ */
+function browserHeicAllowed(): boolean {
+  try {
+    return localStorage.getItem('picforge.heicDecoder') !== 'libheif';
+  } catch {
+    return true;
+  }
+}
+
+function decodeHeic(
+  buffer: ArrayBuffer,
+  color: HeifColor | undefined,
+  native: HeicWorkerRequest['native'],
+  signal: AbortSignal,
+) {
   return new Promise<Extract<HeicWorkerResponse, { rgba: ArrayBuffer }>>((resolve, reject) => {
     const worker = new Worker(new URL('./heicWorker.ts', import.meta.url), { type: 'module' });
     const finish = () => {
@@ -52,12 +69,16 @@ function decodeHeic(buffer: ArrayBuffer, color: HeifColor | undefined, signal: A
       finish();
       reject(new Error('engineFailed'));
     };
-    const request: HeicWorkerRequest = { buffer, color };
+    const request: HeicWorkerRequest = { buffer, color, native };
     worker.postMessage(request, [buffer]);
   });
 }
 
-async function convertStill(image: File, settings: MotionSettings, signal: AbortSignal) {
+async function convertStill(
+  image: File,
+  settings: MotionSettings,
+  signal: AbortSignal,
+): Promise<{ image: Blob; decoder: HeicDecoder }> {
   const buffer = await image.arrayBuffer();
   signal.throwIfAborted();
   const info = readHeifInfo(new Uint8Array(buffer));
@@ -69,12 +90,30 @@ async function convertStill(image: File, settings: MotionSettings, signal: Abort
     signal,
   );
   try {
-    const decoded = await decodeHeic(buffer, info?.color, signal);
+    // The browser decoder is used only where its sRGB conversion matches ours and
+    // its result can be checked against the declared display size.
+    const native =
+      info?.display && browserDecodeMatches(info.color) && browserHeicAllowed()
+        ? info.display
+        : undefined;
+    const started = performance.now();
+    const decoded = await decodeHeic(buffer, info?.color, native, signal);
     signal.throwIfAborted();
+    const encoding = performance.now();
     const jpeg = await encodeJpeg(decoded.rgba, decoded.width, decoded.height, settings.quality, signal);
-    return new Blob([decoded.icc ? embedIccProfile(jpeg, decoded.icc) : jpeg], {
-      type: 'image/jpeg',
+    console.debug('[PicForge] HEIC still', {
+      decoder: decoded.decoder,
+      ...(decoded.nativeError ? { nativeError: decoded.nativeError } : {}),
+      size: `${decoded.width}x${decoded.height}`,
+      decodeMs: Math.round(encoding - started),
+      encodeMs: Math.round(performance.now() - encoding),
     });
+    return {
+      image: new Blob([decoded.icc ? embedIccProfile(jpeg, decoded.icc) : jpeg], {
+        type: 'image/jpeg',
+      }),
+      decoder: decoded.decoder,
+    };
   } finally {
     release();
   }
@@ -214,12 +253,12 @@ export async function processMedia(
     const [image, converted] = await Promise.all([
       item.image
         ? (/\.jpe?g$/i.test(item.image.name)
-            ? Promise.resolve<Blob>(item.image)
+            ? Promise.resolve({ image: item.image as Blob, decoder: undefined })
             : convertStill(item.image, settings, inner.signal)
-          ).then((blob) => {
+          ).then((result) => {
             still = item.video ? 30 : 100;
             report();
-            return blob;
+            return result;
           }, stop)
         : undefined,
       item.video
@@ -231,7 +270,10 @@ export async function processMedia(
     ]);
     signal.throwIfAborted();
     const output: MediaOutput = {};
-    if (image) output.image = image;
+    if (image) {
+      output.image = image.image;
+      if (image.decoder) output.imageDecoder = image.decoder;
+    }
     if (converted) {
       output.video = converted.video;
       output.videoEngine = converted.engine;

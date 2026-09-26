@@ -57,7 +57,7 @@ Everything runs locally. No account, media upload, processing server or API key 
 | --- | --- |
 | Images | Compat normally decodes and resizes the original Blob inside its encoding Worker with `createImageBitmap` and OffscreenCanvas, then encodes with `@jsquash/*`. SVG and unsupported Worker decoding use the main-thread Canvas fallback. |
 | Android | Validate the embedded MP4 structure, then split the original file into JPG and MP4 byte ranges. |
-| iOS | Pair by Apple's Live Photo identifier, otherwise matching filenames. libheif decodes HEIC; supported colour profiles convert to sRGB before MozJPEG encoding. Eligible source-timed video uses WebCodecs, with FFmpeg for PCM audio and as the fallback for unsupported or failed video conversion; explicit 30 fps uses FFmpeg. |
+| iOS | Pair by Apple's Live Photo identifier, otherwise matching filenames. HEIC is decoded by the browser where the result can be verified (Safari), otherwise by libheif; supported colour profiles convert to sRGB before MozJPEG encoding. Eligible source-timed video uses WebCodecs, with FFmpeg for PCM audio and as the fallback for unsupported or failed video conversion; explicit 30 fps uses FFmpeg. |
 
 Results stay in browser memory until you download them. Switching tools, returning home and using Back/Forward keep your queues. **Reloading or closing the page clears files and results.**
 

@@ -86,7 +86,12 @@ fallback that remains unverified. Jobs run serially; within a job, still and vid
 conversion run concurrently subject to the shared budget. A failure cancels the
 other half and produces one terminal outcome.
 
-- HEIC uses the pinned libheif/libde265 Worker, then a separate MozJPEG encoder.
+- HEIC decodes in a Worker, then a separate MozJPEG encoder writes baseline JPEG
+  (about twice as fast as progressive on camera stills for ~3% more bytes at the
+  same measured quality). The Worker first tries the browser's decoder (Safari:
+  ImageIO) drawn into an sRGB canvas, but only for matrix/TRC ICC, untagged or
+  convertible SDR nclx sources, and accepts it only at the clap/irot display size
+  from `heif.ts`; otherwise, or on any failure, the pinned libheif/libde265 decodes.
   Matrix/TRC ICC and supported nclx descriptions convert to sRGB. LUT-only RGB ICC
   is embedded in the JPEG instead of claiming an unavailable conversion. JPEG
   input is retained. Exports are web derivatives, not HDR/metadata archives.

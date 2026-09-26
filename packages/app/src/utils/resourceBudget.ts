@@ -146,7 +146,8 @@ export function estimateVideoCost(sourceBytes: number): number {
 
 /**
  * HEIC decode (compressed input, decoded planes and RGBA inside libheif, plus the
- * transferred RGBA) and the following JPEG encode (RGBA plus MozJPEG's copy and
+ * transferred RGBA; a browser decode holds a source copy, bitmap, canvas and
+ * readback within the same bound) and the following JPEG encode (RGBA plus MozJPEG's copy and
  * coefficients). The two stages run in separate Workers, so the larger one counts.
  */
 export function estimateHeicCost(sourceBytes: number, pixels: number): number {

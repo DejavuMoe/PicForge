@@ -81,6 +81,7 @@ This checklist captures the main manual and browser-based checks for each releas
 - Apple pairing handles lone files and duplicate basenames explicitly; identifier mismatches are flagged, renamed halves with one shared identifier pair, and `.AAE` sidecars appear as separate unsupported rows without blocking their pair.
 - Matrix/TRC ICC or supported nclx HEIC exports match an sRGB reference in a colour-managed viewer. LUT-only RGB profiles remain embedded in the JPEG; do not expect every export to be profile-free sRGB.
 - Check clean aperture, orientation, primary track, audio and per-frame PTS in the actual WASM output.
+- On Safari, confirm the logged HEIC decoder and compare its JPEG with the libheif result (`picforge.heicDecoder`) for orientation, size and colour.
 - Cancel/retry retains completed results; ZIP members equal individual downloads.
 - Unsupported native video playback shows a static fallback and download message.
 - Offline reload after successful engine caching can process media again.

@@ -1,9 +1,10 @@
 /**
  * Minimal, bounds-checked HEIF (ISOBMFF) metadata reader for the primary image:
- * its display size (ispe), colour property (colr: ICC profile or nclx) and the
- * location of its Exif item. Pixel decoding stays in libheif; this only reads
- * the small `meta` box so the app can budget memory, keep colours correct and
- * read Apple's Live Photo identifier.
+ * its size (ispe, and after clap/irot), colour property (colr: ICC profile or
+ * nclx) and the location of its Exif item. Pixel decoding happens elsewhere
+ * (libheif or the browser); this only reads the small `meta` box so the app can
+ * budget memory, keep colours correct, check a browser decode and read Apple's
+ * Live Photo identifier.
  */
 
 export interface NclxColor {
@@ -22,6 +23,12 @@ export interface HeifInfo {
   /** Primary image size before rotation (ispe); undefined if absent. */
   width?: number;
   height?: number;
+  /**
+   * Size after the primary's transformative properties (clap, irot) in their
+   * declared order, i.e. what a conforming decoder displays; undefined if ispe
+   * is absent or a clean aperture is invalid.
+   */
+  display?: { width: number; height: number };
   color: HeifColor;
   /** Byte range of the Exif item payload in the file, if any. */
   exif?: { offset: number; length: number };
@@ -177,16 +184,66 @@ function parse(r: Reader, fileSize: number): HeifInfo | null {
   }
 
   const ispe = properties.get(primary)?.find((box) => box.type === 'ispe');
+  const width = ispe ? r.u32(ispe.data + 4) : undefined;
+  const height = ispe ? r.u32(ispe.data + 8) : undefined;
   const exifId = findItemOfType(r, child('iinf'), 'Exif');
   return {
-    width: ispe ? r.u32(ispe.data + 4) : undefined,
-    height: ispe ? r.u32(ispe.data + 8) : undefined,
+    width,
+    height,
+    display:
+      width && height
+        ? displaySize(width, height, readTransforms(r, properties.get(primary) ?? []))
+        : undefined,
     color: color ?? {},
     exif:
       exifId === undefined
         ? undefined
         : locateItem(r, child('iloc'), child('idat'), exifId, fileSize),
   };
+}
+
+export type HeifTransform =
+  | { type: 'irot'; angle: number }
+  | { type: 'clap'; width: [number, number]; height: [number, number] };
+
+function readTransforms(r: Reader, boxes: Box[]): HeifTransform[] {
+  const transforms: HeifTransform[] = [];
+  for (const box of boxes) {
+    if (box.type === 'irot') transforms.push({ type: 'irot', angle: r.u8(box.data) & 3 });
+    else if (box.type === 'clap')
+      transforms.push({
+        type: 'clap',
+        width: [r.u32(box.data), r.u32(box.data + 4)],
+        height: [r.u32(box.data + 8), r.u32(box.data + 12)],
+      });
+  }
+  return transforms;
+}
+
+/**
+ * Displayed size after clap/irot in order (imir keeps the size). Clean-aperture
+ * sizes round like libheif; an invalid aperture yields undefined.
+ */
+export function displaySize(
+  width: number,
+  height: number,
+  transforms: readonly HeifTransform[],
+): { width: number; height: number } | undefined {
+  for (const transform of transforms) {
+    if (transform.type === 'irot') {
+      if (transform.angle % 2 === 1) [width, height] = [height, width];
+      continue;
+    }
+    const [wn, wd] = transform.width;
+    const [hn, hd] = transform.height;
+    if (wd === 0 || hd === 0) return undefined;
+    const w = Math.floor((wn + Math.floor(wd / 2)) / wd);
+    const h = Math.floor((hn + Math.floor(hd / 2)) / hd);
+    if (w <= 0 || h <= 0 || w > width || h > height) return undefined;
+    width = w;
+    height = h;
+  }
+  return { width, height };
 }
 
 /** Declared size of the top-level box at `at`. */

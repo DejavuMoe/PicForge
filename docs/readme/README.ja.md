@@ -57,7 +57,7 @@ Android の分離では元のバイト列を保持します。iOS の変換で�
 | --- | --- |
 | 画像 | Compat は通常、エンコード Worker 内で `createImageBitmap` と OffscreenCanvas を使い元の Blob をデコード・リサイズし、`@jsquash/*` でエンコードします。SVG や Worker でデコードできない画像はメインスレッドの Canvas を使います。 |
 | Android | 埋め込み MP4 の構造を検証し、元ファイルを JPG と MP4 のバイト範囲に分離。 |
-| iOS | Apple の Live Photo 識別子、なければ同名ファイルでペアリングします。libheif で HEIC をデコードし、対応する色プロファイルを sRGB に変換して MozJPEG でエンコードします。条件を満たす元のタイミングの動画は WebCodecs、PCM 音声は FFmpeg を使用。非対応・失敗時の動画変換と固定 30 fps は FFmpeg を使います。 |
+| iOS | Apple の Live Photo 識別子、なければ同名ファイルでペアリングします。結果を検証できる場合はブラウザ（Safari）、それ以外は libheif で HEIC をデコードし、対応する色プロファイルを sRGB に変換して MozJPEG でエンコードします。条件を満たす元のタイミングの動画は WebCodecs、PCM 音声は FFmpeg を使用。非対応・失敗時の動画変換と固定 30 fps は FFmpeg を使います。 |
 
 結果はダウンロードするまでブラウザーのメモリーに保存されます。ツールの切り替え、ホームへの移動、ブラウザーの戻る・進む操作では一覧を維持します。**ページの再読み込みや終了でファイルと結果は消えるため、先にダウンロードしてください。**
 

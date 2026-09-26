@@ -76,6 +76,12 @@ Synthetic media additionally requires `heif-enc` with an HEVC encoder (Debian:
 test processing contracts; they do not cover every camera container or colour profile.
 Use [animation checks](animation-pipeline.md#验证入口) for GIF/APNG frame semantics.
 
+Linux Playwright browsers have no HEIC decoder, so acceptance exercises the libheif
+fallback there; the browser HEIC decode needs real Safari. Each converted still logs
+`[PicForge] HEIC still` at debug level with the decoder, any rejection reason and
+decode/encode times. For an A/B check on one device, set
+`localStorage['picforge.heicDecoder'] = 'libheif'` to skip the browser decoder.
+
 WebCodecs availability depends on the actual browser, hardware and source codecs.
 Check the path that ran and its fallback rather than inferring hardware acceleration
 from an API name. Playback, audio/video sync and colour on real Safari/iPhone and

@@ -12,6 +12,8 @@ export interface MediaOutput {
   video?: Blob;
   /** Which converter produced the video (diagnostics; the output contract is the same). */
   videoEngine?: 'webcodecs' | 'ffmpeg';
+  /** Which decoder read a converted HEIC still (diagnostics, like videoEngine). */
+  imageDecoder?: 'native' | 'libheif';
 }
 export type VideoPreset = 'balanced' | 'quality' | 'compact';
 export interface MotionSettings {

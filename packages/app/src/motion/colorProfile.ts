@@ -226,6 +226,20 @@ function planNclx(nclx: NclxColor): ColorPlan {
   return { kind: 'convert', matrix, curves: [curve, curve, curve] };
 }
 
+/**
+ * Whether a browser decode drawn into an sRGB canvas yields what this module
+ * would: matrix/TRC ICC, untagged, or nclx whose conversion is supported here.
+ * LUT/grey profiles, HDR transfers and other nclx keep the libheif path, whose
+ * handling (embed or leave unchanged) differs from a browser's conversion.
+ */
+export function browserDecodeMatches(color: HeifColor | undefined): boolean {
+  if (color?.icc) return parseMatrixProfile(color.icc) !== null;
+  if (!color?.nclx) return true;
+  const { primaries, transfer } = color.nclx;
+  if (primaries === 1 || primaries === 2) return nclxCurve(transfer) === srgbDecode;
+  return primaries in NCLX_PRIMARIES && nclxCurve(transfer) !== null;
+}
+
 function nclxCurve(transfer: number): Curve | null {
   // Unspecified, BT.709/601/2020 SDR and sRGB are displayed with the sRGB curve,
   // as browsers do for SDR images; HDR transfers are not tone-mapped here.

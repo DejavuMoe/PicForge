@@ -1,7 +1,6 @@
 {
-  "status": "darkroom ledger, 0.17.0 working tree, 2026-09-26",
+  "status": "current: darkroom ledger",
   "source": "packages/app/src/styles/tokens.css",
-  "previous": "design-tokens.editorial-2026-09-10.json",
   "colors": {
     "light": {
       "paper": "#f3f1ea",

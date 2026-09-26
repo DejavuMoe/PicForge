@@ -1,8 +1,7 @@
 # GIF/APNG → 动态 WebP
 
-本实现选择项目已经固定版本的 FFmpeg 单线程 WASM 核心，通过它的 GIF/APNG 解码器与
-`libwebp_anim` 编码器处理动画。没有新增依赖、生成第二份 FFmpeg、升级 Vips，或切换静态图默认引擎。
-此能力随 0.17.0 发布；根包、应用包与 PWA 缓存版本同步更新。
+动画使用项目固定版本的 FFmpeg 单线程 WASM 核心，通过 GIF/APNG 解码器与
+`libwebp_anim` 编码器输出动态 WebP。它与 Live Photo 共用 FFmpeg 资源和串行通道。
 
 ## 路由与所有权
 
@@ -41,7 +40,7 @@
 
 ## 产品范围与限制
 
-- 本阶段支持 GIF/APNG 输入、动态 WebP 输出，包含质量、无损、压缩方法和已有缩放设置。
+- 支持 GIF/APNG 输入、动态 WebP 输出，包含质量、无损、压缩方法和已有缩放设置。
 - JPEG、当前 PNG/AVIF 编码器属于静态路径；对动画选择这些格式时显示明确错误，不导出单帧替代文件。
   改成 WebP 后自动恢复处理。其他无法由参数纠正的错误及用户取消不会因全局编辑被自动重试。
 - 动态 WebP 输入、GIF 纯文本/交互帧、16 位 APNG、ICC/非标准色彩描述、非默认且未映射的 WebP 高级选项
@@ -52,20 +51,6 @@
 - 动画沿用原生图片预览；原图/结果的播放时钟独立，不提供同步逐帧比较器。
 - WASM 仍从现有 `/wasm/ffmpeg-0.12.10/` 懒加载，约 30.7 MiB 未压缩 WASM。
   第一次加载成本存在；成功缓存后支持离线。沿用现有 FFmpeg 许可与源码分发要求。
-
-## 为什么选择此方案
-
-- **现有 FFmpeg**：实际构建包含 GIF/APNG 解码和 libwebp_anim；两种输入共享完整帧语义与编码路径，
-  单线程核心不要求 SharedArrayBuffer/隔离头；无需新建源码编译供应链。
-- **现有 Vips**：全页 GIF → WebP 可以运行，但固定构建的 PNG loader 没有 `n` 多帧选项，不能作为统一 APNG 方案。
-  生产静态 Vips 的既有资格边界保持不变。
-- **ImageDecoder**：本机 Chromium/Firefox 均暴露该 API，但它不能代替动画 WebP 编码器。
-  原生解码加新编码核心会引入另一套帧桥接、构建和资格验证；本阶段不增加这条路径。
-- **wasm-webp 0.1.0 候选封装**：公开接口接收所有帧数组，源码没有显式提交最终结束时间，且配置映射有限，
-  不满足本项目的资源和时序契约，因此未安装。
-
-未来只有在实测证明首载字节或固定核心内存成为主要瓶颈时，才替换动画引擎为精简的
-GIF/APNG + libwebp WASM 构建；保留上述 Blob、时间轴、取消、设置和输出验证契约。
 
 ## 验证入口
 
@@ -86,7 +71,7 @@ pnpm benchmark:animation
 验证 Motion/Live Photo 的取消/重试、逐帧时间、配对与下载。
 
 现有单测涵盖容器边界、时间轴、无静态回退、设置映射、队列取消和错误恢复。
-本次 Chromium/Firefox 证据不能替代真实 Safari/iOS 资格验证；本机 Playwright WebKit 缺少系统运行库。
+语义检查要求浏览器支持 ImageDecoder；实际 Safari/iOS 的播放和转换兼容性需要实机验证。
 
 ## 上游依据
 
@@ -95,4 +80,3 @@ pnpm benchmark:animation
 - [libvips 多页与动画](https://www.libvips.org/API/8.17/multipage-and-animated-images.html)
 - [FFmpeg APNG 解复用器](https://ffmpeg.org/doxygen/trunk/apngdec_8c_source.html)
 - [WebCodecs 标准](https://www.w3.org/TR/webcodecs/)
-- [未采用封装的源代码](https://github.com/nieyuyao/webp-wasm/blob/main/webp/encode.cpp)

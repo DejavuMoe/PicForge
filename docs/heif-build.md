@@ -42,12 +42,12 @@ Site-output verification also rejects obsolete HEIF directories.
 
 The worker checks actual libheif 1.23.4 and libde265 1.1.1 versions before passing
 untrusted bytes to the decoder. The versioned URL and service-worker cache
-revision prevent reuse of the previous decoder. The application version remains
-0.17.0; this change itself does not publish a release.
+revision isolate decoder versions from one another.
 
-Woodpecker uses the checked-out static assets in both its test and deployment
-pipelines. Its Node jobs still run the asset gate, build the site and verify site
-output. There is no Emscripten image or repeated native compilation in normal CI.
+Woodpecker uses the checked-out static assets in one
+[test-then-publish workflow](../.woodpecker/test-then-publish.yml). It runs the asset
+gate, builds and verifies the site, then publishes that exact output. There is no
+Emscripten image or native compilation in normal CI.
 The manifest checks detect missing/mixed/corrupted files; they are not a signature
 authenticating a compromised repository or build host.
 
@@ -90,11 +90,11 @@ sources/objects stay in an OS temporary directory; `--work-dir PATH` allows reus
 No media is uploaded. Builds on other toolchains/platforms are not promised to
 be byte-identical; normal CI consumes the checked-in build instead.
 
-The approved build used Windows, Emscripten 3.1.61, Python 3.14.7, CMake 3.31.6 and
-Ninja 1.11.1. Only libde265 HEVC decoding is enabled; other codecs, plugins,
+The checked-in manifest records the exact build toolchain and output hashes.
+Only libde265 HEVC decoding is enabled; other codecs, plugins,
 WebCodecs, uncompressed HEIF, dynamic JavaScript execution, filesystem support
-and pthreads are disabled. libde265 1.1.1 includes CVE-2026-54240/54241 fixes and
-enables libheif's backend security-limits integration.
+and pthreads are disabled. The decoder enables libheif's backend security-limits
+integration.
 
 For a future version change, update source pins, static directory, ignore
 exceptions, build/runtime checks, browser regressions and cache revision together.

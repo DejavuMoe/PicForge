@@ -14,7 +14,7 @@
 
 | ツール | できること | 出力 |
 | --- | --- | --- |
-| **画像圧縮** | まとめて圧縮、形式変換、リサイズ。JPEG、PNG、WebP、AVIF、GIF、BMP、SVG を入力可能。ブラウザーのデコード対応が必要です。 | JPEG、WebP、PNG、AVIF |
+| **画像圧縮** | まとめて圧縮、形式変換、リサイズ。JPEG、PNG、WebP、AVIF、GIF、APNG、BMP、SVG を入力可能。ブラウザーのデコード対応が必要です。 | JPEG、WebP、PNG、AVIF。アニメーションは WebP のみ |
 | **Android Motion Photos** | 動画が末尾に付いた JPG を、元の写真と動画に分離。再エンコードは行いません。 | 元の JPG + MP4 |
 | **iOS Live Photos** | HEIC/HEIF と MOV を Apple の Live Photo 識別子で（識別子がない場合はファイル名で）ペアにし、共有しやすい形式へ変換。写真・動画の単独処理や、JPEG・MP4 の入力も可能。 | JPEG + H.264 MP4。音声は必要に応じて AAC で保存 |
 
@@ -26,6 +26,7 @@
 - 全画像に共通の設定と、画像ごとの設定を使い分けられます。共通設定を変更しても、個別設定は上書きされません。
 - ピクセル数または割合でリサイズ。枠内に収める場合は縦横比を保ち、拡大しません。中央クロップは指定サイズを埋め、引き伸ばしは指定した幅と高さに合わせます。
 - PNG 出力は可逆圧縮です。品質スライダーは使いません。
+- GIF/APNG アニメーションは[アニメーション WebP](../animation-pipeline.md) に変換できます。アニメーションの JPEG/PNG/AVIF 出力は非対応で、選択すると設定エラーになります。最初のフレームだけを黙って出力することはありません。
 
 ### Motion Photos と Live Photos
 
@@ -54,15 +55,15 @@ Android の分離では元のバイト列を保持します。iOS の変換で�
 
 | 対象 | 処理 |
 | --- | --- |
-| 画像 | ブラウザーでデコードし、Canvas でリサイズ。Web Worker 内の `@jsquash/*` でエンコード。 |
+| 画像 | Compat は通常、エンコード Worker 内で `createImageBitmap` と OffscreenCanvas を使い元の Blob をデコード・リサイズし、`@jsquash/*` でエンコードします。SVG や Worker でデコードできない画像はメインスレッドの Canvas を使います。 |
 | Android | 埋め込み MP4 の構造を検証し、元ファイルを JPG と MP4 のバイト範囲に分離。 |
-| iOS | Apple の Live Photo 識別子、なければ同名ファイルでグループ化。libheif で HEIC をデコードし、色を sRGB に変換してから MozJPEG で JPEG に変換。動画は FFmpeg で H.264/AAC MP4 に変換。 |
+| iOS | Apple の Live Photo 識別子、なければ同名ファイルでペアリングします。libheif で HEIC をデコードし、対応する色プロファイルを sRGB に変換して MozJPEG でエンコードします。条件を満たす元のタイミングの動画は WebCodecs、PCM 音声は FFmpeg を使用。非対応・失敗時の動画変換と固定 30 fps は FFmpeg を使います。 |
 
 結果はダウンロードするまでブラウザーのメモリーに保存されます。ツールの切り替え、ホームへの移動、ブラウザーの戻る・進む操作では一覧を維持します。**ページの再読み込みや終了でファイルと結果は消えるため、先にダウンロードしてください。**
 
 ## 使う前に
 
-- **両方のファイルに Apple の識別子があれば照合します。** 識別子のないファイルはファイル名だけでペアにします。JPEG/MP4 は sRGB に変換され、HEIC の HDR、メタデータ、補助画像を保管する形式ではないため、元ファイルを残してください。
+- **両方のファイルに Apple 識別子があれば照合します。** 識別子のないファイルは名前だけでペアリングします。元ファイルは残してください。出力は共有用で、HEIC の HDR、メタデータ、補助画像を保存するアーカイブではありません。対応する HEIC 色プロファイルは sRGB に変換し、LUT のみの RGB プロファイルは JPEG に埋め込みます。
 - **対応状況はブラウザーによって異なります。** 画像のデコードや動画プレビューはブラウザーとコーデックに依存します。分離した動画が再生できなくても、ダウンロードは可能です。大きなファイルはメモリーやサイズの制限に達する場合があります。
 - **オフライン利用には事前の読み込みが必要です。** アプリはキャッシュから動作しますが、変換エンジンも読み込みとキャッシュが済んでいる必要があります。初回の変換には通信が必要な場合があります。
 
@@ -89,7 +90,7 @@ pnpm dev
 | --- | --- |
 | UI | React 19、TypeScript、Vite 8、通常の CSS |
 | 状態管理・翻訳 | Zustand、i18next |
-| メディア処理 | Canvas、Web Workers、WebAssembly、`@jsquash/*`、libheif、FFmpeg |
+| メディア処理 | Canvas、Web Workers、WebCodecs、WebAssembly、`@jsquash/*`、libheif、FFmpeg |
 | ダウンロード・オフライン | JSZip、Service Worker |
 
 `packages/app` に UI と写真・動画ツール、`packages/worker` に画像処理と Worker、`packages/codecs` にエンコーダーのアダプターと設定があります。本番の画像圧縮には **Compat** エンジンを使用し、wasm-vips は実験段階です。
@@ -100,10 +101,12 @@ pnpm dev
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:heif
+pnpm test:build
 pnpm build
 ```
 
-ブラウザー・メディアの検証は [QA チェックリスト](../QA_CHECKLIST.md)、現在の UI は [UI 設計](../UI_DESIGN.md)、今後の作業は[開発計画](../next-steps-plan.md)を参照してください。[カメラサンプルの検証](../SAMPLE_VALIDATION.md)と[エンジンの検証](../phase4-validation.md)にはテスト環境を記録しています。Playwright WebKit の成功は、実際の Safari や iPhone での動作確認を意味しません。
+開発・保守については[ドキュメント一覧](../README.md)、[アーキテクチャ](../architecture.md)、[検証ガイド](../validation.md)、[QA チェックリスト](../QA_CHECKLIST.md)、[UI 設計](../UI_DESIGN.md)を参照してください。Playwright WebKit の成功は、実際の Safari や iPhone での動作確認を意味しません。
 
 不具合報告やパッチを歓迎します。ブラウザー、再現手順、ファイル形式、関連する設定を添えてください。Issue やコミットに私的な写真を含めず、個人情報を含まないサンプルで再現できると助かります。
 

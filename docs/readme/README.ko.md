@@ -14,7 +14,7 @@
 
 | 도구 | 기능 | 출력 |
 | --- | --- | --- |
-| **이미지 압축** | 일괄 압축, 형식 변환, 크기 조절. JPEG, PNG, WebP, AVIF, GIF, BMP, SVG를 입력할 수 있으며, 브라우저의 디코딩 지원이 필요합니다. | JPEG, WebP, PNG 또는 AVIF |
+| **이미지 압축** | 일괄 압축, 형식 변환, 크기 조절. JPEG, PNG, WebP, AVIF, GIF, APNG, BMP, SVG를 입력할 수 있으며, 브라우저의 디코딩 지원이 필요합니다. | JPEG, WebP, PNG 또는 AVIF. 애니메이션은 WebP만 지원 |
 | **Android 모션 포토** | 끝에 동영상이 붙어 있는 JPG를 원본 사진과 동영상으로 분리합니다. 다시 인코딩하지 않습니다. | 원본 JPG + MP4 |
 | **iOS Live Photo** | Apple Live Photo 식별자로(식별자가 없으면 파일 이름으로) HEIC/HEIF와 MOV를 짝지어 공유하기 좋은 형식으로 변환합니다. 사진이나 동영상만 처리할 수도 있으며, JPEG와 MP4 입력도 받습니다. | JPEG + H.264 MP4. 선택에 따라 오디오를 AAC로 저장 |
 
@@ -26,6 +26,7 @@
 - 모든 이미지에 공통 설정을 적용하거나, 이미지마다 별도로 설정할 수 있습니다. 이후 공통 설정을 바꿔도 개별 설정은 유지됩니다.
 - 픽셀 또는 백분율로 크기를 조절합니다. 경계에 맞추기는 비율을 유지하며 원본보다 키우지 않습니다. 중앙 자르기는 지정한 크기를 채우고, 늘이기는 정확한 너비와 높이에 맞춥니다.
 - PNG 출력은 무손실 압축이며 품질 슬라이더를 사용하지 않습니다.
+- GIF/APNG 애니메이션은 [애니메이션 WebP](../animation-pipeline.md)로 내보낼 수 있습니다. 애니메이션의 JPEG/PNG/AVIF 출력은 지원하지 않아 설정 오류를 표시하며, 첫 프레임만 알림 없이 내보내지 않습니다.
 
 ### 모션 포토와 Live Photo
 
@@ -54,15 +55,15 @@ Android 파일을 분리할 때는 원본 바이트를 보존합니다. iOS 변�
 
 | 대상 | 처리 과정 |
 | --- | --- |
-| 이미지 | 브라우저에서 디코딩하고 Canvas로 크기를 조절한 뒤, Web Worker에서 `@jsquash/*`로 인코딩합니다. |
+| 이미지 | Compat는 보통 인코딩 Worker에서 `createImageBitmap`과 OffscreenCanvas로 원본 Blob을 디코딩·리사이즈한 뒤 `@jsquash/*`로 인코딩합니다. SVG나 Worker에서 디코딩할 수 없는 파일은 메인 스레드 Canvas를 사용합니다. |
 | Android | 내장 MP4 구조를 확인한 뒤, 원본 파일을 JPG와 MP4의 바이트 범위로 나눕니다. |
-| iOS | Apple Live Photo 식별자로, 없으면 이름이 같은 파일끼리 묶습니다. libheif로 HEIC를 디코딩하고 색상을 sRGB로 변환한 뒤 MozJPEG로 JPEG를 만듭니다. 동영상은 FFmpeg로 H.264/AAC MP4로 변환합니다. |
+| iOS | Apple Live Photo 식별자, 없으면 같은 파일 이름으로 묶습니다. libheif로 HEIC를 디코딩하고 지원하는 색상 프로필을 sRGB로 변환한 뒤 MozJPEG로 인코딩합니다. 조건에 맞는 원본 타이밍 영상은 WebCodecs, PCM 음성은 FFmpeg를 사용합니다. 영상 미지원·실패 시와 고정 30 fps 변환은 FFmpeg를 사용합니다. |
 
 다운로드 전까지 결과는 브라우저 메모리에 저장됩니다. 도구 전환, 홈으로 이동, 브라우저의 뒤로·앞으로 가기에서는 작업 목록이 유지됩니다. **페이지를 새로고침하거나 닫으면 파일과 결과가 사라지므로 먼저 다운로드하세요.**
 
 ## 사용 전 알아두기
 
-- **두 파일 모두 Apple 식별자가 있으면 식별자를 확인합니다.** 식별자가 없는 파일은 파일 이름으로만 짝을 맞춥니다. JPEG/MP4 출력은 sRGB로 변환되며 HEIC의 HDR, 메타데이터, 보조 이미지를 보관하는 용도가 아니므로 원본을 남겨 두세요.
+- **두 파일 모두 Apple 식별자가 있으면 식별자를 확인합니다.** 없는 파일은 이름으로만 짝을 맞춥니다. 출력은 공유용이며 HEIC의 HDR, 메타데이터, 보조 이미지 보관용이 아니므로 원본을 남겨 두세요. 지원하는 HEIC 색상 프로필은 sRGB로 변환하고, LUT 전용 RGB 프로필은 JPEG에 포함합니다.
 - **지원 범위는 브라우저마다 다릅니다.** 이미지 디코딩과 동영상 미리 보기는 브라우저 및 코덱에 따라 달라집니다. 분리한 동영상을 재생할 수 없어도 다운로드는 가능합니다. 큰 파일은 메모리나 크기 제한에 걸릴 수 있습니다.
 - **오프라인 사용에는 사전 로딩이 필요합니다.** 앱은 캐시에서 실행할 수 있지만, 변환 엔진도 미리 불러와 캐시에 저장되어 있어야 합니다. 첫 변환에는 인터넷 연결이 필요할 수 있습니다.
 
@@ -89,7 +90,7 @@ pnpm dev
 | --- | --- |
 | 화면 | React 19, TypeScript, Vite 8, 일반 CSS |
 | 상태 관리·번역 | Zustand, i18next |
-| 미디어 처리 | Canvas, Web Workers, WebAssembly, `@jsquash/*`, libheif, FFmpeg |
+| 미디어 처리 | Canvas, Web Workers, WebCodecs, WebAssembly, `@jsquash/*`, libheif, FFmpeg |
 | 다운로드·오프라인 | JSZip, Service Worker |
 
 `packages/app`에는 화면과 사진·동영상 도구, `packages/worker`에는 이미지 처리와 Worker, `packages/codecs`에는 인코더 어댑터와 설정이 있습니다. 실제 서비스의 이미지 압축은 **Compat** 엔진을 사용하며, wasm-vips는 실험 단계입니다.
@@ -100,10 +101,12 @@ pnpm dev
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:heif
+pnpm test:build
 pnpm build
 ```
 
-브라우저·미디어 검사는 [QA 체크리스트](../QA_CHECKLIST.md), 현재 화면은 [UI 설계](../UI_DESIGN.md), 이후 작업은[개발 계획](../next-steps-plan.md)을 참고하세요. [카메라 샘플 검증](../SAMPLE_VALIDATION.md)과 [엔진 검증](../phase4-validation.md)에는 각 테스트 환경이 기록되어 있습니다. Playwright WebKit 통과가 실제 Safari나 iPhone에서의 검증을 뜻하지는 않습니다.
+개발·유지보수는 [문서 목록](../README.md), [아키텍처](../architecture.md), [검증 안내](../validation.md), [QA 체크리스트](../QA_CHECKLIST.md), [UI 설계](../UI_DESIGN.md)를 참고하세요. Playwright WebKit 통과가 실제 Safari나 iPhone에서의 검증을 뜻하지는 않습니다.
 
 버그 제보와 패치를 환영합니다. 브라우저, 재현 방법, 파일 형식, 관련 설정을 함께 알려 주세요. Issue나 커밋에 개인 사진을 올리지 말고, 가능하면 개인정보가 없는 샘플로 재현해 주세요.
 

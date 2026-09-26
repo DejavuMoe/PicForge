@@ -14,7 +14,7 @@
 
 | 工具 | 用途 | 导出 |
 | --- | --- | --- |
-| **图片压缩** | 批量压缩、转换格式和调整尺寸。接受 JPEG、PNG、WebP、AVIF、GIF、BMP 和 SVG，具体取决于浏览器的解码支持。 | JPEG、WebP、PNG 或 AVIF |
+| **图片压缩** | 批量压缩、转换格式和调整尺寸。接受 JPEG、PNG、WebP、AVIF、GIF、APNG、BMP 和 SVG，具体取决于浏览器的解码支持。 | JPEG、WebP、PNG 或 AVIF；动画仅限 WebP |
 | **Android 动态照片** | 将末尾附带视频的 JPG 拆成原始照片和视频，不重新编码。 | 原始 JPG + MP4 |
 | **iOS 实况照片** | 按 Apple 实况照片标识配对 HEIC/HEIF 与 MOV（文件缺少标识时按文件名），转成便于分享的格式。也可单独处理照片或视频，并接受 JPEG、MP4 输入。 | JPEG + H.264 MP4，可保留音频并转为 AAC |
 
@@ -26,6 +26,7 @@
 - 为全部图片设置参数，也可单独设置某张图片。之后修改全局参数，不会覆盖单图设置。
 - 按像素或百分比缩放。「适应边界」保持比例且不放大；「居中裁切」填满指定尺寸；「拉伸」使用精确宽高。
 - PNG 输出为无损压缩，不使用质量滑块。
+- GIF/APNG 动画可导出为[动画 WebP](../animation-pipeline.md)。动画不支持 JPEG/PNG/AVIF 输出，选择这些格式会提示设置错误，不会静默导出首帧。
 
 ### 动态照片与实况照片
 
@@ -54,15 +55,15 @@ Android 拆分保留原始字节。iOS 转换会处理显示裁切和旋转，�
 
 | 路径 | 处理过程 |
 | --- | --- |
-| 图片 | 浏览器解码、Canvas 调整尺寸，再由 Web Worker 调用 `@jsquash/*` 编码。 |
+| 图片 | Compat 通常在编码 Worker 内用 `createImageBitmap` 和 OffscreenCanvas 解码、缩放原始 Blob，再调用 `@jsquash/*` 编码。SVG 或 Worker 无法解码的文件回退到主线程 Canvas。 |
 | Android | 验证内嵌 MP4 结构，再按字节范围拆出原始 JPG 和 MP4。 |
-| iOS | 按 Apple 实况照片标识配对，否则按同名文件分组。libheif 解码 HEIC，颜色转换为 sRGB 后由 MozJPEG 编码 JPEG；FFmpeg 将视频转成 H.264/AAC MP4。 |
+| iOS | 按 Apple 实况照片标识配对，否则按同名文件分组。libheif 解码 HEIC，支持的颜色配置转换到 sRGB 后由 MozJPEG 编码。符合条件且保留源时间戳的视频使用 WebCodecs；PCM 音频交由 FFmpeg，视频不支持或失败时也回退到 FFmpeg。固定 30 fps 使用 FFmpeg。 |
 
 下载前，结果保存在浏览器内存中。切换工具、返回首页或使用浏览器前进／后退，都保留当前队列。**刷新或关闭页面会清除文件和结果，请先下载。**
 
 ## 使用前了解
 
-- **两个文件都带 Apple 标识时会校验标识**，没有标识的文件只按文件名配对。请保留原片：JPEG/MP4 导出会转换为 sRGB，不适合用来归档 HEIC 的 HDR、元数据和辅助图像。
+- **两个文件都带 Apple 标识时会校验标识**，没有标识的文件只按文件名配对。请保留原片：导出用于分享，不是 HEIC 的 HDR、元数据和辅助图像归档。支持的 HEIC 颜色配置转为 sRGB，仅含 LUT 的 RGB 配置会嵌入 JPEG。
 - **支持情况取决于浏览器。** 图片解码和视频预览受浏览器及编码格式影响；提取的视频即使不能预览，仍可下载。大文件可能触及内存或大小限制。
 - **离线使用需要先加载。** 应用可从缓存运行，转换引擎也必须先成功加载并缓存；首次转换可能需要联网。
 
@@ -89,7 +90,7 @@ pnpm dev
 | --- | --- |
 | 界面 | React 19、TypeScript、Vite 8、原生 CSS |
 | 状态与多语言 | Zustand、i18next |
-| 媒体处理 | Canvas、Web Workers、WebAssembly、`@jsquash/*`、libheif、FFmpeg |
+| 媒体处理 | Canvas、Web Workers、WebCodecs、WebAssembly、`@jsquash/*`、libheif、FFmpeg |
 | 下载与离线 | JSZip、Service Worker |
 
 `packages/app` 包含界面和媒体工具，`packages/worker` 负责图片处理与 Worker，`packages/codecs` 提供编码器适配和参数定义。生产压缩使用 **Compat** 引擎，wasm-vips 仍处于实验阶段。
@@ -100,10 +101,12 @@ pnpm dev
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:heif
+pnpm test:build
 pnpm build
 ```
 
-浏览器与媒体验收见 [QA 清单](../QA_CHECKLIST.md)，当前界面见 [UI 设计](../UI_DESIGN.md)，后续工作见[开发计划](../next-steps-plan.md)。[相机样本验证](../SAMPLE_VALIDATION.md)和[引擎验证](../phase4-validation.md)记录了各自的测试环境；Playwright WebKit 通过不等于已验证真实 Safari 或 iPhone。
+开发与维护见[文档索引](../README.md)、[项目架构](../architecture.md)、[验证指南](../validation.md)、[QA 清单](../QA_CHECKLIST.md)和 [UI 设计](../UI_DESIGN.md)。Playwright WebKit 通过不等于已验证真实 Safari 或 iPhone。
 
 欢迎提交问题和补丁。反馈时请附上浏览器、复现步骤、文件格式和相关设置。请勿在 Issue 或提交中放入私人照片，尽量使用非私人样本复现。
 

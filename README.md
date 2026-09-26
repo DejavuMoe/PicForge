@@ -14,7 +14,7 @@ Compress images, split Android Motion Photos, and convert iOS Live Photos. An op
 
 | Tool | What it does | Export |
 | --- | --- | --- |
-| **Image compression** | Batch compression, format conversion and resizing. Accepts JPEG, PNG, WebP, AVIF, GIF, BMP and SVG, subject to browser decoding support. | JPEG, WebP, PNG or AVIF |
+| **Image compression** | Batch compression, format conversion and resizing. Accepts JPEG, PNG, WebP, AVIF, GIF, APNG, BMP and SVG, subject to browser decoding support. | JPEG, WebP, PNG or AVIF; animations: WebP only |
 | **Android Motion Photos** | Splits a JPG containing an appended video into its original photo and video, without re-encoding. | Original JPG + MP4 |
 | **iOS Live Photos** | Pairs HEIC/HEIF and MOV using Apple's Live Photo identifier, or by filename when a file lacks it, and converts them for sharing. Individual photos or videos also work; JPEG and MP4 inputs are accepted too. | JPEG + H.264 MP4, with optional AAC audio |
 
@@ -26,6 +26,7 @@ Drop in images, paste from the clipboard, or open the sample from the home page.
 - Apply settings to all images, or give one image its own settings. Later global edits leave those custom settings alone.
 - Resize by pixels or percentage. Fit keeps proportions without enlarging; center crop fills the frame; stretch uses the exact width and height.
 - PNG output is lossless. Its compression does not use the quality slider.
+- Animated GIF/APNG exports as [animated WebP](docs/animation-pipeline.md). JPEG/PNG/AVIF animation output is unsupported and reports a settings error; it never silently exports only the first frame.
 
 ### Motion Photos and Live Photos
 
@@ -54,15 +55,15 @@ Everything runs locally. No account, media upload, processing server or API key 
 
 | Path | Processing |
 | --- | --- |
-| Images | Browser decoding and Canvas resizing, then a Web Worker encodes with `@jsquash/*`. |
+| Images | Compat normally decodes and resizes the original Blob inside its encoding Worker with `createImageBitmap` and OffscreenCanvas, then encodes with `@jsquash/*`. SVG and unsupported Worker decoding use the main-thread Canvas fallback. |
 | Android | Validate the embedded MP4 structure, then split the original file into JPG and MP4 byte ranges. |
-| iOS | Pair by Apple's Live Photo identifier, otherwise by matching filenames. libheif decodes HEIC, colours are converted to sRGB and MozJPEG encodes JPEG; FFmpeg converts video to H.264/AAC MP4. |
+| iOS | Pair by Apple's Live Photo identifier, otherwise matching filenames. libheif decodes HEIC; supported colour profiles convert to sRGB before MozJPEG encoding. Eligible source-timed video uses WebCodecs, with FFmpeg for PCM audio and as the fallback for unsupported or failed video conversion; explicit 30 fps uses FFmpeg. |
 
 Results stay in browser memory until you download them. Switching tools, returning home and using Back/Forward keep your queues. **Reloading or closing the page clears files and results.**
 
 ## Before you start
 
-- **Live Photo pairing checks Apple's identifier when both files contain it**; files without it are paired by filename only. Keep the originals: JPEG/MP4 exports are converted to sRGB and do not preserve HEIC's HDR, metadata or auxiliary images as an archive.
+- **Live Photo pairing checks Apple's identifier when both files contain it**; files without it are paired by filename only. Keep the originals: exports are sharing derivatives, not an archive of HEIC HDR, metadata or auxiliary images. Supported HEIC colour profiles convert to sRGB; LUT-only RGB profiles are embedded in the JPEG.
 - **Browser support varies.** Image decoding and video preview depend on the browser and codec. An extracted video can still be downloaded if it cannot play in the preview. Large files may hit memory or size limits.
 - **Offline use needs a first load.** The app can work from its cache; conversion engines must also have loaded and cached successfully. Your first conversion may need a connection.
 
@@ -89,7 +90,7 @@ Open [127.0.0.1:5173](http://127.0.0.1:5173). Use `pnpm build` to build and `pnp
 | --- | --- |
 | Interface | React 19, TypeScript, Vite 8, plain CSS |
 | State and translation | Zustand, i18next |
-| Media | Canvas, Web Workers, WebAssembly, `@jsquash/*`, libheif, FFmpeg |
+| Media | Canvas, Web Workers, WebCodecs, WebAssembly, `@jsquash/*`, libheif, FFmpeg |
 | Downloads and offline use | JSZip, Service Worker |
 
 `packages/app` contains the interface and media tools, `packages/worker` the image pipeline and workers, and `packages/codecs` the encoder adapters and settings. Production compression uses the **Compat** engine; wasm-vips remains experimental.
@@ -105,19 +106,9 @@ pnpm test:build
 pnpm build
 ```
 
-See the [QA checklist](docs/QA_CHECKLIST.md) for browser and media checks, [UI design](docs/UI_DESIGN.md) for the current interface, and [next steps](docs/next-steps-plan.md) for planned work. [Camera validation](docs/SAMPLE_VALIDATION.md) and [engine validation](docs/phase4-validation.md) record their test environments; Playwright WebKit results do not establish real Safari or iPhone support.
+See the [documentation index](docs/README.md), [architecture](docs/architecture.md), [validation guide](docs/validation.md), [QA checklist](docs/QA_CHECKLIST.md) and [UI design](docs/UI_DESIGN.md). Playwright WebKit results do not establish real Safari or iPhone support.
 
 Bug reports and patches are welcome. Include the browser, reproduction steps and relevant format/settings. Please keep private photos out of issues and commits; a non-personal reproducer is best.
-
-## CI release retention
-
-The single `.woodpecker/test.yml` workflow tests, builds once, verifies the output,
-and then publishes that same `dist/` from its shared workspace. A failed check stops
-publication. Only the final publish step mounts the deployment directory; the
-workflow retains the existing production concurrency limit and publisher lock.
-
-After successful activation, the site publisher keeps the current release and the immediately previous release in `releases/`, pruning older release directories under the deployment lock. Failed or stale publications do not trigger cleanup; a cleanup failure emits a warning. The first deployment has one release, subsequent successful deployments normally keep two. The retained previous release is available for manual rollback.
-
 
 ## License
 

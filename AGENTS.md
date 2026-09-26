@@ -2,7 +2,7 @@
 
 ## Current state
 
-Working version **0.18.0**, browser-only image toolbox. See the [documentation index](docs/README.md) and [architecture](docs/architecture.md). The package version does not establish a release/deployment.
+Working version **0.19.0**, browser-only image toolbox. See the [documentation index](docs/README.md) and [architecture](docs/architecture.md). The package version does not establish a release/deployment.
 
 - **Image compression:** existing `@jsquash/*` pipeline, batch resize, global/per-image settings, compare/zoom previews and ZIP manifest.
 - **Android Motion Photos:** binary JPG + MP4 extraction; no re-encoding or Apple engine loading. Preserve the MotionFlow attribution.

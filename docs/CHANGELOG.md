@@ -9,6 +9,20 @@ All notable changes to PicForge are documented here.
 - Fix first-visit offline app caching and add sample-driven browser checks.
 - Consolidate project guidance; remove obsolete compressor documentation, unused helper exports/loading styles, duplicate TypeScript declaration and stale sharp build permission.
 
+### Changed (darkroom ledger redesign)
+
+- New visual system ([brief](design/darkroom-ledger.md), [tokens](design/design-tokens.json)): warm paper/ink chrome, a single safelight-amber signal, a hue-free graphite stage for all media in both themes, self-hosted IBM Plex Sans/Mono (Latin subsets, OFL, precached), 1 px rules and 2 px corners. `app-shell.css` is replaced by token-based stylesheets in `packages/app/src/styles/`.
+- Header gains indexed tool navigation; the per-tool heading band is removed. The footer becomes a status line with local processing and the version.
+- Queue rows become ledger rows with mono sizes, a signed change and a remaining-size bar. The batch ledger (count, totals, actions) moves under the queue and is sticky on phones. Phones show settings in the list view as well.
+- Compression stage: registration-marked plate with labels and sizes outside the pixels, and one view switch (Original · Result · split · two-up). The inspector gains visible preset recipes with the current one marked, a format radio rail and a source → result ledger footer.
+- Media tools: legible locked settings; phone frames hug the fitted photo/video.
+- Brand recoloured (ink P, amber play triangle, ink tile for header/favicon/icons; favicon `?v=ledger`). Share cards and the README screenshots (five languages) are regenerated.
+
+### Fixed (redesign testing)
+
+- A video whose metadata loads without a frame size (an undecodable track such as HEVC) now shows the still-image fallback. Previously its dock was wider than the visible poster.
+- A themed select scrolled into view on focus no longer closes as soon as it opens, which had made keyboard selection pick the previous value.
+
 ### Fixed (post-0.17.0 review)
 
 - HEIC → JPEG converts Display P3 (and other matrix/TRC ICC or nclx) colours to sRGB instead of writing P3 values into an untagged JPEG; LUT-only profiles are embedded.

@@ -43,6 +43,10 @@ export function VideoPlayer({
       if (!video.videoWidth || !video.videoHeight) return;
       const bounds = container.getBoundingClientRect();
       const style = getComputedStyle(element);
+      // A frame that hugs its player (phones) declares its limit as max-height; its
+      // rendered height would only echo the previous fit.
+      const limit = parseFloat(getComputedStyle(container).maxHeight);
+      const availableHeight = Number.isFinite(limit) ? limit : bounds.height;
       // Choose the layout from its row tokens, not the previous dock's rendered height.
       const baseDockHeight =
         parseFloat(style.getPropertyValue('--pf-video-seek-height')) +
@@ -52,7 +56,7 @@ export function VideoPlayer({
         Math.min(
           1,
           bounds.width / video.videoWidth,
-          Math.max(0, bounds.height - height) / video.videoHeight,
+          Math.max(0, availableHeight - height) / video.videoHeight,
         );
       const compact = video.videoWidth * scaleForDock(baseDockHeight) < 220;
       element.dataset.compact = String(compact);
@@ -148,6 +152,12 @@ export function VideoPlayer({
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
         onLoadedMetadata={(event) => {
+          // Metadata without a renderable frame size means the container parsed but the
+          // video track cannot be decoded here (e.g. HEVC): use the still-image fallback.
+          if (!event.currentTarget.videoWidth || !event.currentTarget.videoHeight) {
+            onError();
+            return;
+          }
           const value = event.currentTarget.duration;
           setDuration(Number.isFinite(value) ? value : 0);
         }}

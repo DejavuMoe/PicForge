@@ -1,0 +1,332 @@
+/* Motion/Live Photo stage: paired prints with docks fitted to the visible media. */
+.pf-motion-output {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  gap: 24px;
+  min-height: 0;
+  padding: 20px 28px 16px;
+}
+.pf-motion-media-pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+}
+.pf-motion-media-pane > figcaption {
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--pf-label-tracking);
+  text-align: center;
+  text-transform: uppercase;
+}
+.pf-motion-media-frame {
+  position: relative;
+  display: flex;
+  flex: 0 1 75%;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.pf-motion-media-frame img,
+.pf-motion-media-frame video {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+}
+.pf-motion-media-pane > .pf-text-button {
+  flex-wrap: wrap;
+  justify-content: center;
+  justify-self: center;
+  align-self: center;
+}
+.pf-motion-media-pane > .pf-text-button > span {
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-weight: 400;
+}
+.pf-media-placeholder {
+  width: 32px;
+  height: 32px;
+  color: var(--pf-ink-3);
+}
+.pf-motion-preview-note {
+  margin: 0;
+  color: var(--pf-ink-3);
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+.pf-motion-media-pane:only-child {
+  grid-column: 1 / -1;
+}
+@supports (grid-template-rows: subgrid) {
+  @media (min-width: 768px) {
+    .pf-motion-output {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+      gap: 0 24px;
+    }
+    .pf-motion-media-pane {
+      display: grid;
+      grid-row: span 4;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: subgrid;
+      justify-content: stretch;
+      gap: 12px;
+    }
+  }
+}
+@media (min-width: 768px) {
+  .pf-motion-media-pane > figcaption {
+    grid-row: 1;
+  }
+  .pf-motion-media-pane > .pf-motion-media-frame {
+    grid-row: 2;
+  }
+  .pf-motion-media-pane > .pf-motion-preview-note {
+    grid-row: 3;
+  }
+  .pf-motion-media-pane > .pf-text-button {
+    grid-row: 4;
+  }
+}
+
+/* Video: the player is sized by VideoPlayer to the visible frame plus its dock. */
+.pf-video-player {
+  display: flex;
+  flex-direction: column;
+  width: var(--pf-video-width, 100%);
+  height: var(--pf-video-height, 100%);
+  min-height: 0;
+  background: var(--pf-paper);
+}
+.pf-motion-media-frame .pf-video-player video {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  object-fit: scale-down;
+}
+.pf-video-controls {
+  display: grid;
+  flex-shrink: 0;
+  grid-template-columns:
+    minmax(24px, var(--pf-video-action-height)) minmax(min-content, 1fr)
+    minmax(24px, var(--pf-video-action-height)) minmax(24px, var(--pf-video-action-height));
+  grid-template-rows: var(--pf-video-seek-height) var(--pf-video-action-height);
+  align-items: center;
+  gap: 0 4px;
+  width: 100%;
+  height: var(--pf-video-controls-height);
+  padding: 4px 8px;
+  border-top: 1px solid var(--pf-rule);
+  background: var(--pf-paper-raised);
+}
+.pf-video-controls input[type='range'] {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  height: var(--pf-video-seek-height);
+  min-height: var(--pf-video-seek-height);
+}
+.pf-video-controls .pf-icon-control {
+  grid-row: 2;
+  width: 100%;
+  min-width: 24px;
+  height: var(--pf-video-action-height);
+  min-height: var(--pf-video-action-height);
+}
+.pf-video-play {
+  grid-column: 1;
+  color: var(--pf-ink);
+}
+.pf-video-mute {
+  grid-column: 3;
+}
+.pf-video-fullscreen {
+  grid-column: 4;
+}
+.pf-video-time {
+  grid-row: 2;
+  grid-column: 2;
+  min-width: 0;
+  color: var(--pf-ink-2);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.pf-video-player[data-compact='true']:not(:fullscreen) .pf-video-controls {
+  grid-template-columns: repeat(3, minmax(24px, 1fr));
+  grid-template-rows: var(--pf-video-seek-height) var(--pf-video-action-height) 14px;
+  height: calc(var(--pf-video-controls-height) + 14px);
+}
+.pf-video-player[data-compact='true']:not(:fullscreen) .pf-video-time {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  text-align: center;
+}
+.pf-video-player[data-compact='true']:not(:fullscreen) .pf-video-mute {
+  grid-column: 2;
+}
+.pf-video-player[data-compact='true']:not(:fullscreen) .pf-video-fullscreen {
+  grid-column: 3;
+}
+.pf-video-player:fullscreen {
+  width: 100%;
+  height: 100%;
+  background: var(--pf-paper);
+}
+.pf-video-player:fullscreen video {
+  object-fit: contain;
+}
+
+/* Photo strip: fitted to the rendered picture, not the pane. */
+.pf-photo-preview {
+  --pf-photo-controls-height: var(--pf-video-controls-height);
+  padding-bottom: var(--pf-photo-controls-height);
+}
+.pf-photo-controls {
+  position: absolute;
+  top: var(--pf-photo-bottom);
+  left: 50%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
+  gap: 0 8px;
+  width: var(--pf-photo-width);
+  height: var(--pf-photo-controls-height);
+  padding: 4px 8px 4px 12px;
+  border-top: 1px solid var(--pf-rule);
+  background: var(--pf-paper-raised);
+  transform: translateX(-50%);
+}
+.pf-photo-dimensions {
+  flex: 1;
+  color: var(--pf-ink-2);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pf-photo-controls .pf-icon-control {
+  width: var(--pf-video-action-height);
+  min-width: var(--pf-video-action-height);
+  height: var(--pf-video-action-height);
+  min-height: var(--pf-video-action-height);
+  margin-left: auto;
+}
+.pf-photo-preview:fullscreen {
+  width: 100%;
+  height: 100%;
+  background: var(--pf-paper);
+}
+.pf-photo-preview:fullscreen .pf-photo-controls {
+  top: auto;
+  bottom: 0;
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .pf-motion-output:has(.pf-video-player[data-compact='true']) .pf-photo-preview {
+    --pf-photo-controls-height: calc(var(--pf-video-controls-height) + 14px);
+  }
+}
+
+/* Waiting/queued/error state of a selected item */
+.pf-motion-waiting {
+  display: grid;
+  flex: 1;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  text-align: center;
+}
+.pf-motion-waiting .pf-motion-thumb {
+  width: 112px;
+  height: 112px;
+  margin-bottom: 4px;
+}
+.pf-motion-waiting .pf-motion-thumb svg {
+  width: 28px;
+  height: 28px;
+}
+.pf-motion-waiting h2 {
+  color: var(--pf-ink);
+  font-size: 16px;
+  font-weight: 500;
+}
+.pf-motion-waiting .pf-field-hint {
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.pf-motion-waiting .pf-field-error {
+  max-width: 460px;
+}
+.pf-motion-waiting progress {
+  width: min(240px, 100%);
+  height: 2px;
+  border: 0;
+  background: var(--pf-rule);
+  appearance: none;
+  accent-color: var(--pf-signal);
+}
+.pf-motion-waiting progress::-webkit-progress-bar {
+  background: var(--pf-rule);
+}
+.pf-motion-waiting progress::-webkit-progress-value {
+  background: var(--pf-signal);
+}
+.pf-motion-waiting progress::-moz-progress-bar {
+  background: var(--pf-signal);
+}
+
+@media (max-width: 767px) {
+  .pf-motion-viewer {
+    flex: none;
+    min-height: 450px;
+  }
+  .pf-output-file .pf-button {
+    min-height: 44px;
+  }
+  .pf-motion-output {
+    flex-direction: column;
+    gap: 28px;
+    padding: 16px 12px 20px;
+  }
+  .pf-motion-media-pane {
+    flex: none;
+  }
+  .pf-motion-media-frame {
+    flex: none;
+  }
+  /* Frames hug the fitted media on phones; landscape media leaves no empty bands. */
+  .pf-motion-media-frame:has(.pf-video-player) {
+    height: auto;
+    max-height: calc(min(62dvh, 440px) + var(--pf-video-controls-height));
+  }
+  .pf-motion-media-frame:has(.pf-video-player) .pf-video-player:not(:fullscreen) {
+    height: var(--pf-video-height, calc(min(62dvh, 440px) + var(--pf-video-controls-height)));
+  }
+  .pf-photo-preview {
+    --pf-photo-controls-height: 56px;
+  }
+  .pf-photo-preview img {
+    max-height: min(62dvh, 440px);
+  }
+  .pf-motion-media-pane > .pf-text-button {
+    min-height: 44px;
+  }
+}

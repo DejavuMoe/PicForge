@@ -1,11 +1,11 @@
 /** A file selection button and independent actions: no nested interactive roles. */
-import { memo, type ReactNode } from 'react';
+import { memo, type CSSProperties, type ReactNode } from 'react';
 import { FiDownload, FiRefreshCw, FiStopCircle, FiX } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useFileStore } from '../stores/fileStore';
 import type { ImageFile } from '../types';
-import { formatFileSize } from '../utils/fileUtils';
+import { compressionRatio, formatFileSize, formatSizeChange } from '../utils/fileUtils';
 import { getOutputName, isResultExportable } from '../utils/exportManifest';
 
 interface FileRowProps {
@@ -25,6 +25,10 @@ export const FileRow = memo(function FileRow({
   const { t } = useTranslation();
   const settings = useSettingsStore((state) => state.settings);
   const canExport = isResultExportable(file, settings);
+  const result = canExport ? file.result : undefined;
+  const saving = result ? compressionRatio(file.originalSize, result.size) : 0;
+  // Remaining size as a share of the original; the unfilled rule is what was saved.
+  const remaining = result ? result.size / Math.max(1, file.originalSize) : 0;
   const download = async () => {
     if (!isResultExportable(file, useSettingsStore.getState().settings)) return;
     const { saveAs } = await import('file-saver');
@@ -54,28 +58,41 @@ export const FileRow = memo(function FileRow({
           <span className="pf-file-name" data-tooltip={file.file.name}>
             {file.file.name}
           </span>
-          <span id={`file-status-${file.id}`} className={`pf-file-status-text is-${file.status}`}>
-            {t(`status.${file.status}`, { progress: file.progress })}
-          </span>
-          <span className="pf-file-meta">
+          <span className="pf-file-status-line">
+            <span id={`file-status-${file.id}`} className={`pf-file-status-text is-${file.status}`}>
+              {t(`status.${file.status}`, { progress: file.progress })}
+            </span>
             {file.settingsMode === 'custom' && (
               <span className="pf-file-custom-label">{t('settings.mode.custom')}</span>
             )}
+          </span>
+          <span className="pf-file-meta">
             <span>{formatFileSize(file.originalSize)}</span>
-            {canExport && file.result && (
+            {result && (
               <>
-                <span>→</span>
-                <span className="pf-file-result-size">{formatFileSize(file.result.size)}</span>
+                <span aria-hidden>→</span>
+                <span className="pf-file-result-size">{formatFileSize(result.size)}</span>
+                <span className={`pf-file-ratio${saving < 0 ? ' is-larger' : ''}`}>
+                  {formatSizeChange(saving)}
+                </span>
               </>
             )}
           </span>
+          {file.status === 'processing' ? (
+            <span className="pf-file-row-progress" aria-hidden>
+              <span style={{ width: `${file.progress}%` }} />
+            </span>
+          ) : (
+            result && (
+              <span
+                className={`pf-file-delta${remaining > 1 ? ' is-larger' : ''}`}
+                style={{ '--pf-delta': Math.min(1, remaining) } as CSSProperties}
+                aria-hidden
+              />
+            )
+          )}
         </span>
       </button>
-      {file.status === 'processing' && (
-        <span className="pf-file-row-progress" aria-hidden>
-          <span style={{ width: `${file.progress}%` }} />
-        </span>
-      )}
       <div className="pf-file-row-actions">
         {file.status === 'processing' && (
           <RowAction

@@ -1,4 +1,4 @@
-/* Landing: one useful image, three direct paths. No continuous animation. */
+/* Landing: a title sheet, one real sample on the stage, and the tool index. */
 .pf-landing {
   flex: 1;
   min-height: 0;
@@ -6,59 +6,103 @@
   scrollbar-gutter: stable;
 }
 .pf-landing-main {
+  display: grid;
+  gap: 48px;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 48px 48px 36px;
+  padding: 56px 48px 48px;
 }
 .pf-landing-hero {
   display: grid;
-  grid-template-columns: 0.95fr 1.05fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
   align-items: center;
-  gap: 48px;
-  margin-bottom: 40px;
+  gap: 64px;
+}
+.pf-landing-intro {
+  display: grid;
+  justify-items: start;
+  align-content: center;
 }
 .pf-landing-intro h1 {
-  font-size: clamp(38px, 4.5vw, 66px);
-  line-height: 1.08;
-  letter-spacing: -0.055em;
-  font-weight: 650;
+  color: var(--pf-ink);
+  font-size: clamp(44px, 5.6vw, 80px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-wrap: balance;
 }
-.pf-landing-intro h1 span {
-  display: block;
-}
-.pf-landing-intro h1 span + span {
-  color: var(--pf-accent);
+.pf-landing-intro h1::after {
+  content: '';
+  display: inline-block;
+  width: 0.16em;
+  height: 0.16em;
+  margin-left: 0.08em;
+  background: var(--pf-signal);
 }
 .pf-landing-summary {
-  font-size: 17px;
-  line-height: 1.65;
-  color: var(--pf-text-secondary);
-  max-width: 430px;
+  max-width: 440px;
   margin-top: 28px;
+  color: var(--pf-ink-2);
+  font-size: 17px;
+  line-height: 1.6;
   text-wrap: pretty;
 }
 .pf-landing-privacy {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid var(--pf-rule);
+  color: var(--pf-ink-2);
   font-size: 13px;
-  color: var(--pf-text-secondary);
-  margin-top: 24px;
 }
 .pf-landing-privacy svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
+  color: var(--pf-ink-3);
 }
+
+/* Sample on a graphite stage */
 .pf-demo {
-  margin: 0;
+  display: grid;
+  gap: 10px;
   min-width: 0;
+  margin: 0;
+  padding: 16px 32px 14px;
+  border-radius: var(--pf-radius);
+  background: var(--pf-paper);
+  color: var(--pf-ink);
+}
+.pf-demo > figcaption {
+  display: flex;
+  justify-content: space-between;
+  color: var(--pf-ink-2);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
 }
 .pf-demo-image {
+  --pf-mark: var(--pf-ink-3);
   position: relative;
   aspect-ratio: 3 / 2;
-  border-radius: 4px 4px 0 0;
-  overflow: hidden;
-  background: var(--pf-image-mat);
+}
+.pf-demo-image::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  --pf-mark-length: 12px;
+  background:
+    linear-gradient(var(--pf-mark) 0 0) top left / var(--pf-mark-length) 1px no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) top left / 1px var(--pf-mark-length) no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) top right / var(--pf-mark-length) 1px no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) top right / 1px var(--pf-mark-length) no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) bottom left / var(--pf-mark-length) 1px no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) bottom left / 1px var(--pf-mark-length) no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) bottom right / var(--pf-mark-length) 1px no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) bottom right / 1px var(--pf-mark-length) no-repeat;
+  pointer-events: none;
 }
 .pf-demo-image img {
   display: block;
@@ -77,27 +121,29 @@
   bottom: 0;
   left: var(--split);
   width: 1px;
-  background: #fff;
+  background: #f4f2ec;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 30%);
   pointer-events: none;
 }
 .pf-demo-divider > span {
   position: absolute;
   top: 50%;
   left: 0;
-  transform: translate(-50%, -50%);
-  width: 36px;
-  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: white;
-  color: #222221;
-  box-shadow: 0 1px 5px rgb(0 0 0 / 15%);
+  width: 22px;
+  height: 44px;
+  border-radius: var(--pf-radius);
+  background: #f4f2ec;
+  color: #171714;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 35%);
+  transform: translate(-50%, -50%);
 }
 .pf-demo-divider svg {
-  width: 13px;
-  height: 16px;
+  width: 10px;
+  height: 14px;
+  margin: 0 -2px;
 }
 .pf-demo-image input[type='range'] {
   position: absolute;
@@ -107,99 +153,156 @@
   opacity: 0;
   cursor: ew-resize;
 }
+:where(html[data-pf-input='keyboard']) .pf-demo-image input:focus {
+  outline: none;
+}
 :where(html[data-pf-input='keyboard']) .pf-demo-image input:focus ~ .pf-demo-divider > span {
-  outline: 2px solid var(--pf-accent);
+  outline: 2px solid var(--pf-signal);
   outline-offset: 2px;
 }
-.pf-demo figcaption {
+.pf-demo-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  min-height: 42px;
-  gap: 8px;
-  padding: 0 12px;
-  font:
-    12px/1.5 ui-monospace,
-    monospace;
-  border: 1px solid var(--pf-border-default);
-  border-top: 0;
-  border-radius: 0 0 4px 4px;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 32px;
 }
 .pf-demo-note {
-  color: var(--pf-text-tertiary);
-  font-size: 11px;
-  text-align: right;
-  margin-top: 7px;
+  color: var(--pf-ink-3);
+  font-size: 12px;
 }
 .pf-demo-note[role='alert'] {
-  color: var(--pf-error);
+  color: var(--pf-alert);
 }
+.pf-demo-footer .pf-text-button {
+  color: var(--pf-ink);
+}
+.pf-demo-footer .pf-text-button svg {
+  color: var(--pf-signal);
+}
+
+/* Tool index: one shared column template across rows and locales. */
 .pf-entry-tools {
-  border-top: 1px solid var(--pf-border-default);
-  --pf-entry-columns: 36px minmax(210px, 1fr) minmax(200px, 1.3fr) 24ch 20px;
+  --pf-entry-columns: 40px minmax(220px, 1fr) minmax(220px, 1.25fr) 24ch 20px;
+  border-top: 1px solid var(--pf-ink);
 }
 .pf-entry-tool {
+  position: relative;
   display: grid;
   grid-template-columns: var(--pf-entry-columns);
-  gap: 24px;
   align-items: center;
-  padding: 24px 20px;
-  min-height: 90px;
-  border-bottom: 1px solid var(--pf-border-default);
-  color: var(--pf-text-primary);
+  gap: 24px;
+  min-height: 84px;
+  padding: 20px;
+  border-bottom: 1px solid var(--pf-rule);
+  color: var(--pf-ink);
   text-decoration: none;
   transition: background-color 150ms;
 }
-@media (hover: hover) and (pointer: fine) {
-  .pf-entry-tool:hover {
-    background: var(--pf-hover-bg);
-  }
+.pf-entry-tool::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 0;
+  width: 2px;
+  background: transparent;
+  transition: background-color 150ms;
 }
-@media (hover: hover) and (pointer: fine) {
-  .pf-entry-tool:hover .pf-entry-arrow {
-    color: var(--pf-accent);
-  }
+.pf-entry-number {
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 150ms;
 }
 .pf-entry-tool strong {
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-.pf-entry-number,
-.pf-entry-formats {
-  font:
-    12px/1.5 ui-monospace,
-    'SFMono-Regular',
-    Consolas,
-    monospace;
-  color: var(--pf-text-secondary);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 .pf-entry-description {
-  color: var(--pf-text-secondary);
-  font-size: 13px;
-  line-height: 1.6;
+  color: var(--pf-ink-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.pf-entry-formats {
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  line-height: 1.5;
 }
 .pf-entry-arrow {
   width: 20px;
   height: 20px;
-  transition: color 150ms;
+  color: var(--pf-ink-2);
+  transition:
+    color 150ms,
+    transform 150ms;
+}
+:where(html[data-pf-input='keyboard']) .pf-entry-tool:focus {
+  outline-offset: -2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-entry-tool:hover {
+    background: var(--pf-paper-sunk);
+  }
+  .pf-entry-tool:hover::before {
+    background: var(--pf-signal);
+  }
+  .pf-entry-tool:hover .pf-entry-number {
+    color: var(--pf-signal-ink);
+  }
+  .pf-entry-tool:hover .pf-entry-arrow {
+    color: var(--pf-ink);
+    transform: translateX(3px);
+  }
 }
 html:lang(zh-CN) .pf-landing-intro h1,
 html:lang(zh-TW) .pf-landing-intro h1,
 html:lang(ja) .pf-landing-intro h1,
 html:lang(ko) .pf-landing-intro h1 {
-  letter-spacing: -0.045em;
-  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+@media (min-width: 768px) and (max-height: 900px) {
+  .pf-landing-main {
+    gap: 36px;
+    padding-top: 40px;
+  }
+  .pf-landing-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+  }
+  .pf-demo-image {
+    aspect-ratio: 16 / 9;
+  }
+  .pf-landing-intro h1 {
+    font-size: clamp(44px, 4.8vw, 64px);
+  }
+  .pf-landing-summary {
+    margin-top: 22px;
+  }
+  .pf-landing-privacy {
+    margin-top: 22px;
+  }
+  .pf-entry-tool {
+    min-height: 72px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
 }
 @media (max-width: 1100px) {
   .pf-landing-main {
-    padding: 36px 32px;
+    padding: 40px 32px;
   }
   .pf-landing-hero {
-    gap: 32px;
+    gap: 36px;
   }
   .pf-entry-tools {
-    --pf-entry-columns: 24px minmax(170px, 1fr) minmax(200px, 1.4fr) 20px;
+    --pf-entry-columns: 28px minmax(180px, 1fr) minmax(200px, 1.3fr) 20px;
   }
   .pf-entry-tool {
     gap: 18px;
@@ -207,110 +310,68 @@ html:lang(ko) .pf-landing-intro h1 {
   .pf-entry-formats {
     display: none;
   }
-  .pf-landing-intro h1 {
-    font-size: clamp(36px, 4.7vw, 50px);
-  }
-}
-@media (max-width: 767px) {
-  .pf-landing-main {
-    padding: 32px 24px 28px;
-  }
-  .pf-landing-hero {
-    grid-template-columns: 1fr;
-    gap: 28px;
-    margin-bottom: 28px;
-  }
-  .pf-landing-intro h1 {
-    font-size: clamp(40px, 8vw, 56px);
-  }
-  .pf-landing-summary {
-    font-size: 15px;
-    margin-top: 20px;
-  }
-  .pf-landing-privacy {
-    margin-top: 18px;
-    font-size: 12px;
-  }
-  .pf-demo {
-    max-width: 540px;
-  }
-  .pf-demo-divider > span {
-    width: 44px;
-    height: 44px;
-  }
-  .pf-demo figcaption {
-    min-height: 46px;
-  }
-  .pf-entry-tools {
-    --pf-entry-columns: 20px minmax(0, 1fr) 20px;
-  }
-  .pf-entry-tool {
-    gap: 8px 12px;
-    padding: 20px 12px;
-  }
   .pf-entry-tool strong {
-    font-size: 17px;
-  }
-  .pf-entry-number {
-    font-size: 11px;
-  }
-  .pf-entry-description {
-    grid-column: 2;
-    grid-row: 2;
-    font-size: 12px;
-  }
-  .pf-entry-arrow {
-    grid-column: 3;
-    grid-row: 1 / 3;
-  }
-}
-@media (min-width: 768px) and (max-height: 900px) {
-  .pf-landing-main {
-    padding-top: 28px;
-  }
-  .pf-landing-hero {
-    grid-template-columns: 1fr 0.85fr;
-    margin-bottom: 24px;
-  }
-  .pf-demo-image {
-    aspect-ratio: 2 / 1;
-  }
-  .pf-landing-intro h1 {
-    font-size: 48px;
-  }
-  .pf-landing-summary {
-    margin-top: 20px;
-  }
-  .pf-landing-privacy {
-    margin-top: 18px;
-  }
-  .pf-entry-tool {
-    min-height: 76px;
-    padding-top: 18px;
-    padding-bottom: 18px;
+    font-size: 19px;
   }
 }
 @media (max-width: 767px) {
   .pf-landing-main {
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 32px;
+    padding: 28px 16px 32px;
   }
   .pf-landing-hero {
     display: contents;
   }
   .pf-landing-intro {
     order: 0;
+    padding: 0 4px;
   }
   .pf-entry-tools {
+    --pf-entry-columns: 22px minmax(0, 1fr) 20px;
     order: 1;
   }
   .pf-demo {
     order: 2;
     width: 100%;
+    padding: 12px 16px 10px;
   }
-}
-
-.pf-demo figcaption > .pf-text-button {
-  font-family: var(--pf-font-family);
+  .pf-landing-intro h1 {
+    font-size: clamp(42px, 12vw, 56px);
+  }
+  .pf-landing-summary {
+    margin-top: 16px;
+    font-size: 15px;
+  }
+  .pf-landing-privacy {
+    margin-top: 18px;
+    font-size: 12px;
+  }
+  .pf-entry-tool {
+    gap: 4px 12px;
+    min-height: 0;
+    padding: 16px 12px;
+  }
+  .pf-entry-tool strong {
+    font-size: 17px;
+  }
+  .pf-entry-number {
+    align-self: start;
+    padding-top: 3px;
+    font-size: 11px;
+  }
+  .pf-entry-description {
+    grid-row: 2;
+    grid-column: 2;
+    font-size: 13px;
+  }
+  .pf-entry-arrow {
+    grid-row: 1 / 3;
+    grid-column: 3;
+  }
+  .pf-demo-divider > span {
+    width: 44px;
+    height: 44px;
+  }
 }

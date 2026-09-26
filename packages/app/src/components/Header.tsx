@@ -50,13 +50,16 @@ export function Header({
       {tool !== 'home' && (
         <>
           <nav className="pf-tool-nav" aria-label={t('workbench.tools')}>
-            {TOOLS.map((value) => (
+            {TOOLS.map((value, index) => (
               <button
                 type="button"
                 key={value}
                 aria-current={tool === value ? 'page' : undefined}
                 onClick={() => onSelect(value)}
               >
+                <span className="pf-tool-index" aria-hidden>
+                  0{index + 1}
+                </span>
                 {t(`nav.${value}`)}
               </button>
             ))}

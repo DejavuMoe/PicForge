@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { TooltipLayer } from './components/TooltipLayer';
 import { ProjectInfo } from './components/ProjectInfo';
 import { Header } from './components/Header';
-import { FiLock } from 'react-icons/fi';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SERVICE_WORKER_UPDATE_EVENT, applyServiceWorkerUpdate } from './registerServiceWorker';
 import type { ToolId } from './types';
@@ -114,16 +113,9 @@ export default function App() {
         )}
 
         {tool !== 'home' && (
-          <div className="pf-workspace-heading">
-            <h1 id="pf-main" tabIndex={-1}>
-              {t(`motion.${tool}`)}
-            </h1>
-            <p>{t(`entry.${tool}`)}</p>
-            <span className="pf-workspace-local">
-              <FiLock aria-hidden />
-              {t('workbench.local')}
-            </span>
-          </div>
+          <h1 id="pf-main" className="pf-sr-only" tabIndex={-1}>
+            {t(`motion.${tool}`)}
+          </h1>
         )}
 
         {visited.map((value) => (

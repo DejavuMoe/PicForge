@@ -215,7 +215,7 @@ try {
         for (let i = 0; i < data.length; i += 4) {
           opaqueMaskable &&= data[i + 3] === 255;
           if (
-            Math.abs(data[i] - 196) + Math.abs(data[i + 1] - 72) + Math.abs(data[i + 2] - 50) >
+            Math.abs(data[i] - 23) + Math.abs(data[i + 1] - 23) + Math.abs(data[i + 2] - 20) >
             15
           ) {
             const pixel = i / 4;
@@ -476,8 +476,10 @@ try {
     pngChunk('tIME', Buffer.alloc(7)),
   ]);
   await pngPage.goto('http://127.0.0.1:4187/?tool=compression');
-  await pngPage.getByRole('combobox', { name: 'Format', exact: true }).click();
-  await pngPage.getByRole('option', { name: 'PNG', exact: true }).click();
+  await pngPage
+    .getByRole('radiogroup', { name: 'Format', exact: true })
+    .getByRole('radio', { name: 'PNG', exact: true })
+    .click();
   await pngPage
     .getByTestId('file-input')
     .setInputFiles({ name: 'deep.png', mimeType: 'image/png', buffer: pngSource });
@@ -503,8 +505,10 @@ try {
   await animationPage.getByText('Select WebP to preserve this animation. Other output formats are not supported for animations.', { exact: true }).waitFor();
   assert(!await animationPage.locator('.pf-download-current').isEnabled());
   const chooseWebp = async () => {
-    await animationPage.getByRole('combobox', { name: 'Format', exact: true }).click();
-    await animationPage.getByRole('option', { name: 'WebP', exact: true }).click();
+    await animationPage
+      .getByRole('radiogroup', { name: 'Format', exact: true })
+      .getByRole('radio', { name: 'WebP', exact: true })
+      .click();
   };
   const downloadAnimation = async (name) => {
     await animationPage.getByText('1 / 1 completed', { exact: true }).waitFor();

@@ -110,6 +110,7 @@ export function DropZone() {
         onKeyDown={handleKeyDown}
       >
         <div className="pf-drop-content">
+          <p className="pf-eyebrow">01 — {t('motion.compression')}</p>
           <div>
             <p className="pf-drop-main-text">
               {isDragging ? t('dropzone.dragActive') : t('workbench.emptyTitle')}

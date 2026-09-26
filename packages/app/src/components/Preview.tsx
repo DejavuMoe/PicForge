@@ -30,7 +30,7 @@ import {
   useState,
 } from 'react';
 import type { ImageFile } from '../types';
-import { formatFileSize, compressionRatio } from '../utils/fileUtils';
+import { formatFileSize, formatSizeChange, compressionRatio } from '../utils/fileUtils';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useFileStore } from '../stores/fileStore';
 import { getEffectiveSettings } from '../utils/settingsUtils';
@@ -515,11 +515,19 @@ export function Preview({
     );
   }
 
+  const shownView = hasResult ? view : 'original';
   const controls = (
     <div className="pf-viewer-controls pf-preview-controls">
-      {view === 'compare' && hasResult && (
-        <CompareModeSwitch mode={activeCompareMode} onChange={setCompareMode} />
-      )}
+      <ViewSwitch
+        view={shownView}
+        mode={activeCompareMode}
+        hasResult={hasResult}
+        onView={setView}
+        onCompare={(mode) => {
+          setView('compare');
+          setCompareMode(mode);
+        }}
+      />
       <ZoomControls zoom={viewport.zoom} onSetZoom={setZoomLevel} onResetZoom={resetViewport} />
       {!isMobile && (
         <IconControl
@@ -594,23 +602,6 @@ export function Preview({
             />
           </div>
         </div>
-        <SelectionRail
-          className="pf-preview-tabs"
-          role="group"
-          aria-label={t('preview.compareMode')}
-          data-testid={PREVIEW_TEST_IDS.toolbarLayer}
-        >
-          {(['original', 'result', 'compare'] as const).map((value) => (
-            <button
-              key={value}
-              aria-pressed={(hasResult ? view : 'original') === value}
-              disabled={value !== 'original' && !hasResult}
-              onClick={() => setView(value)}
-            >
-              {t(`workbench.${value}`)}
-            </button>
-          ))}
-        </SelectionRail>
       </header>
       {!hasResult && file.result && (file.status === 'pending' || file.status === 'processing') && (
         <p className="pf-preview-notice" role="status">
@@ -679,7 +670,6 @@ export function Preview({
             sliderPos={sliderPos}
             onSliderChange={setSliderPos}
             isPanning={isInteracting}
-            ratio={ratio}
             onPointerDown={handleSliderComparePointerDown}
           />
         ) : (
@@ -727,15 +717,22 @@ function IconControl({
   );
 }
 
-function CompareModeSwitch({
+/** One switch for what the stage shows: either image alone, or a comparison layout. */
+function ViewSwitch({
+  view,
   mode,
-  onChange,
+  hasResult,
+  onView,
+  onCompare,
 }: {
+  view: 'original' | 'result' | 'compare';
   mode: CompareMode;
-  onChange: (mode: CompareMode) => void;
+  hasResult: boolean;
+  onView: (view: 'original' | 'result') => void;
+  onCompare: (mode: CompareMode) => void;
 }) {
   const { t } = useTranslation();
-  const options: Array<{ mode: CompareMode; icon: JSX.Element; label: string }> = [
+  const comparisons: Array<{ mode: CompareMode; icon: JSX.Element; label: string }> = [
     { mode: 'slider', icon: <FiSliders aria-hidden="true" />, label: t('preview.modes.slider') },
     {
       mode: 'sideBySide',
@@ -743,23 +740,39 @@ function CompareModeSwitch({
       label: t('preview.modes.sideBySide'),
     },
   ];
-
   return (
-    <div className="pf-compare-mode-switch" role="group" aria-label={t('preview.compareMode')}>
-      {options.map((option) => (
+    <SelectionRail
+      className="pf-view-switch"
+      role="group"
+      aria-label={t('preview.compareMode')}
+      data-testid={PREVIEW_TEST_IDS.toolbarLayer}
+    >
+      {(['original', 'result'] as const).map((value) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={view === value}
+          disabled={value === 'result' && !hasResult}
+          onClick={() => onView(value)}
+        >
+          {t(`workbench.${value}`)}
+        </button>
+      ))}
+      {comparisons.map((option) => (
         <button
           key={option.mode}
           type="button"
-          className={`pf-compare-mode-button${mode === option.mode ? ' is-active' : ''}`}
+          className="is-icon"
           aria-label={option.label}
-          aria-pressed={mode === option.mode}
+          aria-pressed={view === 'compare' && mode === option.mode}
           data-tooltip={option.label}
-          onClick={() => onChange(option.mode)}
+          disabled={!hasResult}
+          onClick={() => onCompare(option.mode)}
         >
           {option.icon}
         </button>
       ))}
-    </div>
+    </SelectionRail>
   );
 }
 
@@ -844,7 +857,6 @@ function SliderCompareView({
   sliderPos,
   onSliderChange,
   isPanning,
-  ratio,
   onPointerDown,
 }: {
   original: ImageMeta;
@@ -853,7 +865,6 @@ function SliderCompareView({
   sliderPos: number;
   onSliderChange: (value: number) => void;
   isPanning: boolean;
-  ratio: number;
   onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
 }) {
   return (
@@ -910,24 +921,9 @@ function SliderCompareView({
           <FiChevronLeft aria-hidden />
           <FiChevronRight aria-hidden />
         </button>
-        <PreviewLabel
-          text={`${original.label} (${original.size})`}
-          top
-          left
-          isInteracting={isPanning}
-        />
-        <PreviewLabel
-          text={`${output.label} (${output.size})`}
-          top
-          right
-          isInteracting={isPanning}
-        />
-        <CompareSummary
-          originalSize={original.size}
-          outputSize={output.size}
-          ratio={ratio}
-          isInteracting={isPanning}
-        />
+        <span className="pf-plate" aria-hidden />
+        <PreviewLabel image={original} top left isInteracting={isPanning} />
+        <PreviewLabel image={output} top right isInteracting={isPanning} />
       </div>
     </div>
   );
@@ -987,7 +983,8 @@ function PreviewPane({
         data-testid={PREVIEW_TEST_IDS.paneOverlayLayer}
         className="pf-preview-pane-overlay-layer"
       >
-        <PreviewLabel text={image.label} top left isInteracting={isPanning} />
+        <span className="pf-plate" aria-hidden />
+        <PreviewLabel image={image} top left isInteracting={isPanning} />
         <ImageInfoBadge image={image} isInteracting={isPanning} />
       </div>
     </div>
@@ -1025,13 +1022,13 @@ function PreviewImage({
 }
 
 function PreviewLabel({
-  text,
+  image,
   top,
   left,
   right,
   isInteracting = false,
 }: {
-  text: string;
+  image: ImageMeta;
   top: boolean;
   left?: boolean;
   right?: boolean;
@@ -1042,7 +1039,13 @@ function PreviewLabel({
       data-testid={PREVIEW_TEST_IDS.previewLabel}
       className={`pf-preview-label${top ? ' is-top' : ''}${left ? ' is-left' : ''}${right ? ' is-right' : ''}${isInteracting ? ' is-interacting' : ''}`}
     >
-      {text}
+      <span>{image.label}</span>
+      <span className="pf-mono">{image.size}</span>
+      {image.ratio !== undefined && (
+        <span className={`pf-mono pf-file-ratio${image.ratio < 0 ? ' is-larger' : ''}`}>
+          {formatSizeChange(image.ratio)}
+        </span>
+      )}
     </span>
   );
 }
@@ -1054,48 +1057,12 @@ function ImageInfoBadge({
   image: ImageMeta;
   isInteracting?: boolean;
 }) {
-  const isPositive = !!image.ratio && image.ratio > 0;
-
   return (
     <div
       data-testid={PREVIEW_TEST_IDS.previewInfoBadge}
       className={`pf-preview-info-badge${isInteracting ? ' is-interacting' : ''}`}
     >
       {image.dimensions && <span className="pf-preview-dimensions">{image.dimensions}</span>}
-      <span className="pf-preview-info-row">
-        <span className="pf-preview-info-size">{image.size}</span>
-        {image.ratio !== undefined && (
-          <span className={`pf-preview-ratio-badge${isPositive ? ' is-positive' : ' is-negative'}`}>
-            {image.ratio > 0 ? `-${image.ratio}%` : `+${Math.abs(image.ratio)}%`}
-          </span>
-        )}
-      </span>
-    </div>
-  );
-}
-
-function CompareSummary({
-  originalSize,
-  outputSize,
-  ratio,
-  isInteracting = false,
-}: {
-  originalSize: string;
-  outputSize: string;
-  ratio: number;
-  isInteracting?: boolean;
-}) {
-  return (
-    <div
-      data-testid={PREVIEW_TEST_IDS.compareSummary}
-      className={`pf-preview-compare-summary${isInteracting ? ' is-interacting' : ''}`}
-    >
-      <span className="pf-preview-summary-muted">{originalSize}</span>
-      <span className="pf-preview-summary-arrow">→</span>
-      <span className="pf-preview-summary-strong">{outputSize}</span>
-      <span className={`pf-preview-ratio-badge${ratio > 0 ? ' is-positive' : ' is-negative'}`}>
-        {ratio > 0 ? `-${ratio}%` : `+${Math.abs(ratio)}%`}
-      </span>
     </div>
   );
 }
@@ -1106,8 +1073,10 @@ function ProcessingOverlay({ progress }: { progress: number }) {
   return (
     <div className="pf-processing-overlay">
       <div className="pf-processing-card">
-        <span className="pf-processing-spinner" aria-hidden="true" />
         <span className="pf-processing-progress">{progress}%</span>
+        <span className="pf-processing-spinner" aria-hidden="true">
+          <span style={{ width: `${progress}%` }} />
+        </span>
         <span className="pf-processing-copy">{t('preview.compressing')}</span>
       </div>
     </div>

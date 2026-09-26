@@ -42,6 +42,9 @@ try {
         : page.locator(`[role="option"][data-value="${value}"]`);
     await option.click();
   };
+  const formatRail = () => active().getByRole('radiogroup', { name: 'Format', exact: true });
+  const pickFormat = (label) =>
+    formatRail().getByRole('radio', { name: label, exact: true }).click();
   const openTool = async (name) => {
     const picker = page.locator('.pf-mobile-tool .pf-select');
     if (await picker.isVisible()) {
@@ -295,8 +298,13 @@ try {
       await active().getByRole('button', { name: 'dune-sample.jpg', exact: true }).count(),
       1,
     );
-    const format = active().getByRole('combobox', { name: 'Format', exact: true });
-    await choose(format, 'webp');
+    const format = formatRail();
+    await pickFormat('WebP');
+    assert.equal(
+      await format.getByRole('radio', { checked: true }).innerText(),
+      'WebP',
+      'format rail reports the checked format',
+    );
     await active().getByText('1 / 1 completed', { exact: true }).waitFor();
     const quality = active().getByRole('spinbutton', { name: 'Quality value', exact: true });
     await quality.fill('');
@@ -322,9 +330,9 @@ try {
     );
     await active().getByText('1 / 1 completed', { exact: true }).waitFor();
     assert((await active().locator('.pf-preview-file-facts').innerText()).includes('960×640'));
-    await choose(format, 'oxipng');
+    await pickFormat('PNG');
     assert(await quality.isDisabled(), 'lossless PNG has no ineffective quality input');
-    await choose(format, 'webp');
+    await pickFormat('WebP');
     await active().getByText('1 / 1 completed', { exact: true }).waitFor();
     await active().getByRole('button', { name: 'Slider compare', exact: true }).click();
     const full = active().getByRole('button', { name: 'Toggle fullscreen', exact: true });
@@ -497,9 +505,13 @@ try {
 
     await page.goto(`${origin}/?tool=compression&lng=en`);
     await active().locator('.pf-inspector').waitFor();
-    const format = active().getByRole('combobox', { name: 'Format', exact: true });
+    const format = formatRail();
     const disclosure = active().locator('.pf-settings-fields > details > summary');
-    const presets = active().locator('.pf-inspector-body > details > summary');
+    assert.equal(
+      await active().locator('.pf-preset').count(),
+      4,
+      'presets are visible recipes, not a hidden disclosure',
+    );
     for (const [width, height] of [
       [1160, 571],
       [1576, 828],
@@ -512,13 +524,14 @@ try {
       for (let toggle = 0; toggle < 4; toggle++) {
         widths.push((await format.boundingBox()).width);
         await disclosure.click();
-        await presets.click();
       }
       disclosureDrift = Math.max(disclosureDrift, same(widths, `${width} inspector toggle width`));
     }
     await page.setViewportSize({ width: 1576, height: 828 });
+    await active().getByRole('switch', { name: 'Resize', exact: true }).click();
+    const method = active().getByRole('combobox', { name: 'Resize method', exact: true });
     const controlStyle = () =>
-      format.evaluate((element) => {
+      method.evaluate((element) => {
         const style = getComputedStyle(element),
           r = element.getBoundingClientRect();
         return {
@@ -539,11 +552,11 @@ try {
       await page.locator('.pf-brand-button').hover();
       await settleLayout();
       const normal = await controlStyle();
-      await format.hover();
+      await method.hover();
       await settleLayout();
       const hover = await controlStyle();
       assert.equal(normal.appearance, 'none');
-      assert.equal(await format.locator('svg').count(), 1);
+      assert.equal(await method.locator('svg').count(), 1);
       if (hoverCapable)
         assert.notEqual(
           normal.background,
@@ -558,7 +571,17 @@ try {
         );
       same([normal.width, hover.width], 'select hover width');
       same([normal.height, hover.height], 'select hover height');
-      await format.press('Tab');
+      await format.getByRole('radio', { checked: true }).focus();
+      await page.keyboard.press('ArrowRight');
+      assert.equal(
+        await format
+          .getByRole('radio', { checked: true })
+          .evaluate((el) => el === document.activeElement),
+        true,
+        'arrow keys move focus and selection together',
+      );
+      await page.keyboard.press('ArrowLeft');
+      await format.getByRole('radio', { checked: true }).press('Tab');
       await page.keyboard.press('Tab');
       const quality = active().getByRole('spinbutton', { name: 'Quality value', exact: true });
       assert(await quality.evaluate((input) => input === document.activeElement));
@@ -576,7 +599,7 @@ try {
       await capture(`audit-controls-${mode}`);
     }
     report.interactions.push(
-      'advanced/preset disclosures keep width across desktop/tablet/phone; select hover geometry and numeric Enter/Escape focus',
+      'advanced disclosure keeps width across desktop/tablet/phone; format rail arrow keys; select hover geometry and numeric Enter/Escape focus',
     );
     report.detailMeasurements = { columnDrift, disclosureDrift, hoverCapable };
   }
@@ -650,12 +673,14 @@ try {
     }
     await page.setViewportSize({ width: 1160, height: 571 });
     await page.goto(`${origin}/?tool=compression&lng=en`);
-    const format = active().getByRole('combobox', { name: 'Format', exact: true });
+    await active().locator('.pf-inspector').waitFor();
+    await active().getByRole('switch', { name: 'Resize', exact: true }).click();
+    const format = active().getByRole('combobox', { name: 'Resize method', exact: true });
     await format.press('Enter');
     assert.equal(await page.getByRole('listbox').count(), 1);
     await format.press('ArrowDown');
     await format.press('Enter');
-    assert.equal(await format.getAttribute('data-value'), 'webp');
+    assert.equal(await format.getAttribute('data-value'), 'cover');
     assert(await format.evaluate((el) => el === document.activeElement));
     assert.equal(await format.evaluate((el) => getComputedStyle(el).outlineStyle), 'solid');
     await format.press('Enter');
@@ -775,7 +800,7 @@ try {
       await checkRanges();
       await capture(`ranges-${tool}-enabled`);
       if (tool === 'compression') {
-        await choose(active().getByRole('combobox', { name: 'Format', exact: true }), 'oxipng');
+        await pickFormat('PNG');
         await active().getByRole('switch', { name: 'Resize', exact: true }).click();
         await active().locator('.pf-settings-fields > details > summary').click();
         await active().getByRole('button', { name: 'Percentage', exact: true }).click();

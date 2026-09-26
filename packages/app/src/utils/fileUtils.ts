@@ -30,6 +30,15 @@ export function compressionRatio(original: number, compressed: number): number {
 }
 
 /**
+ * Signed size change for a saving percentage: 41 → "−41%", -12 → "+12%".
+ */
+export function formatSizeChange(savingPercent: number): string {
+  if (savingPercent > 0) return `−${savingPercent}%`;
+  if (savingPercent < 0) return `+${-savingPercent}%`;
+  return '±0%';
+}
+
+/**
  * Replace file extension.
  */
 export function replaceExtension(filename: string, newExt: string): string {

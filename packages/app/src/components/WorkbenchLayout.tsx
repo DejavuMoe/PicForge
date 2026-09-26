@@ -5,12 +5,15 @@ export function WorkbenchLayout({
   queue,
   viewer,
   inspector,
+  batch,
   mobileView,
   hasFiles,
 }: {
   queue: ReactNode;
   viewer: ReactNode;
   inspector: ReactNode;
+  /** Batch ledger under the queue; sticky at the bottom on phones. */
+  batch?: ReactNode;
   mobileView: 'list' | 'preview';
   hasFiles: boolean;
 }) {
@@ -24,10 +27,15 @@ export function WorkbenchLayout({
       <section className="pf-file-list-panel" data-testid="file-list-panel">
         {queue}
       </section>
-      <section className="pf-preview-panel" data-testid="preview-panel">
+      {/* Media is judged on the neutral stage; the empty drop sheet stays on paper. */}
+      <section
+        className={`pf-preview-panel${hasFiles ? ' pf-stage-scope' : ''}`}
+        data-testid="preview-panel"
+      >
         {viewer}
       </section>
       {inspector}
+      {batch && <div className="pf-batch-slot">{batch}</div>}
     </main>
   );
 }

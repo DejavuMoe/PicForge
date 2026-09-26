@@ -56,3 +56,9 @@ Hyalite 0.3.0: MIT, Copyright (c) 2026 VII-Cae.
 Source: https://github.com/VII-Cae/hyalite--liquid-glass/tree/b0692b8aecdf264fcb49276f45d7d1d1f80f6dd0
 Historical UI component, removed from the runtime in 0.16.0.
 License: Hyalite-MIT.txt is retained for attribution; it was not used for media processing.
+
+IBM Plex Sans (variable, @fontsource-variable/ibm-plex-sans 5.3.0) and IBM Plex Mono
+(@fontsource/ibm-plex-mono 5.3.0): SIL Open Font License 1.1, Copyright 2017-2019 IBM Corp.
+Only the Latin and Latin Extended subsets are served, unmodified, as self-hosted WOFF2 interface fonts.
+Brand artwork outlines IBM Plex Sans 1.1.0 glyphs. License: IBM-Plex-OFL-1.1.txt.
+Source: https://github.com/IBM/plex

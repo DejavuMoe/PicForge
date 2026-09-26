@@ -1,7 +1,7 @@
 import { SelectionRail } from './SelectionRail';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiArrowRight, FiDownload } from 'react-icons/fi';
+import { FiDownload } from 'react-icons/fi';
 import type { CompressSettings, OutputFormat, ResizeMethod } from '@pic-forge/codecs';
 import { AVIF_CHROMA_SUBSAMPLE } from '@pic-forge/codecs';
 import { SelectControl } from './SelectControl';
@@ -10,9 +10,9 @@ import { Inspector, SwitchControl } from './WorkbenchLayout';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useFileStore } from '../stores/fileStore';
-import { PRESETS } from '../stores/presets';
+import { PRESETS, type Preset } from '../stores/presets';
 import { FORMAT_OPTIONS, type ImageFile } from '../types';
-import { applyPresetSettings, cloneSettings } from '../utils/settingsUtils';
+import { applyPresetSettings, cloneSettings, getEffectiveSettings } from '../utils/settingsUtils';
 import { formatFileSize, compressionRatio } from '../utils/fileUtils';
 import { getOutputName, isResultExportable } from '../utils/exportManifest';
 import { getRangeProgressStyle } from '../utils/rangeProgress';
@@ -25,6 +25,28 @@ const DEFAULT_RESIZE: NonNullable<CompressSettings['resize']> = {
   percentage: 50,
   method: 'contain',
 };
+const SOURCE_FORMATS: Record<string, string> = {
+  'image/jpeg': 'JPEG',
+  'image/png': 'PNG',
+  'image/apng': 'APNG',
+  'image/webp': 'WebP',
+  'image/avif': 'AVIF',
+  'image/gif': 'GIF',
+  'image/bmp': 'BMP',
+  'image/svg+xml': 'SVG',
+};
+function sourceFormat(file: File) {
+  return SOURCE_FORMATS[file.type] ?? file.name.split('.').pop()?.toUpperCase() ?? '';
+}
+/** A preset is current when format, quality and its own advanced options all match. */
+function matchesPreset(settings: CompressSettings, preset: Preset) {
+  const advanced = (settings.advanced ?? {}) as Record<string, unknown>;
+  return (
+    settings.outputFormat === preset.settings.outputFormat &&
+    settings.quality === preset.settings.quality &&
+    Object.entries(preset.settings.advanced ?? {}).every(([key, value]) => advanced[key] === value)
+  );
+}
 interface SettingsFieldsProps {
   settings: CompressSettings;
   updateSettings: (partial: Partial<CompressSettings>) => void;
@@ -66,6 +88,12 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
   };
   const exportable = file && isResultExportable(file, global);
   const saving = exportable ? compressionRatio(file.originalSize, file.result!.size) : 0;
+  const outputLabel =
+    file &&
+    FORMAT_OPTIONS.find(
+      (option) => option.value === getEffectiveSettings(file, global).outputFormat,
+    )?.label;
+  const meta = file?.outputMeta;
   const download = async () => {
     if (!file || !isResultExportable(file, global)) return;
     const { saveAs } = await import('file-saver');
@@ -77,28 +105,48 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
       footer={
         file && (
           <>
-            <div className="pf-result-summary">
+            <dl className="pf-result-ledger">
               <div>
-                <span>{t('workbench.original')}</span>
-                <strong>{formatFileSize(file.originalSize)}</strong>
+                <dt>{t('workbench.original')}</dt>
+                <dd>
+                  {sourceFormat(file.file)}
+                  {meta && ` · ${meta.originalWidth}×${meta.originalHeight}`}
+                </dd>
+                <dd>{formatFileSize(file.originalSize)}</dd>
               </div>
-              <FiArrowRight aria-hidden />
               <div>
-                <span>{t('workbench.result')}</span>
-                <strong>
-                  {exportable ? formatFileSize(file.result!.size) : t('workbench.notReady')}
-                </strong>
+                <dt>{t('workbench.result')}</dt>
+                <dd>
+                  {exportable && outputLabel}
+                  {exportable && meta && ` · ${meta.outputWidth}×${meta.outputHeight}`}
+                </dd>
+                <dd>{exportable ? formatFileSize(file.result!.size) : '—'}</dd>
               </div>
-            </div>
-            {exportable && (
-              <p className={`pf-result-saving${saving < 0 ? ' is-larger' : ''}`}>
-                {saving === 0
-                  ? t('progress.noChange')
-                  : t(saving > 0 ? 'workbench.smaller' : 'workbench.larger', {
-                      percent: Math.abs(saving),
-                    })}
+            </dl>
+            <div className="pf-result-delta">
+              <span
+                className={`pf-file-delta${saving < 0 ? ' is-larger' : ''}`}
+                style={
+                  {
+                    '--pf-delta': exportable
+                      ? Math.min(1, file.result!.size / Math.max(1, file.originalSize))
+                      : 0,
+                  } as CSSProperties
+                }
+                aria-hidden
+              />
+              <p
+                className={`pf-result-saving${!exportable ? ' is-pending' : saving < 0 ? ' is-larger' : ''}`}
+              >
+                {!exportable
+                  ? t('workbench.notReady')
+                  : saving === 0
+                    ? t('progress.noChange')
+                    : t(saving > 0 ? 'workbench.smaller' : 'workbench.larger', {
+                        percent: Math.abs(saving),
+                      })}
               </p>
-            )}
+            </div>
             <button
               className="pf-button pf-download-current"
               disabled={!exportable}
@@ -137,33 +185,38 @@ export function Toolbar({ file }: { file: ImageFile | null }) {
           </button>
         </div>
       )}
-      <SettingsFields settings={settings} updateSettings={updateSettings} />
-      <details className="pf-settings-extra">
-        <summary>{t('settings.title')}</summary>
+      <section className="pf-presets" aria-labelledby="pf-presets-title">
+        <div className="pf-presets-heading">
+          <h3 id="pf-presets-title" className="pf-field-label">
+            {t('settings.title')}
+          </h3>
+          {scope === 'global' && (
+            <button
+              className="pf-text-button"
+              onClick={(event) => {
+                event.currentTarget.focus();
+                setResetOpen(true);
+              }}
+            >
+              {t('actions.resetDefaults')}
+            </button>
+          )}
+        </div>
         <div className="pf-preset-list">
           {PRESETS.map((preset) => (
             <button
               key={preset.id}
-              className="pf-button"
-              data-tooltip={t(preset.descriptionKey)}
+              className="pf-preset"
+              aria-current={matchesPreset(settings, preset) ? 'true' : undefined}
               onClick={() => applyPreset(preset)}
             >
-              {t(preset.labelKey)}
+              <strong>{t(preset.labelKey)}</strong>
+              <span>{t(preset.descriptionKey)}</span>
             </button>
           ))}
         </div>
-        {scope === 'global' && (
-          <button
-            className="pf-text-button"
-            onClick={(event) => {
-              event.currentTarget.focus();
-              setResetOpen(true);
-            }}
-          >
-            {t('actions.resetDefaults')}
-          </button>
-        )}
-      </details>
+      </section>
+      <SettingsFields settings={settings} updateSettings={updateSettings} />
       {resetOpen && (
         <ConfirmDialog
           title={t('dialog.resetTitle')}
@@ -187,20 +240,17 @@ function SettingsFields({ settings, updateSettings }: SettingsFieldsProps) {
     updateSettings({ resize: { ...resize, ...partial } });
   return (
     <div className="pf-settings-fields" data-testid="toolbar">
-      <label className="pf-field">
-        <span>{t('workbench.format')}</span>
-        <SelectControl
+      <div className="pf-field">
+        <span className="pf-field-label" aria-hidden>
+          {t('workbench.format')}
+        </span>
+        <RadioRail
+          label={t('workbench.format')}
           value={settings.outputFormat}
-          aria-label={t('workbench.format')}
-          onValueChange={(value) => updateSettings({ outputFormat: value as OutputFormat })}
-        >
-          {FORMAT_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </SelectControl>
-      </label>
+          options={FORMAT_OPTIONS}
+          onChange={(value) => updateSettings({ outputFormat: value as OutputFormat })}
+        />
+      </div>
       <div className="pf-field">
         <label htmlFor="pf-global-quality">{t('settings.quality')}</label>
         <div className="pf-range-field">
@@ -469,6 +519,62 @@ function AdvancedControls({ settings, updateSettings }: SettingsFieldsProps) {
           </Chip>
         </>
       )}
+    </div>
+  );
+}
+
+/** Single-choice rail with roving focus: arrows move and select, like native radios. */
+function RadioRail({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+}) {
+  const buttons = useRef<Array<HTMLButtonElement | null>>([]);
+  const current = Math.max(
+    0,
+    options.findIndex((option) => option.value === value),
+  );
+  const move = (index: number) => {
+    const next = (index + options.length) % options.length;
+    onChange(options[next].value);
+    buttons.current[next]?.focus();
+  };
+  return (
+    <div className="pf-radio-rail" role="radiogroup" aria-label={label}>
+      {options.map((option, index) => (
+        <button
+          key={option.value}
+          ref={(element) => {
+            buttons.current[index] = element;
+          }}
+          type="button"
+          role="radio"
+          aria-checked={option.value === value}
+          tabIndex={index === current ? 0 : -1}
+          onClick={() => onChange(option.value)}
+          onKeyDown={(event) => {
+            const steps: Record<string, number> = {
+              ArrowRight: 1,
+              ArrowDown: 1,
+              ArrowLeft: -1,
+              ArrowUp: -1,
+            };
+            if (steps[event.key]) move(index + steps[event.key]);
+            else if (event.key === 'Home') move(0);
+            else if (event.key === 'End') move(options.length - 1);
+            else return;
+            event.preventDefault();
+          }}
+        >
+          {option.label}
+        </button>
+      ))}
     </div>
   );
 }

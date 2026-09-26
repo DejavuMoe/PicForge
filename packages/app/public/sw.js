@@ -17,7 +17,7 @@ const APP_SHELL = [
   '/',
   '/index.html',
   '/favicon.svg',
-  '/favicon.svg?v=folded-p',
+  '/favicon.svg?v=ledger',
   '/favicon.ico',
   '/favicon-32.png',
   '/apple-touch-icon.png',

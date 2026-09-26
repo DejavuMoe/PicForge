@@ -9,6 +9,7 @@ import {
   getOutputName,
   isResultExportable,
 } from '../utils/exportManifest';
+import { compressionRatio, formatFileSize, formatSizeChange } from '../utils/fileUtils';
 
 export function StatusBar({ onCancel }: { onCancel: () => void }) {
   const { t } = useTranslation();
@@ -24,6 +25,9 @@ export function StatusBar({ onCancel }: { onCancel: () => void }) {
     ['done', 'error', 'cancelled'].includes(file.status),
   ).length;
   const failed = files.filter((file) => file.status === 'error').length;
+  const sourceBytes = doneFiles.reduce((sum, file) => sum + file.originalSize, 0);
+  const resultBytes = doneFiles.reduce((sum, file) => sum + (file.result?.size ?? 0), 0);
+  const saving = compressionRatio(sourceBytes, resultBytes);
   const handleDownloadZip = useCallback(async () => {
     const currentSettings = useSettingsStore.getState().settings;
     const exportable = useFileStore
@@ -98,6 +102,16 @@ export function StatusBar({ onCancel }: { onCancel: () => void }) {
           </button>
         )}
       </div>
+      {doneFiles.length > 0 && (
+        <p className="pf-batch-totals">
+          <span>{formatFileSize(sourceBytes)}</span>
+          <span aria-hidden>→</span>
+          <strong>{formatFileSize(resultBytes)}</strong>
+          <span className={`pf-file-ratio${saving < 0 ? ' is-larger' : ''}`}>
+            {formatSizeChange(saving)}
+          </span>
+        </p>
+      )}
       <button
         className="pf-button is-primary pf-export-button"
         disabled={!doneFiles.length || isZipping}

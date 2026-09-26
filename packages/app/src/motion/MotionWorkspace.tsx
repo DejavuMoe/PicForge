@@ -397,6 +397,9 @@ export default function MotionWorkspace({
         aria-label={t('motion.drop')}
       >
         <div className="pf-drop-content">
+          <p className="pf-eyebrow">
+            {android ? '02' : '03'} — {t(`motion.${android ? 'android' : 'ios'}`)}
+          </p>
           <div>
             <h2 className="pf-drop-main-text">{t('motion.drop')}</h2>
             <p className="pf-drop-secondary-text">
@@ -607,6 +610,68 @@ export default function MotionWorkspace({
       )}
     </Inspector>
   );
+  const batch = (
+    <div className="pf-status-bar" role="region" aria-label={t('workbench.batchActions')}>
+      {busy && (
+        <div
+          className="pf-batch-progress"
+          role="progressbar"
+          aria-label={t('workbench.batchProgress')}
+          aria-valuemin={0}
+          aria-valuemax={items.length}
+          aria-valuenow={done}
+        >
+          <span style={{ width: `${(done / Math.max(1, items.length)) * 100}%` }} />
+        </div>
+      )}
+      <div className="pf-batch-status">
+        <span role="status" aria-live="polite">
+          {t('motion.count', { done, total: items.length })}
+        </span>
+        {!busy && allDone && (
+          <button
+            className="pf-text-button"
+            disabled={exporting}
+            onClick={(event) => {
+              event.currentTarget.focus();
+              setConfirmReset(true);
+            }}
+          >
+            {t('motion.newBatch')}
+          </button>
+        )}
+      </div>
+      <div className="pf-motion-actions">
+        {busy ? (
+          <button className="pf-button" onClick={() => controller.current?.abort()}>
+            {t('workbench.cancelProcessing')}
+          </button>
+        ) : (
+          <>
+            {pending > 0 && (
+              <button
+                className={`pf-button${hasResults ? '' : ' is-primary'}`}
+                disabled={exporting || scanning > 0}
+                onClick={run}
+              >
+                {t(android ? 'workbench.extractFiles' : 'motion.start')}
+              </button>
+            )}
+          </>
+        )}
+        {(hasResults || pending === 0) && (
+          <button
+            className="pf-button pf-export-button is-primary"
+            disabled={!hasResults || exporting || busy}
+            onClick={exportZip}
+          >
+            <FiDownload aria-hidden />
+            {t(exporting ? 'motion.exporting' : 'workbench.exportCompleted')}
+          </button>
+        )}
+      </div>
+    </div>
+  );
   return (
     <div className="pf-motion-workspace" data-tool={android ? 'android' : 'ios'}>
       <input
@@ -626,55 +691,8 @@ export default function MotionWorkspace({
         inspector={inspector}
         hasFiles={items.length > 0}
         mobileView={mobileView}
+        batch={items.length > 0 && batch}
       />
-      {items.length > 0 && (
-        <div className="pf-status-bar" role="region" aria-label={t('workbench.batchActions')}>
-          <div className="pf-batch-status" role="status" aria-live="polite">
-            {items.length > 0 && t('motion.count', { done, total: items.length })}
-          </div>
-          <div className="pf-motion-actions">
-            {busy ? (
-              <button className="pf-button" onClick={() => controller.current?.abort()}>
-                {t('workbench.cancelProcessing')}
-              </button>
-            ) : (
-              <>
-                {allDone && (
-                  <button
-                    className="pf-text-button"
-                    disabled={exporting}
-                    onClick={(event) => {
-                      event.currentTarget.focus();
-                      setConfirmReset(true);
-                    }}
-                  >
-                    {t('motion.newBatch')}
-                  </button>
-                )}
-                {pending > 0 && (
-                  <button
-                    className={`pf-button${hasResults ? '' : ' is-primary'}`}
-                    disabled={exporting || scanning > 0}
-                    onClick={run}
-                  >
-                    {t(android ? 'workbench.extractFiles' : 'motion.start')}
-                  </button>
-                )}
-              </>
-            )}
-            {(hasResults || pending === 0) && (
-              <button
-                className="pf-button pf-export-button is-primary"
-                disabled={!hasResults || exporting || busy}
-                onClick={exportZip}
-              >
-                <FiDownload aria-hidden />
-                {t(exporting ? 'motion.exporting' : 'workbench.exportCompleted')}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
       {confirmReset && (
         <ConfirmDialog
           danger

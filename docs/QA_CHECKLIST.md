@@ -12,7 +12,8 @@ This checklist captures the main manual and browser-based checks for each releas
 
 ## Preview
 
-- Slider, side-by-side, and single-image modes render non-empty images.
+- Slider, side-by-side, and single-image modes render non-empty images. One view switch selects Original, Result, split or two-up; comparisons stay disabled until a result exists.
+- At fit zoom, registration marks and the ORIGINAL/RESULT labels (with sizes and signed change) sit in the mat, outside the pixels; when zoomed, the marks hide and labels become corner chips.
 - In slider mode, the divider stays aligned with the real split boundary at fit zoom and after pan/zoom.
 - In slider mode, dragging near the divider still adjusts the split when the image is zoomed in.
 - Side-by-side labels, toolbar, metadata badges, and divider do not scale with image zoom.
@@ -22,7 +23,7 @@ This checklist captures the main manual and browser-based checks for each releas
 - Fullscreen keeps the preview controls available; zoom does not scale UI labels.
 - Preview tools do not obscure image pixels; no decorative filter reaches media.
 - PNG disables the ineffective quality control and explains lossless output.
-- Result summaries use actual sizes and distinguish larger files from savings.
+- Result summaries use actual sizes and distinguish larger files from savings. Row size bars, the inspector ledger and batch totals agree with the downloaded bytes.
 
 ## Export
 
@@ -37,11 +38,20 @@ This checklist captures the main manual and browser-based checks for each releas
 - Object URLs are revoked when files are removed, results are replaced, settings trigger reprocessing, or the queue is cleared.
 - Initial load does not include ZIP generation libraries until the user downloads.
 
+## Visual System
+
+- Media always sits on the graphite stage in both themes; the empty drop sheet stays on paper.
+- Amber appears only for the primary action, current tool/row, checked switch, range fill, progress and done/local markers.
+- Figures (sizes, dimensions, percentages, times) are real values set in mono; nothing illustrative is presented as a measurement.
+- Locked Live Photo settings remain legible (dashed control lines, ink-3 labels).
+- A video that loads metadata without a frame size (undecodable track) shows the still, the unavailable note and a working download.
+
 ## Responsive And Accessibility
 
 - Layout is usable at 320x844, 375x667, 390x844, 768x1024, 1280x720, and 1440x900.
 - On phones, all three home tool entries are reachable before the sample comparison.
-- Shared language/tool/format comboboxes have themed popups and support keyboard and touch input.
+- Shared language/tool/resize-method comboboxes have themed popups and support keyboard and touch input, including a trigger that must first scroll into view.
+- Format is a radio rail: arrow keys move focus and selection together; presets show their recipe and mark the one matching the current settings.
 - Numeric fields accept empty drafts, commit on blur/Enter, and restore on Escape.
 - System theme changes and disabled local storage do not break the page.
 - File selection and row actions are separate buttons; keyboard focus remains visible.
@@ -56,7 +66,7 @@ This checklist captures the main manual and browser-based checks for each releas
 - App installs with the PicForge name and icon.
 - After the first online load, refresh works offline.
 - With a newer build deployed, an open page keeps working (including tools not yet opened) until "Refresh" is chosen; the prompt then activates the update and reloads once. Cached FFmpeg/HEIF engines survive the update.
-- WASM and built assets are served from cache when offline; no unused fonts are precached.
+- WASM and built assets are served from cache when offline; only the four IBM Plex WOFF2 subsets (Sans Latin/Latin Extended, Mono 400/500) are precached.
 - A service worker version change removes old PicForge caches.
 - A service worker version change shows the in-app new-version refresh prompt.
 

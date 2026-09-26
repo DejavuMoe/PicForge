@@ -1,0 +1,954 @@
+/* Workbench: queue ledger, stage, inspector and batch ledger. */
+.pf-app,
+.pf-motion-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.pf-workbench {
+  display: grid;
+  flex: 1;
+  grid-template-areas:
+    'queue stage inspector'
+    'batch stage inspector';
+  grid-template-columns: var(--pf-queue) minmax(0, 1fr) var(--pf-inspector);
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+}
+.pf-file-list-panel {
+  display: flex;
+  grid-area: queue;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--pf-rule);
+}
+.pf-preview-panel {
+  display: flex;
+  grid-area: stage;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--pf-paper);
+  color: var(--pf-ink);
+}
+.pf-batch-slot {
+  grid-area: batch;
+  min-width: 0;
+  border-top: 1px solid var(--pf-rule);
+  border-right: 1px solid var(--pf-rule);
+  background: var(--pf-paper);
+}
+.pf-batch-slot:empty {
+  display: none;
+}
+
+/* Column headers share one height so the three panes read as one ruled sheet. */
+.pf-file-list-header,
+.pf-inspector-disclosure > summary,
+.pf-preview-header {
+  min-height: 48px;
+}
+.pf-file-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.pf-file-list-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--pf-rule);
+}
+.pf-file-list-header h2,
+.pf-inspector-disclosure > summary h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-right: auto;
+  color: var(--pf-ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: var(--pf-label-tracking);
+  text-transform: uppercase;
+}
+.pf-file-list-header h2 > span {
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.pf-add-files {
+  min-height: var(--pf-target);
+  padding: 0 6px;
+}
+.pf-file-list > .pf-field-error {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--pf-rule);
+}
+.pf-file-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.pf-queue-empty {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 10px;
+  padding: 20px 16px;
+  color: var(--pf-ink-3);
+  font-size: 12px;
+}
+.pf-queue-empty::before {
+  content: '';
+  height: 1px;
+  background: repeating-linear-gradient(to right, var(--pf-rule-strong) 0 4px, transparent 4px 8px);
+}
+
+/* Ledger rows */
+.pf-file-row,
+.pf-motion-row {
+  position: relative;
+  border-bottom: 1px solid var(--pf-rule);
+  background: transparent;
+  transition: background-color 120ms;
+}
+.pf-file-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.pf-file-select,
+.pf-motion-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: start;
+  gap: 0 12px;
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 16px 12px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--pf-ink);
+  text-align: left;
+}
+.pf-file-select {
+  grid-area: 1 / 1 / 2 / 3;
+}
+.pf-motion-row {
+  border-bottom: 1px solid var(--pf-rule);
+}
+.pf-file-row.is-selected,
+.pf-motion-row.is-selected {
+  background: var(--pf-paper-sunk);
+}
+.pf-file-row-selected-bar,
+.pf-motion-row.is-selected::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 0;
+  z-index: 1;
+  width: 2px;
+  background: var(--pf-signal);
+}
+:where(html[data-pf-input='keyboard']) .pf-file-select:focus,
+:where(html[data-pf-input='keyboard']) .pf-motion-row:focus {
+  outline-offset: -2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-file-row:not(.is-selected):hover,
+  .pf-motion-row:not(.is-selected):hover {
+    background: color-mix(in srgb, var(--pf-paper-sunk) 55%, transparent);
+  }
+}
+.pf-file-thumb-skeleton,
+.pf-motion-thumb {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  background: var(--pf-paper-sunk);
+  color: var(--pf-ink-3);
+  box-shadow: inset 0 0 0 1px var(--pf-rule);
+}
+.pf-file-thumb,
+.pf-motion-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pf-motion-thumb svg {
+  width: 18px;
+  height: 18px;
+}
+.pf-file-row-main,
+.pf-motion-row-content {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding-top: 1px;
+}
+.pf-file-name,
+.pf-motion-row-content > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--pf-ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-file-name {
+  padding-right: 60px;
+}
+.pf-file-status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.pf-file-status-text,
+.pf-motion-row-status {
+  color: var(--pf-ink-2);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.pf-file-status-text.is-processing {
+  color: var(--pf-ink);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+}
+.pf-file-status-text.is-pending,
+.pf-file-status-text.is-cancelled,
+.pf-motion-row-status.is-cancelled {
+  color: var(--pf-ink-3);
+}
+.pf-file-status-text.is-error,
+.pf-motion-row-status.is-error {
+  color: var(--pf-alert);
+}
+.pf-file-status-text.is-done::before,
+.pf-motion-row-status.is-done::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  background: var(--pf-signal);
+  vertical-align: 1px;
+}
+.pf-file-custom-label {
+  padding: 0 4px;
+  border: 1px solid var(--pf-rule-strong);
+  border-radius: var(--pf-radius);
+  color: var(--pf-ink-2);
+  font-family: var(--pf-font-mono);
+  font-size: 10px;
+  line-height: 15px;
+}
+.pf-file-meta,
+.pf-motion-row-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.pf-motion-row-meta {
+  font-family: var(--pf-font-sans);
+  font-size: 12px;
+}
+.pf-file-result-size {
+  color: var(--pf-ink);
+}
+.pf-file-ratio {
+  margin-left: auto;
+  color: var(--pf-signal-ink);
+  font-weight: 500;
+}
+.pf-file-ratio.is-larger {
+  color: var(--pf-alert);
+}
+.pf-file-delta,
+.pf-file-row-progress {
+  position: relative;
+  display: block;
+  height: 2px;
+  margin-top: 5px;
+  overflow: hidden;
+  background: var(--pf-rule);
+}
+.pf-file-delta::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--pf-delta, 1) * 100%);
+  background: var(--pf-ink-3);
+}
+.pf-file-delta.is-larger::before {
+  width: 100%;
+  background: var(--pf-alert);
+}
+.pf-file-row-progress > span,
+.pf-motion-row .pf-file-row-progress > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--pf-signal);
+  transition: width 200ms linear;
+}
+.pf-file-row-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  grid-area: 1 / 2 / 2 / 3;
+  align-self: start;
+  gap: 0;
+  margin: 6px 6px 0 0;
+}
+.pf-row-action {
+  width: 28px;
+  height: 28px;
+}
+.pf-row-action svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Batch ledger */
+.pf-status-bar {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px 16px;
+}
+.pf-batch-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  color: var(--pf-ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+.pf-batch-status > span:first-child {
+  font-family: var(--pf-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.pf-batch-status .pf-text-button {
+  min-height: 24px;
+  margin-left: auto;
+  font-size: 12px;
+}
+.pf-batch-status .pf-field-error {
+  flex-basis: 100%;
+}
+.pf-batch-totals {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.pf-batch-totals > * {
+  white-space: nowrap;
+}
+.pf-batch-totals strong {
+  color: var(--pf-ink);
+  font-weight: 500;
+}
+.pf-batch-totals .pf-file-ratio {
+  margin-left: auto;
+}
+.pf-export-button {
+  width: 100%;
+}
+.pf-batch-progress {
+  position: absolute;
+  top: -1px;
+  right: 0;
+  left: 0;
+  height: 2px;
+  overflow: hidden;
+  background: var(--pf-rule);
+}
+.pf-batch-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--pf-signal);
+  transition: width 200ms linear;
+}
+.pf-motion-actions {
+  display: grid;
+  gap: 8px;
+}
+.pf-motion-actions > .pf-text-button {
+  justify-self: start;
+}
+.pf-motion-actions > .pf-button {
+  width: 100%;
+}
+
+/* Inspector */
+.pf-inspector {
+  display: flex;
+  grid-area: inspector;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--pf-rule);
+  background: var(--pf-paper);
+}
+/* The details element is the scroller (its content box cannot flex); the title stays pinned. */
+.pf-inspector-disclosure {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.pf-inspector-disclosure > summary {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px 0 20px;
+  border-bottom: 1px solid var(--pf-rule);
+  background: var(--pf-paper);
+  cursor: pointer;
+  user-select: none;
+}
+.pf-disclosure-mark {
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  border-right: 1.5px solid var(--pf-ink-3);
+  border-bottom: 1.5px solid var(--pf-ink-3);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 140ms;
+}
+.pf-inspector-disclosure[open] > summary .pf-disclosure-mark {
+  transform: translateY(2px) rotate(-135deg);
+}
+:where(html[data-pf-input='keyboard']) .pf-inspector-disclosure > summary:focus {
+  outline-offset: -2px;
+}
+.pf-inspector-body {
+  display: grid;
+  align-content: start;
+  gap: 20px;
+  padding: 20px 20px 24px;
+}
+.pf-settings-fields {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.pf-settings-section {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid var(--pf-rule);
+}
+.pf-settings-section h3 {
+  color: var(--pf-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.pf-resize-controls {
+  display: grid;
+  gap: 14px;
+}
+.pf-dimensions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.pf-resize-mode-setting {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.pf-resize-mode-setting > legend {
+  margin-bottom: 8px;
+  color: var(--pf-ink-2);
+  font-size: 12px;
+  font-weight: 500;
+}
+.pf-settings-fields > .pf-settings-extra {
+  margin-top: 0;
+}
+.pf-scope-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--pf-signal);
+  background: var(--pf-paper-sunk);
+  color: var(--pf-ink-2);
+  font-size: 12px;
+}
+.pf-scope-note .pf-text-button {
+  min-height: 24px;
+  font-size: 12px;
+}
+.pf-scope-switch + .pf-field-hint {
+  margin-top: -10px;
+}
+
+/* Presets: a 2×2 sheet of labelled recipes. */
+.pf-presets {
+  display: grid;
+  gap: 8px;
+}
+.pf-presets-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pf-presets-heading .pf-text-button {
+  min-height: 24px;
+  color: var(--pf-ink-2);
+  font-size: 12px;
+}
+.pf-preset-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.pf-preset {
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 6px 10px;
+  border: 1px solid var(--pf-rule-strong);
+  border-radius: var(--pf-radius);
+  background: transparent;
+  color: var(--pf-ink);
+  text-align: left;
+  transition:
+    background-color 120ms,
+    border-color 120ms;
+}
+.pf-preset > strong {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.pf-preset > span {
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+}
+.pf-preset[aria-current='true'] {
+  border-color: var(--pf-ink);
+  box-shadow: inset 2px 0 var(--pf-signal);
+}
+.pf-preset:active {
+  background: var(--pf-paper-press);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-preset:hover {
+    border-color: var(--pf-ink-3);
+    background: var(--pf-paper-sunk);
+  }
+}
+
+/* Inspector footer: source → result ledger for the selected item. */
+.pf-inspector-footer {
+  display: grid;
+  flex: none;
+  gap: 12px;
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--pf-rule);
+}
+.pf-result-ledger {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin: 0;
+}
+.pf-result-ledger > div {
+  display: contents;
+}
+.pf-result-ledger dt {
+  color: var(--pf-ink-3);
+  font-size: 12px;
+}
+.pf-result-ledger dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--pf-ink-2);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-result-ledger dd:last-child {
+  color: var(--pf-ink);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+}
+.pf-result-delta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.pf-result-delta > .pf-file-delta {
+  margin: 0;
+}
+.pf-result-saving {
+  color: var(--pf-signal-ink);
+  font-family: var(--pf-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pf-result-saving.is-larger {
+  color: var(--pf-alert);
+}
+.pf-result-saving.is-pending {
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-sans);
+  font-weight: 400;
+}
+.pf-download-current {
+  width: 100%;
+}
+
+/* Android output files */
+.pf-output-file {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--pf-rule);
+}
+.pf-output-file h3 {
+  color: var(--pf-ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+.pf-output-file p {
+  margin-top: 2px;
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.pf-output-file .pf-button {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.pf-settings-section > .pf-field-hint {
+  margin-top: -6px;
+}
+
+/* Empty stage: a registration-marked drop sheet. */
+.pf-drop-zone {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 24px;
+}
+.pf-drop-surface {
+  --pf-mark: var(--pf-ink-3);
+  position: relative;
+  display: grid;
+  flex: 1;
+  align-content: center;
+  min-height: 0;
+  padding: 48px clamp(28px, 7%, 96px);
+  border-radius: var(--pf-radius);
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.pf-drop-surface::before,
+.pf-plate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  --pf-mark-length: 18px;
+  background:
+    linear-gradient(var(--pf-mark) 0 0) top left / var(--pf-mark-length) 1px no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) top left / 1px var(--pf-mark-length) no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) top right / var(--pf-mark-length) 1px no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) top right / 1px var(--pf-mark-length) no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) bottom left / var(--pf-mark-length) 1px no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) bottom left / 1px var(--pf-mark-length) no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) bottom right / var(--pf-mark-length) 1px no-repeat,
+    linear-gradient(var(--pf-mark) 0 0) bottom right / 1px var(--pf-mark-length) no-repeat;
+  pointer-events: none;
+  transition: inset 160ms;
+}
+.pf-drop-content {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 20px;
+  max-width: 460px;
+}
+.pf-drop-content .pf-eyebrow {
+  margin-bottom: -8px;
+}
+.pf-drop-main-text {
+  color: var(--pf-ink);
+  font-size: clamp(24px, 2.6vw, 34px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.pf-drop-secondary-text {
+  margin-top: 10px;
+  color: var(--pf-ink-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.pf-drop-cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: var(--pf-radius);
+  background: var(--pf-signal);
+  color: var(--pf-on-signal);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 120ms;
+}
+.pf-drop-format-hint {
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.pf-drop-zone.is-dragging .pf-drop-surface {
+  --pf-mark: var(--pf-signal-ink);
+  background: color-mix(in srgb, var(--pf-signal-wash) 45%, transparent);
+}
+.pf-drop-zone.is-dragging .pf-drop-surface::before {
+  inset: 8px;
+}
+:where(html[data-pf-input='keyboard']) .pf-drop-surface:focus {
+  outline-offset: -2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-drop-surface:hover {
+    --pf-mark: var(--pf-ink);
+  }
+  .pf-drop-surface:hover .pf-drop-cta {
+    background: var(--pf-signal-hover);
+  }
+}
+.pf-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  opacity: 0;
+}
+.pf-drop-toast {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  z-index: 5;
+  padding: 8px 12px;
+  border-radius: var(--pf-radius);
+  background: var(--pf-ink);
+  color: var(--pf-paper);
+  font-size: 12px;
+  transform: translateX(-50%);
+}
+
+/* Tablet: stage or queue share the main column; the inspector stays. */
+@media (max-width: 1100px) and (min-width: 768px) {
+  :root {
+    --pf-inspector: 288px;
+  }
+  .pf-workbench {
+    grid-template-areas:
+      'main inspector'
+      'batch inspector';
+    grid-template-columns: minmax(0, 1fr) var(--pf-inspector);
+  }
+  .pf-file-list-panel,
+  .pf-preview-panel {
+    grid-area: main;
+    border-right: 0;
+  }
+  .pf-batch-slot {
+    border-right: 0;
+  }
+  .pf-workbench[data-has-files='false'] .pf-file-list-panel,
+  .pf-workbench[data-mobile-view='preview'] .pf-file-list-panel,
+  .pf-workbench[data-has-files='true'][data-mobile-view='list'] .pf-preview-panel {
+    display: none;
+  }
+  .pf-status-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 12px 16px;
+  }
+  .pf-status-bar .pf-batch-totals {
+    grid-row: 2;
+  }
+  .pf-status-bar > .pf-export-button,
+  .pf-status-bar > .pf-motion-actions {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    width: auto;
+  }
+  .pf-motion-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pf-motion-actions > .pf-button {
+    width: auto;
+  }
+}
+
+@media (max-width: 374px) {
+  /* Narrow phones keep the result and change; the source size is on each row. */
+  .pf-batch-totals > span:first-child,
+  .pf-batch-totals > span[aria-hidden] {
+    display: none;
+  }
+}
+
+/* Phone: one scrolling column, sticky batch ledger. */
+@media (max-width: 767px) {
+  .pf-workbench {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .pf-file-list-panel {
+    flex: none;
+    border-right: 0;
+  }
+  .pf-file-list-scroll {
+    flex: none;
+    overflow: visible;
+  }
+  .pf-queue-empty {
+    flex: none;
+  }
+  .pf-preview-panel {
+    flex: none;
+  }
+  .pf-workbench[data-has-files='false'] .pf-file-list-panel,
+  .pf-workbench[data-mobile-view='preview'] .pf-file-list-panel,
+  .pf-workbench[data-has-files='true'][data-mobile-view='list'] .pf-preview-panel,
+  .pf-workbench[data-has-files='true'][data-mobile-view='list'] .pf-inspector-footer {
+    display: none;
+  }
+  .pf-inspector {
+    flex: none;
+    border-top: 1px solid var(--pf-rule);
+    border-left: 0;
+  }
+  .pf-inspector,
+  .pf-inspector-disclosure {
+    flex: none;
+    overflow: visible;
+  }
+  .pf-inspector-disclosure > summary {
+    position: static;
+  }
+  .pf-inspector-body {
+    padding: 18px 16px 24px;
+  }
+  .pf-inspector-footer {
+    padding: 16px;
+  }
+  .pf-batch-slot {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    flex: none;
+    margin-top: auto;
+    border-right: 0;
+  }
+  .pf-status-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 12px;
+    padding: 10px 12px 10px 16px;
+  }
+  .pf-status-bar .pf-batch-totals {
+    grid-row: 2;
+  }
+  .pf-status-bar > .pf-export-button,
+  .pf-status-bar > .pf-motion-actions {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    width: auto;
+  }
+  .pf-motion-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pf-motion-actions > .pf-button {
+    width: auto;
+  }
+  .pf-file-select,
+  .pf-motion-row {
+    min-height: 76px;
+    padding: 14px 16px;
+  }
+  .pf-file-name {
+    padding-right: 92px;
+  }
+  .pf-row-action {
+    width: 44px;
+    height: 44px;
+  }
+  .pf-file-row-actions {
+    margin: 0 2px 0 0;
+  }
+  .pf-drop-zone {
+    flex: none;
+    min-height: 380px;
+    padding: 12px;
+  }
+  .pf-drop-surface {
+    padding: 40px 24px;
+  }
+}

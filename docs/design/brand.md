@@ -1,29 +1,30 @@
 # PicForge identity
 
-The current mark is a folded P: two broad plates separated by a diagonal cut, with a play triangle inside. It connects the product name with its image and motion tools. This replaces the former typeset P inside a red square; the accepted workbench and player styling are retained.
+The mark is a folded P: two broad plates separated by a diagonal cut, with a play triangle inside. It connects the product name with its image and motion tools. The geometry is unchanged since the folded-P introduction; the 2026-09-26 [darkroom ledger](darkroom-ledger.md) redesign recoloured it.
 
-The [SVG master](../../packages/app/src/assets/logo.svg) has three filled paths on a 64-unit grid. The header imports this exact source; Vite can inline the small SVG. Color is vermilion `#c44832`. The export pack also includes charcoal and white variants. The dark sharing card uses the lighter vermilion `#ef6b4a` against graphite `#202322`.
+The [SVG master](../../packages/app/src/assets/logo.svg) has three filled paths on a 64-unit grid: the two plates in ink `#171714` and the play triangle in safelight amber `#f2b100`. `pnpm assets:brand` derives every export from it. The **tile** — ink square (2/16 corner radius), paper `#f3f1ea` P, amber triangle — is the favicon, the install icon and the in-app header mark (`packages/app/src/assets/logo-tile.svg`, 64×64). It reads on paper and on the dark theme without a theme-specific asset. The export pack also includes one-colour ink and white marks, a two-tone mark for light backgrounds and a paper/amber mark for dark backgrounds.
 
 ## Assets
 
 | Purpose | Files | Size |
 | --- | --- | --- |
-| Symbol | [Color SVG](../../packages/app/public/brand/logo.svg), [charcoal](../../packages/app/public/brand/logo-black.svg), [white](../../packages/app/public/brand/logo-white.svg), [PNG](../../packages/app/public/brand/logo-512.png) | Scalable / 512×512 PNG |
+| Symbol | [Two-tone SVG](../../packages/app/public/brand/logo.svg), [on dark](../../packages/app/public/brand/logo-on-dark.svg), [ink](../../packages/app/public/brand/logo-black.svg), [white](../../packages/app/public/brand/logo-white.svg), [PNG](../../packages/app/public/brand/logo-512.png) | Scalable / 512×512 PNG |
+| Header mark | [Tile SVG](../../packages/app/src/assets/logo-tile.svg), bundled and precached by Vite | 64×64 |
 | Horizontal lockup | [Light-background SVG](../../packages/app/public/brand/logo-lockup.svg), [dark-background SVG](../../packages/app/public/brand/logo-lockup-white.svg), [PNG](../../packages/app/public/brand/logo-lockup.png) | 512×128 SVG / 1024×256 PNG |
 | Favicon | SVG, ICO and 16/32/48 px PNGs in `packages/app/public/` | ICO contains all three raster sizes |
 | Apple Web Clip | [apple-touch-icon.png](../../packages/app/public/apple-touch-icon.png) | 180×180 |
 | PWA | `pwa-192.png`, `pwa-512.png` | 192×192 / 512×512, purpose `any` |
 | Maskable PWA | [PNG](../../packages/app/public/pwa-maskable-512.png), [SVG](../../packages/app/public/pwa-icon.svg) | 512×512, purpose `maskable` |
-| Open Graph | [PNG](../../packages/app/public/og-image.png), [vector source](social-card.svg) | 1200×630, light background |
-| Twitter large-image card | [PNG](../../packages/app/public/twitter-card.png), [vector source](twitter-card.svg) | 1200×600, dark background |
+| Open Graph | [PNG](../../packages/app/public/og-image.png), [vector source](social-card.svg) | 1200×630, paper background |
+| Twitter large-image card | [PNG](../../packages/app/public/twitter-card.png), [vector source](twitter-card.svg) | 1200×600, darkroom background |
 
-The previous `/og-image.jpg` URL remains valid and contains the new Open Graph artwork. Share-card text is outlined Noto Sans, so the final SVG/PNG assets need no font download and retain their exact typography. The web interface keeps its existing system-font wordmark.
+The previous `/og-image.jpg` URL remains valid and contains the new Open Graph artwork. Share-card text is outlined IBM Plex Sans 1.1.0 (the interface typeface), so the final SVG/PNG assets need no font download and retain their exact typography. The card title ends in the same amber square as the landing title.
 
 ## Integration
 
 - The static HTML head contains matching Open Graph image dimensions/MIME/alt text and a separate `summary_large_image` Twitter image. All social URLs are absolute HTTPS URLs on `picforge.de`.
 - JSON-LD points to the new application icon and the existing repository. No Twitter account or creator handle is invented.
-- SVG favicon uses a new revision query to refresh existing tab-icon caches, with PNG and multi-size ICO fallbacks. Apple has its own 180 px icon.
+- SVG favicon uses a revision query (`?v=ledger` since the recolour) to refresh existing tab-icon caches, with PNG and multi-size ICO fallbacks. Apple has its own 180 px icon.
 - The manifest separates ordinary icons from opaque maskable icons. The latter keep the mark inside the central safe circle, following the [Web App Manifest safe-zone definition](https://www.w3.org/TR/appmanifest/#icon-masks). The measured foreground radius is below 0.4 of the icon width; circle and squircle previews retain the entire mark.
 - The service-worker shell list includes the linked icons and both share cards, including the revisioned favicon URL. Existing engine loading/caching behavior is unchanged.
 
@@ -31,11 +32,13 @@ The image properties follow the [Open Graph protocol](https://ogp.me/). The Appl
 
 ## Reproduction and provenance
 
-Run `pnpm assets:brand` with Python 3, `rsvg-convert`, `pango-view`, ImageMagick and Noto Sans available. This is an explicit authoring command; normal app builds use the committed assets and do not require these export tools. It regenerates the icon family, lockups, outlined card SVGs, raster exports and [size/hash manifest](brand-assets.json) from the SVG master. Two consecutive exports were byte-identical in the authoring environment.
+Run `pnpm assets:brand` with Python 3, `rsvg-convert` (librsvg2-bin), `pango-view` (pango1.0-tools), ImageMagick and IBM Plex Sans Regular/Medium/SemiBold installed as OTF/TTF (Pango silently falls back when given WOFF; convert `@ibm/plex-sans@1.1.0` `fonts/complete/woff` files with fontTools if the distribution has no package). This is an explicit authoring command; normal app builds use the committed assets and do not require these export tools. It regenerates the icon family, lockups, outlined card SVGs, raster exports and [size/hash manifest](brand-assets.json) from the SVG master. Two consecutive exports were byte-identical in the authoring environment.
 
 Four text-only directions were explored with built-in Codex ImageGen. [Exact prompts](brand-prompts.json) are recorded, and [the selected D reference](brand-concept.png) is kept for provenance. The reference is an illustrative raster concept. Its shading was removed, its geometry rebuilt as three paths, and spacing was adjusted for small icons. No personal photos were supplied to generation. The final source and exports are the actual integrated artwork.
 
 ## Validation
+
+2026-09-26 recolour: two consecutive `pnpm assets:brand` runs in Debian WSL2 were byte-identical (rsvg-convert 2.60.0, pango 1.56.3, IBM Plex Sans 1.1.0 OTF). The production `browser-check.mjs` passed with the new header tile (64×64), metadata sizes, and a fully opaque maskable icon whose foreground stays inside the safe circle, measured against the ink tile. The evidence below records the original folded-P introduction.
 
 The asset preview checks 16, 32 and 48 px icons on light/dark surfaces and common install masks. `scripts/browser-check.mjs` verifies the built header mark, metadata URLs, decoded dimensions, manifest sizes, mask opacity/safe area and offline availability of linked brand assets alongside the production compressor/PWA smoke check. `PICFORGE_UI_GROUPS=entry` retains the five-locale desktop/mobile entry checks.
 

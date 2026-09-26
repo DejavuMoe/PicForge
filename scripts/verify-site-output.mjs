@@ -29,7 +29,8 @@ const precache = JSON.parse(readFileSync(resolve(root, 'precache.json'), 'utf8')
 assert(Array.isArray(precache) && precache.length > 0, 'Empty precache manifest');
 for (const url of precache) {
   assert(
-    typeof url === 'string' && /^\/assets\/[^/]+\.(js|css|svg|png|jpe?g|webp|avif)$/.test(url),
+    typeof url === 'string' &&
+      /^\/assets\/[^/]+\.(js|css|svg|png|jpe?g|webp|avif|woff2)$/.test(url),
     'Invalid precache URL',
   );
 }

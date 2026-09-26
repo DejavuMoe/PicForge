@@ -61,7 +61,11 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
               {t('entry.privacy')}
             </p>
           </div>
-          <figure className="pf-demo">
+          <figure className="pf-demo pf-stage-scope">
+            <figcaption>
+              <span>JPEG</span>
+              <span>WebP</span>
+            </figcaption>
             <div className="pf-demo-image" style={{ '--split': `${position}%` } as CSSProperties}>
               <img
                 src={preview}
@@ -95,17 +99,15 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
                 </span>
               </span>
             </div>
-            <figcaption>
-              <span>JPEG</span>
+            <div className="pf-demo-footer">
+              <p className="pf-demo-note" role={failed ? 'alert' : undefined}>
+                {t(failed ? 'entry.sampleFailed' : 'entry.sampleNote')}
+              </p>
               <button className="pf-text-button" disabled={loading} onClick={trySample}>
                 {t(loading ? 'motion.loading' : 'entry.trySample')}
                 <FiArrowRight aria-hidden />
               </button>
-              <span>WebP</span>
-            </figcaption>
-            <p className="pf-demo-note" role={failed ? 'alert' : undefined}>
-              {t(failed ? 'entry.sampleFailed' : 'entry.sampleNote')}
-            </p>
+            </div>
           </figure>
         </section>
         <nav className="pf-entry-tools" aria-label={t('workbench.tools')}>

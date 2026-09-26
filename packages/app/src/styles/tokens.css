@@ -1,0 +1,211 @@
+/*
+ * PicForge "darkroom ledger" tokens.
+ * Warm paper and ink for chrome, one safelight-amber signal, and a hue-free
+ * graphite stage for judging pixels. See docs/design/darkroom-ledger.md.
+ */
+
+@font-face {
+  font-family: 'IBM Plex Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 700;
+  src: url('@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-ext-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 700;
+  src: url('@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light;
+
+  /* Type. Latin uses Plex; CJK falls through to the platform's own faces. */
+  --pf-font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC';
+  --pf-font-sans:
+    'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI',
+    var(--pf-font-cjk), sans-serif;
+  --pf-font-mono:
+    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, var(--pf-font-cjk), monospace;
+  --pf-label-tracking: 0.06em;
+
+  /* Geometry: hairlines and nearly square corners. */
+  --pf-radius: 2px;
+  --pf-control: 32px;
+  --pf-target: 32px;
+  --pf-header: 52px;
+  --pf-footer: 32px;
+  --pf-queue: 288px;
+  --pf-inspector: 312px;
+  --pf-pad: 20px;
+
+  /* Media dock geometry, read by VideoPlayer's fit calculation. */
+  --pf-video-seek-height: 24px;
+  --pf-video-action-height: 32px;
+  --pf-video-controls-height: calc(
+    var(--pf-video-seek-height) + var(--pf-video-action-height) + 9px
+  );
+
+  /* Paper */
+  --pf-paper: #f3f1ea;
+  --pf-paper-raised: #fbfaf6;
+  --pf-paper-sunk: #e9e6dd;
+  --pf-paper-press: #dedace;
+  --pf-ink: #171714;
+  --pf-ink-2: #504e48;
+  --pf-ink-3: #69665d;
+  --pf-ink-4: #a19d91;
+  --pf-rule: #dbd7cc;
+  --pf-rule-strong: #c4bfb1;
+  --pf-control-line: #8b867a;
+
+  /* Signal: safelight amber. Fill with ink text; text-on-paper uses signal-ink. */
+  --pf-signal: #f2b100;
+  --pf-signal-hover: #e2a500;
+  --pf-signal-press: #cf9600;
+  --pf-on-signal: #171714;
+  --pf-signal-ink: #7a5300;
+  --pf-signal-wash: #f6e4ae;
+  --pf-alert: #b3261e;
+  --pf-on-alert: #ffffff;
+  --pf-alert-wash: #f5dcd6;
+  --pf-focus: #171714;
+  --pf-scrim: rgb(23 23 20 / 42%);
+  --pf-shadow-pop: 0 1px 0 rgb(23 23 20 / 4%), 0 12px 32px rgb(23 23 20 / 16%);
+
+  /* Stage: neutral graphite in both themes, so surroundings do not tint judgement. */
+  --pf-stage: #2a2a29;
+  --pf-stage-raised: #323231;
+  --pf-stage-hover: #3a3a39;
+  --pf-stage-press: #454544;
+  --pf-stage-line: #3d3d3b;
+  --pf-stage-line-strong: #545452;
+  --pf-stage-control: #797976;
+  --pf-stage-ink: #edece8;
+  --pf-stage-ink-2: #b8b6b0;
+  --pf-stage-ink-3: #94928c;
+  --pf-checker-a: #3a3a39;
+  --pf-checker-b: #2f2f2e;
+}
+
+html:lang(zh-TW) {
+  --pf-font-cjk: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans CJK TC';
+}
+html:lang(ja) {
+  --pf-font-cjk:
+    'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', Meiryo, 'Noto Sans CJK JP';
+}
+html:lang(ko) {
+  --pf-font-cjk: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans CJK KR';
+}
+html:lang(zh-CN),
+html:lang(zh-TW),
+html:lang(ja),
+html:lang(ko) {
+  /* Tracking is a Latin capitals device; CJK labels keep natural spacing. */
+  --pf-label-tracking: 0;
+}
+
+html[data-pf-theme='dark'] {
+  color-scheme: dark;
+  --pf-paper: #161614;
+  --pf-paper-raised: #1e1e1b;
+  --pf-paper-sunk: #262622;
+  --pf-paper-press: #302f2b;
+  --pf-ink: #eeebe3;
+  --pf-ink-2: #b3afa5;
+  --pf-ink-3: #959186;
+  --pf-ink-4: #5c5a53;
+  --pf-rule: #2b2b27;
+  --pf-rule-strong: #3c3b36;
+  --pf-control-line: #6c6960;
+  --pf-signal: #f5b400;
+  --pf-signal-hover: #ffc526;
+  --pf-signal-press: #e0a400;
+  --pf-signal-ink: #f5b400;
+  --pf-signal-wash: #3b3116;
+  --pf-alert: #ff8e7f;
+  --pf-on-alert: #1d0b08;
+  --pf-alert-wash: #3d231e;
+  --pf-focus: #f5b400;
+  --pf-scrim: rgb(0 0 0 / 60%);
+  --pf-shadow-pop: 0 12px 32px rgb(0 0 0 / 50%);
+  --pf-stage: #0f0f0f;
+  --pf-stage-raised: #181818;
+  --pf-stage-hover: #212121;
+  --pf-stage-press: #2b2b2b;
+  --pf-stage-line: #262626;
+  --pf-stage-line-strong: #383838;
+  --pf-stage-control: #5f5f5f;
+  --pf-stage-ink: #eeebe3;
+  --pf-stage-ink-2: #b3afa5;
+  --pf-stage-ink-3: #8f8b81;
+  --pf-checker-a: #242424;
+  --pf-checker-b: #1b1b1b;
+}
+
+/* Everything inside a stage renders against graphite, including shared controls. */
+.pf-stage-scope {
+  color-scheme: dark;
+  --pf-paper: var(--pf-stage);
+  --pf-paper-raised: var(--pf-stage-raised);
+  --pf-paper-sunk: var(--pf-stage-hover);
+  --pf-paper-press: var(--pf-stage-press);
+  --pf-ink: var(--pf-stage-ink);
+  --pf-ink-2: var(--pf-stage-ink-2);
+  --pf-ink-3: var(--pf-stage-ink-3);
+  --pf-ink-4: var(--pf-stage-line-strong);
+  --pf-rule: var(--pf-stage-line);
+  --pf-rule-strong: var(--pf-stage-line-strong);
+  --pf-control-line: var(--pf-stage-control);
+  --pf-signal-ink: var(--pf-signal);
+  --pf-focus: var(--pf-signal);
+  --pf-alert: #ff8e7f;
+  --pf-on-alert: #1d0b08;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  :root {
+    --pf-target: 44px;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --pf-control: 44px;
+    --pf-header: 56px;
+    --pf-pad: 16px;
+    --pf-video-seek-height: 44px;
+    --pf-video-action-height: 44px;
+  }
+}

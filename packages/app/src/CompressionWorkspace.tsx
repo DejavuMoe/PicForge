@@ -146,8 +146,8 @@ export default function CompressionWorkspace({ active }: { active: boolean }) {
             )
           }
           inspector={<Toolbar key={selectedFile?.id ?? 'empty'} file={selectedFile} />}
+          batch={<StatusBar onCancel={abortAll} />}
         />
-        <StatusBar onCancel={abortAll} />
       </div>
     </ErrorBoundary>
   );

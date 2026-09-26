@@ -90,8 +90,19 @@ export function SelectControl({
       )
         close();
     };
+    // Close only when a scroll actually moved the trigger. Focusing a trigger below the
+    // fold scrolls it into view, and that scroll event can arrive after the popup opened.
+    const anchor = trigger.current?.getBoundingClientRect();
     const scroll = (event: Event) => {
-      if (!menu.current?.contains(event.target as Node)) close();
+      if (menu.current?.contains(event.target as Node)) return;
+      const now = trigger.current?.getBoundingClientRect();
+      if (
+        !anchor ||
+        !now ||
+        Math.abs(now.top - anchor.top) > 1 ||
+        Math.abs(now.left - anchor.left) > 1
+      )
+        close();
     };
     const visibility = () => {
       if (document.hidden) close();

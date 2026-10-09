@@ -2,58 +2,98 @@
 
 /* Buttons */
 .pf-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-width: 0;
   min-height: var(--pf-control);
   padding: 0 14px;
-  border: 1px solid var(--pf-control-line);
+  border: 1px solid var(--pf-line);
   border-radius: var(--pf-radius);
-  background: var(--pf-paper-raised);
+  background: var(--pf-raised);
   color: var(--pf-ink);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;
+  box-shadow: 0 1px 1px rgb(23 23 20 / 4%);
   transition:
-    background-color 120ms,
-    border-color 120ms,
-    color 120ms;
+    background-color var(--pf-fast) var(--pf-ease),
+    border-color var(--pf-fast) var(--pf-ease),
+    color var(--pf-fast) var(--pf-ease),
+    box-shadow var(--pf-fast) var(--pf-ease);
 }
-.pf-button svg {
+.pf-button > svg {
   width: 15px;
   height: 15px;
 }
+.pf-button-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf-button.is-sm {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.pf-button.is-lg {
+  min-height: 40px;
+  padding: 0 18px;
+  font-size: 13.5px;
+}
+.pf-button.is-block {
+  width: 100%;
+}
 .pf-button:active:not(:disabled) {
-  background: var(--pf-paper-press);
+  background: var(--pf-sunk);
+  box-shadow: none;
 }
 .pf-button.is-primary {
-  border-color: var(--pf-signal);
+  border-color: transparent;
   background: var(--pf-signal);
   color: var(--pf-on-signal);
   font-weight: 600;
+  box-shadow:
+    var(--pf-signal-bevel),
+    0 1px 2px rgb(122 82 0 / 22%);
 }
 .pf-button.is-primary:active:not(:disabled) {
-  border-color: var(--pf-signal-press);
   background: var(--pf-signal-press);
+  box-shadow: inset 0 1px 2px rgb(122 82 0 / 30%);
+}
+.pf-button.is-quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--pf-ink-2);
+  box-shadow: none;
+}
+.pf-button.is-quiet:active:not(:disabled) {
+  background: var(--pf-press);
 }
 .pf-button.is-danger {
-  border-color: var(--pf-alert);
+  border-color: transparent;
   background: var(--pf-alert);
   color: var(--pf-on-alert);
   font-weight: 600;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 18%);
 }
 .pf-button:disabled,
 fieldset:disabled .pf-button {
   border-color: var(--pf-rule-strong);
   background: transparent;
-  color: var(--pf-ink-3);
+  color: var(--pf-ink-4);
+  box-shadow: none;
 }
 .pf-button.is-primary:disabled {
-  border-color: var(--pf-paper-press);
-  background: var(--pf-paper-sunk);
-  color: var(--pf-ink-3);
+  border-color: transparent;
+  background: var(--pf-track);
+  color: var(--pf-ink-4);
+}
+.pf-button.is-quiet:disabled {
+  border-color: transparent;
 }
 
 .pf-text-button {
@@ -71,19 +111,30 @@ fieldset:disabled .pf-button {
   text-align: left;
   text-decoration: underline 1px transparent;
   text-underline-offset: 5px;
-  transition: text-decoration-color 120ms;
+  transition:
+    text-decoration-color var(--pf-fast) var(--pf-ease),
+    color var(--pf-fast) var(--pf-ease);
 }
-.pf-text-button svg {
+.pf-text-button > svg {
   width: 15px;
   height: 15px;
 }
 .pf-text-button:disabled {
-  color: var(--pf-ink-3);
+  color: var(--pf-ink-4);
+}
+/* Touch keeps compact text actions but widens what a finger can hit. */
+@media (pointer: coarse) {
+  .pf-text-button {
+    position: relative;
+  }
+  .pf-text-button::after {
+    content: '';
+    position: absolute;
+    inset: -8px -6px;
+  }
 }
 
-.pf-icon-button,
-.pf-icon-control,
-.pf-row-action {
+.pf-icon-button {
   display: inline-grid;
   place-items: center;
   flex: none;
@@ -94,47 +145,65 @@ fieldset:disabled .pf-button {
   border-radius: var(--pf-radius);
   background: transparent;
   color: var(--pf-ink-2);
+  text-decoration: none;
   transition:
-    background-color 120ms,
-    color 120ms;
+    background-color var(--pf-fast) var(--pf-ease),
+    color var(--pf-fast) var(--pf-ease);
 }
-.pf-icon-button svg,
-.pf-icon-control svg,
-.pf-row-action svg {
+.pf-icon-button > svg {
   width: 16px;
   height: 16px;
 }
-.pf-icon-button:active:not(:disabled),
-.pf-icon-control:active:not(:disabled),
-.pf-row-action:active:not(:disabled) {
-  background: var(--pf-paper-press);
+.pf-icon-button.is-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--pf-radius-sm);
 }
-.pf-icon-button:disabled,
-.pf-icon-control:disabled,
-.pf-row-action:disabled {
+.pf-icon-button.is-sm > svg {
+  width: 15px;
+  height: 15px;
+}
+.pf-icon-button:active:not(:disabled) {
+  background: var(--pf-press);
+}
+.pf-icon-button:disabled {
   color: var(--pf-ink-4);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .pf-button:hover:not(:disabled) {
-    background: var(--pf-paper-sunk);
-    border-color: var(--pf-ink-3);
+    border-color: var(--pf-line-hover);
+    background: var(--pf-raised-hover);
   }
   .pf-button.is-primary:hover:not(:disabled) {
-    border-color: var(--pf-signal-hover);
+    border-color: transparent;
     background: var(--pf-signal-hover);
   }
+  .pf-button.is-quiet:hover:not(:disabled) {
+    border-color: transparent;
+    background: var(--pf-hover);
+    color: var(--pf-ink);
+  }
   .pf-button.is-danger:hover:not(:disabled) {
-    filter: brightness(0.94);
+    border-color: transparent;
+    background: color-mix(in srgb, var(--pf-alert), #000 8%);
   }
   .pf-text-button:hover:not(:disabled) {
     text-decoration-color: var(--pf-signal);
   }
-  .pf-icon-button:hover:not(:disabled),
-  .pf-icon-control:hover:not(:disabled),
-  .pf-row-action:hover:not(:disabled) {
-    background: var(--pf-paper-sunk);
+  .pf-icon-button:hover:not(:disabled) {
+    background: var(--pf-hover);
     color: var(--pf-ink);
+  }
+}
+@media (max-width: 767px) {
+  .pf-button.is-sm,
+  .pf-button.is-lg {
+    min-height: 44px;
+  }
+  .pf-icon-button.is-sm {
+    width: 44px;
+    height: 44px;
   }
 }
 
@@ -147,18 +216,19 @@ fieldset:disabled .pf-button {
   width: 100%;
   min-width: 0;
   min-height: var(--pf-control);
-  padding: 0 8px 0 10px;
-  border: 1px solid var(--pf-control-line);
+  padding: 0 9px 0 12px;
+  border: 1px solid var(--pf-line);
   border-radius: var(--pf-radius);
-  background: var(--pf-paper-raised);
+  background: var(--pf-raised);
   color: var(--pf-ink);
   font-size: 13px;
   line-height: 1.2;
   text-align: left;
   appearance: none;
+  box-shadow: 0 1px 1px rgb(23 23 20 / 4%);
   transition:
-    background-color 120ms,
-    border-color 120ms;
+    background-color var(--pf-fast) var(--pf-ease),
+    border-color var(--pf-fast) var(--pf-ease);
 }
 .pf-select > span {
   min-width: 0;
@@ -170,7 +240,10 @@ fieldset:disabled .pf-button {
   width: 14px;
   height: 14px;
   color: var(--pf-ink-3);
-  transition: transform 140ms;
+  transition: transform var(--pf-base) var(--pf-ease);
+}
+.pf-select[aria-expanded='true'] {
+  border-color: var(--pf-line-hover);
 }
 .pf-select[aria-expanded='true'] > svg {
   transform: rotate(180deg);
@@ -181,11 +254,29 @@ fieldset:disabled .pf-select {
   border-color: var(--pf-rule-strong);
   background: transparent;
   color: var(--pf-ink-3);
+  box-shadow: none;
+}
+.pf-select:disabled > svg,
+fieldset:disabled .pf-select > svg {
+  color: var(--pf-ink-4);
+}
+/* Quiet selects sit in the header and the stage dock: no field chrome until pointed at. */
+.pf-select.is-quiet {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.pf-select.is-quiet[aria-expanded='true'] {
+  background: var(--pf-press);
 }
 @media (hover: hover) and (pointer: fine) {
   .pf-select:hover:not(:disabled) {
-    border-color: var(--pf-ink-3);
-    background: var(--pf-paper-sunk);
+    border-color: var(--pf-line-hover);
+    background: var(--pf-raised-hover);
+  }
+  .pf-select.is-quiet:hover:not(:disabled) {
+    border-color: transparent;
+    background: var(--pf-hover);
   }
 }
 .pf-select-menu {
@@ -193,24 +284,25 @@ fieldset:disabled .pf-select {
   z-index: 1000;
   display: grid;
   align-content: start;
+  gap: 1px;
   overflow-y: auto;
   padding: 4px;
-  border: 1px solid var(--pf-rule-strong);
-  border-radius: var(--pf-radius);
-  background: var(--pf-paper-raised);
+  border-radius: 10px;
+  background: var(--pf-raised);
   color: var(--pf-ink);
   box-shadow: var(--pf-shadow-pop);
   overscroll-behavior: contain;
+  animation: pf-pop 140ms var(--pf-ease);
 }
 .pf-select-option {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 34px;
+  min-height: 32px;
   padding: 0 10px;
   border: 0;
-  border-radius: 1px;
+  border-radius: var(--pf-radius-sm);
   background: transparent;
   color: var(--pf-ink);
   font-size: 13px;
@@ -221,7 +313,7 @@ fieldset:disabled .pf-select {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.pf-select-option svg {
+.pf-select-option > svg {
   width: 14px;
   height: 14px;
   color: var(--pf-signal-ink);
@@ -230,14 +322,14 @@ fieldset:disabled .pf-select {
   font-weight: 600;
 }
 .pf-select-option[data-active='true'] {
-  background: var(--pf-paper-sunk);
+  background: var(--pf-hover);
 }
 .pf-select-option:disabled {
   color: var(--pf-ink-4);
 }
 @media (hover: hover) and (pointer: fine) {
   .pf-select-option:hover:not(:disabled) {
-    background: var(--pf-paper-sunk);
+    background: var(--pf-hover);
   }
 }
 @media (pointer: coarse), (max-width: 767px) {
@@ -251,21 +343,26 @@ input[type='number'] {
   width: 100%;
   min-width: 0;
   height: var(--pf-control);
-  padding: 0 8px;
-  border: 1px solid var(--pf-control-line);
+  padding: 0 10px;
+  border: 1px solid var(--pf-line);
   border-radius: var(--pf-radius);
-  background: var(--pf-paper-raised);
+  background: var(--pf-raised);
   color: var(--pf-ink);
   font-family: var(--pf-font-mono);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 1px 1px rgb(23 23 20 / 4%);
   appearance: textfield;
   -moz-appearance: textfield;
+  transition: border-color var(--pf-fast) var(--pf-ease);
 }
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   margin: 0;
   -webkit-appearance: none;
+}
+input[type='number']:focus {
+  border-color: var(--pf-ink-3);
 }
 input[type='number']:disabled,
 fieldset:disabled input[type='number'] {
@@ -273,27 +370,31 @@ fieldset:disabled input[type='number'] {
   border-color: var(--pf-rule-strong);
   background: transparent;
   color: var(--pf-ink-3);
+  box-shadow: none;
 }
 @media (hover: hover) and (pointer: fine) {
   input[type='number']:hover:not(:disabled):not(:focus) {
-    border-color: var(--pf-ink-3);
+    border-color: var(--pf-line-hover);
   }
 }
 :where(html[data-pf-input='keyboard']) input[type='number']:focus,
 :where(html[data-pf-input='keyboard']) .pf-select:focus {
   outline-offset: 1px;
 }
+.pf-number-value {
+  text-align: center;
+}
 .pf-unit-input {
   position: relative;
   display: block;
 }
 .pf-unit-input input {
-  padding-right: 28px;
+  padding-right: 30px;
 }
 .pf-unit-input > span {
   position: absolute;
   top: 50%;
-  right: 8px;
+  right: 10px;
   transform: translateY(-50%);
   color: var(--pf-ink-3);
   font-family: var(--pf-font-mono);
@@ -301,12 +402,15 @@ fieldset:disabled input[type='number'] {
   pointer-events: none;
 }
 
-/* Ranges: a 2px rule with a signal fill and a square ink thumb. */
+/* Ranges: a fine track with a signal fill and a fader cap. */
 input[type='range'] {
   --pf-range-fill: var(--pf-signal);
   --pf-range-track: var(--pf-rule-strong);
-  --pf-range-thumb: var(--pf-ink);
-  --pf-range-at: calc(6px + (100% - 12px) * var(--pf-range-fraction, 0));
+  --pf-thumb-w: 14px;
+  --pf-thumb-h: 22px;
+  --pf-range-at: calc(
+    var(--pf-thumb-w) / 2 + (100% - var(--pf-thumb-w)) * var(--pf-range-fraction, 0)
+  );
   width: 100%;
   min-width: 0;
   height: var(--pf-control);
@@ -319,8 +423,8 @@ input[type='range'] {
   -webkit-appearance: none;
 }
 input[type='range']::-webkit-slider-runnable-track {
-  height: 2px;
-  border-radius: 0;
+  height: 4px;
+  border-radius: 2px;
   background: linear-gradient(
     to right,
     var(--pf-range-fill) var(--pf-range-at),
@@ -328,31 +432,41 @@ input[type='range']::-webkit-slider-runnable-track {
   );
 }
 input[type='range']::-webkit-slider-thumb {
-  width: 12px;
-  height: 18px;
-  margin-top: -8px;
+  width: var(--pf-thumb-w);
+  height: var(--pf-thumb-h);
+  margin-top: calc((4px - var(--pf-thumb-h)) / 2);
   border: 0;
-  border-radius: 1px;
-  background: var(--pf-range-thumb);
-  box-shadow: 0 0 0 2px var(--pf-paper);
+  border-radius: 5px;
+  background:
+    linear-gradient(var(--pf-ink-4), var(--pf-ink-4)) center / 2px 8px no-repeat,
+    var(--pf-raised);
+  box-shadow:
+    0 0 0 1px var(--pf-line-hover),
+    0 1px 3px rgb(0 0 0 / 18%);
   -webkit-appearance: none;
-  transition: transform 120ms;
+  transition: transform var(--pf-fast) var(--pf-ease);
 }
 input[type='range']::-moz-range-track {
-  height: 2px;
+  height: 4px;
+  border-radius: 2px;
   background: var(--pf-range-track);
 }
 input[type='range']::-moz-range-progress {
-  height: 2px;
+  height: 4px;
+  border-radius: 2px;
   background: var(--pf-range-fill);
 }
 input[type='range']::-moz-range-thumb {
-  width: 12px;
-  height: 18px;
+  width: var(--pf-thumb-w);
+  height: var(--pf-thumb-h);
   border: 0;
-  border-radius: 1px;
-  background: var(--pf-range-thumb);
-  box-shadow: 0 0 0 2px var(--pf-paper);
+  border-radius: 5px;
+  background:
+    linear-gradient(var(--pf-ink-4), var(--pf-ink-4)) center / 2px 8px no-repeat,
+    var(--pf-raised);
+  box-shadow:
+    0 0 0 1px var(--pf-line-hover),
+    0 1px 3px rgb(0 0 0 / 18%);
 }
 input[type='range']::-moz-focus-outer {
   border: 0;
@@ -360,39 +474,41 @@ input[type='range']::-moz-focus-outer {
 input[type='range']:disabled,
 fieldset:disabled input[type='range'] {
   --pf-range-fill: var(--pf-ink-4);
-  --pf-range-thumb: var(--pf-ink-4);
+  --pf-range-track: var(--pf-rule);
   cursor: default;
+}
+input[type='range']:disabled::-webkit-slider-thumb,
+fieldset:disabled input[type='range']::-webkit-slider-thumb {
+  background: var(--pf-sunk);
+  box-shadow: 0 0 0 1px var(--pf-rule-strong);
+}
+input[type='range']:disabled::-moz-range-thumb,
+fieldset:disabled input[type='range']::-moz-range-thumb {
+  background: var(--pf-sunk);
+  box-shadow: 0 0 0 1px var(--pf-rule-strong);
 }
 :where(html[data-pf-input='keyboard']) input[type='range']:focus {
   outline-offset: 0;
 }
 @media (hover: hover) and (pointer: fine) {
   input[type='range']:hover:not(:disabled)::-webkit-slider-thumb {
-    transform: scaleY(1.15);
+    transform: scaleY(1.08);
   }
 }
 @media (max-width: 767px), (pointer: coarse) {
-  input[type='range']::-webkit-slider-thumb {
-    width: 16px;
-    height: 24px;
-    margin-top: -11px;
-  }
-  input[type='range']::-moz-range-thumb {
-    width: 16px;
-    height: 24px;
-  }
   input[type='range'] {
-    --pf-range-at: calc(8px + (100% - 16px) * var(--pf-range-fraction, 0));
+    --pf-thumb-w: 18px;
+    --pf-thumb-h: 28px;
   }
 }
 .pf-range-field {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 60px;
+  grid-template-columns: minmax(0, 1fr) 64px;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
-/* Switch: a rectangular toggle; signal when on. */
+/* Switch */
 .pf-switch {
   position: relative;
   display: inline-flex;
@@ -400,13 +516,11 @@ fieldset:disabled input[type='range'] {
   flex: none;
   width: 36px;
   height: 20px;
-  padding: 3px;
-  border: 1px solid var(--pf-control-line);
-  border-radius: var(--pf-radius);
-  background: var(--pf-paper-raised);
-  transition:
-    background-color 140ms,
-    border-color 140ms;
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pf-ink) 16%, transparent);
+  transition: background-color var(--pf-base) var(--pf-ease);
 }
 .pf-switch::before {
   content: '';
@@ -414,62 +528,82 @@ fieldset:disabled input[type='range'] {
   inset: calc((var(--pf-target) - 20px) / -2) -6px;
 }
 .pf-switch-thumb {
-  width: 12px;
-  height: 12px;
-  border-radius: 1px;
-  background: var(--pf-ink-3);
-  transition:
-    transform 140ms ease,
-    background-color 140ms;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 22%),
+    0 0 0 0.5px rgb(0 0 0 / 8%);
+  transition: transform var(--pf-base) var(--pf-ease-spring);
 }
 .pf-switch.is-checked {
-  border-color: var(--pf-signal);
   background: var(--pf-signal);
 }
 .pf-switch.is-checked .pf-switch-thumb {
   transform: translateX(16px);
-  background: var(--pf-on-signal);
 }
 .pf-switch:disabled,
 fieldset:disabled .pf-switch {
-  border-style: dashed;
-  border-color: var(--pf-rule-strong);
   background: transparent;
+  box-shadow: inset 0 0 0 1px var(--pf-rule-strong);
+  outline: 1px dashed var(--pf-rule-strong);
+  outline-offset: -1px;
 }
 .pf-switch:disabled .pf-switch-thumb,
 fieldset:disabled .pf-switch .pf-switch-thumb {
   background: var(--pf-ink-4);
+  box-shadow: none;
 }
 @media (hover: hover) and (pointer: fine) {
   .pf-switch:hover:not(:disabled):not(.is-checked) {
-    border-color: var(--pf-ink-3);
+    background: color-mix(in srgb, var(--pf-ink) 24%, transparent);
   }
 }
 
-/* Rails: segmented choices. Pressed/checked segment is set in ink. */
-.pf-selection-rail,
-.pf-segmented,
-.pf-radio-rail {
+/* Segmented controls: equal keys on a recessed track; a raised key follows the choice. */
+.pf-segmented {
+  --pf-seg-pad: 2px;
+  position: relative;
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
   min-width: 0;
-  border: 1px solid var(--pf-control-line);
-  border-radius: var(--pf-radius);
-  background: var(--pf-paper-raised);
+  padding: var(--pf-seg-pad);
+  border-radius: calc(var(--pf-radius) + 1px);
+  background: var(--pf-track);
+  box-shadow: inset 0 0 0 1px var(--pf-rule);
 }
-.pf-selection-rail > button,
-.pf-segmented > button,
-.pf-radio-rail > button {
+.pf-segmented-indicator {
+  position: absolute;
+  top: var(--pf-seg-pad);
+  bottom: var(--pf-seg-pad);
+  left: var(--pf-seg-pad);
+  width: calc((100% - 2 * var(--pf-seg-pad)) / var(--pf-seg-count, 1));
+  border-radius: calc(var(--pf-radius) - 1px);
+  background: var(--pf-raised);
+  box-shadow: var(--pf-shadow-key);
+  transform: translateX(calc(var(--pf-seg-index, 0) * 100%));
+  transition:
+    transform 240ms var(--pf-ease),
+    opacity var(--pf-fast);
+  pointer-events: none;
+}
+.pf-segmented[data-empty] .pf-segmented-indicator {
+  opacity: 0;
+}
+.pf-segmented > button {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   min-width: 0;
-  min-height: calc(var(--pf-control) - 2px);
+  min-height: calc(var(--pf-control) - 2 * var(--pf-seg-pad));
   padding: 0 10px;
   border: 0;
-  border-radius: 0;
+  border-radius: calc(var(--pf-radius) - 1px);
   background: transparent;
   color: var(--pf-ink-2);
   font-size: 13px;
@@ -477,59 +611,43 @@ fieldset:disabled .pf-switch .pf-switch-thumb {
   line-height: 1.2;
   white-space: nowrap;
   transition:
-    background-color 120ms,
-    color 120ms;
+    color var(--pf-fast) var(--pf-ease),
+    background-color var(--pf-fast) var(--pf-ease);
 }
-.pf-selection-rail > button + button,
-.pf-segmented > button + button,
-.pf-radio-rail > button + button {
-  box-shadow: inset 1px 0 var(--pf-rule);
-}
-.pf-selection-rail > button svg,
-.pf-segmented > button svg,
-.pf-radio-rail > button svg {
+.pf-segmented > button > svg {
   width: 15px;
   height: 15px;
 }
-.pf-selection-rail > button[aria-pressed='true'],
 .pf-segmented > button[aria-pressed='true'],
-.pf-radio-rail > button[aria-checked='true'] {
-  background: var(--pf-ink);
-  color: var(--pf-paper);
-  box-shadow: none;
+.pf-segmented > button[aria-checked='true'] {
+  color: var(--pf-ink);
+  font-weight: 600;
 }
-.pf-selection-rail > button[aria-pressed='true'] + button,
-.pf-segmented > button[aria-pressed='true'] + button,
-.pf-radio-rail > button[aria-checked='true'] + button {
-  box-shadow: none;
+.pf-segmented > button:disabled {
+  color: var(--pf-ink-4);
 }
-.pf-selection-rail > button:disabled,
-.pf-segmented > button:disabled,
-.pf-radio-rail > button:disabled,
+fieldset:disabled .pf-segmented {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--pf-rule-strong);
+}
 fieldset:disabled .pf-segmented > button {
   color: var(--pf-ink-4);
 }
-fieldset:disabled .pf-segmented,
-fieldset:disabled .pf-radio-rail {
-  border-style: dashed;
-  border-color: var(--pf-rule-strong);
-}
 fieldset:disabled .pf-segmented > button[aria-pressed='true'] {
-  background: var(--pf-paper-sunk);
   color: var(--pf-ink-3);
 }
-:where(html[data-pf-input='keyboard']) .pf-selection-rail > button:focus,
-:where(html[data-pf-input='keyboard']) .pf-segmented > button:focus,
-:where(html[data-pf-input='keyboard']) .pf-radio-rail > button:focus {
-  position: relative;
-  z-index: 1;
-  outline-offset: 1px;
+fieldset:disabled .pf-segmented-indicator {
+  background: var(--pf-track);
+  box-shadow: none;
+}
+:where(html[data-pf-input='keyboard']) .pf-segmented > button:focus {
+  z-index: 2;
+  outline-offset: 0;
 }
 @media (hover: hover) and (pointer: fine) {
-  .pf-selection-rail > button:hover:not(:disabled):not([aria-pressed='true']),
-  .pf-segmented > button:hover:not(:disabled):not([aria-pressed='true']),
-  .pf-radio-rail > button:hover:not(:disabled):not([aria-checked='true']) {
-    background: var(--pf-paper-sunk);
+  .pf-segmented > button:hover:not(:disabled):not([aria-pressed='true']):not(
+      [aria-checked='true']
+    ) {
     color: var(--pf-ink);
   }
 }
@@ -540,12 +658,11 @@ fieldset:disabled .pf-segmented > button[aria-pressed='true'] {
   gap: 8px;
   min-width: 0;
 }
+.pf-field-label,
 .pf-field > span:first-child,
-.pf-field > label:first-child,
-.pf-field-heading > span:first-child,
-.pf-field-label {
+.pf-field > label:first-child {
   color: var(--pf-ink-2);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   line-height: 1.35;
 }
@@ -558,7 +675,8 @@ fieldset:disabled .pf-segmented > button[aria-pressed='true'] {
 }
 .pf-field-heading > span:first-child {
   color: var(--pf-ink);
-  font-size: 13px;
+  font-size: 13.5px;
+  font-weight: 600;
 }
 fieldset:disabled .pf-field > span:first-child,
 fieldset:disabled .pf-field > label:first-child,
@@ -571,6 +689,7 @@ fieldset:disabled .pf-field-heading > span:first-child {
   color: var(--pf-ink-3);
   font-size: 12px;
   line-height: 1.55;
+  text-wrap: pretty;
 }
 .pf-field-error {
   color: var(--pf-alert);
@@ -579,71 +698,135 @@ fieldset:disabled .pf-field-heading > span:first-child {
 }
 
 /* Disclosures */
-.pf-settings-extra {
+.pf-disclosure {
   border-top: 1px solid var(--pf-rule);
 }
-.pf-settings-extra > summary {
+.pf-disclosure > summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   min-height: 44px;
   color: var(--pf-ink);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
   user-select: none;
 }
-.pf-settings-extra > summary::after {
+.pf-disclosure > summary::after {
   content: '';
   width: 7px;
   height: 7px;
-  margin-right: 4px;
+  margin-right: 5px;
   border-right: 1.5px solid var(--pf-ink-3);
   border-bottom: 1.5px solid var(--pf-ink-3);
   transform: translateY(-2px) rotate(45deg);
-  transition: transform 140ms;
+  transition: transform var(--pf-base) var(--pf-ease);
 }
-.pf-settings-extra[open] > summary::after {
+.pf-disclosure[open] > summary::after {
   transform: translateY(2px) rotate(-135deg);
 }
-.pf-settings-extra[open] > summary {
-  margin-bottom: 4px;
+.pf-disclosure[open] {
+  padding-bottom: 8px;
 }
-.pf-settings-extra[open] {
-  padding-bottom: 16px;
+.pf-disclosure[open] > :not(summary) {
+  animation: pf-rise 180ms var(--pf-ease);
 }
-:where(html[data-pf-input='keyboard']) .pf-settings-extra > summary:focus {
+:where(html[data-pf-input='keyboard']) .pf-disclosure > summary:focus {
   outline-offset: -2px;
 }
 @media (hover: hover) and (pointer: fine) {
-  .pf-settings-extra > summary:hover::after {
+  .pf-disclosure > summary:hover::after {
     border-color: var(--pf-ink);
   }
 }
 
-/* Chip rows (advanced options): label left, control right, hairline between. */
-.pf-advanced-controls {
+/* Option rows (advanced codec settings): label left, control right. */
+.pf-option-rows {
   display: grid;
 }
-.pf-toolbar-chip {
+.pf-option-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  min-height: 44px;
-  border-bottom: 1px solid var(--pf-rule);
+  gap: 16px;
+  min-height: 52px;
+  padding: 10px 0;
+  border-top: 1px solid var(--pf-rule);
 }
-.pf-toolbar-chip:last-child {
-  border-bottom: 0;
+.pf-option-row:first-child {
+  border-top: 0;
 }
-.pf-toolbar-chip-label {
+.pf-option-row > :last-child {
+  flex: none;
+}
+.pf-option-row-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.pf-option-row-label {
   color: var(--pf-ink);
   font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
 }
-.pf-toolbar-select-compact {
-  width: 96px;
+.pf-option-row-hint {
+  color: var(--pf-ink-3);
+  font-size: 12px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.pf-option-select {
+  width: 88px;
+}
+
+/* Status glyphs */
+.pf-status-glyph {
   flex: none;
+  width: 12px;
+  height: 12px;
+  overflow: visible;
+}
+.pf-glyph-ring {
+  fill: none;
+  stroke: var(--pf-ink-4);
+  stroke-width: 1.4;
+  stroke-dasharray: 2.2 2;
+}
+.pf-glyph-track {
+  fill: none;
+  stroke: var(--pf-rule-strong);
+  stroke-width: 2;
+}
+.pf-glyph-arc {
+  fill: none;
+  stroke: var(--pf-signal);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--pf-base) linear;
+}
+.pf-status-glyph.is-done .pf-glyph-fill {
+  fill: var(--pf-signal);
+}
+.pf-status-glyph.is-error .pf-glyph-fill {
+  fill: var(--pf-alert);
+}
+.pf-glyph-mark {
+  fill: none;
+  stroke: var(--pf-on-signal);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pf-status-glyph.is-error .pf-glyph-mark {
+  stroke: var(--pf-on-alert);
+}
+.pf-status-glyph.is-cancelled .pf-glyph-mark {
+  stroke: var(--pf-ink-3);
+}
+.pf-status-glyph.is-busy {
+  animation: pf-spin 1s linear infinite;
 }
 
 /* Tooltip */
@@ -651,28 +834,34 @@ fieldset:disabled .pf-field-heading > span:first-child {
   position: fixed;
   z-index: 1100;
   max-width: min(280px, calc(100vw - 24px));
-  padding: 5px 8px;
-  border-radius: var(--pf-radius);
+  padding: 5px 9px;
+  border-radius: var(--pf-radius-sm);
   background: var(--pf-ink);
-  color: var(--pf-paper);
+  color: var(--pf-sheet);
   font-size: 12px;
   line-height: 1.4;
   overflow-wrap: anywhere;
+  box-shadow: 0 6px 16px -6px rgb(0 0 0 / 35%);
   pointer-events: none;
+  animation: pf-fade var(--pf-fast) var(--pf-ease);
 }
 
 /* Dialog */
 .pf-dialog {
   width: min(420px, calc(100vw - 32px));
   padding: 24px;
-  border: 1px solid var(--pf-rule-strong);
-  border-radius: var(--pf-radius);
-  background: var(--pf-paper-raised);
+  border: 0;
+  border-radius: var(--pf-radius-xl);
+  background: var(--pf-raised);
   color: var(--pf-ink);
   box-shadow: var(--pf-shadow-pop);
 }
+.pf-dialog[open] {
+  animation: pf-pop 180ms var(--pf-ease);
+}
 .pf-dialog::backdrop {
   background: var(--pf-scrim);
+  backdrop-filter: blur(2px);
 }
 .pf-dialog h2 {
   font-size: 17px;
@@ -680,9 +869,9 @@ fieldset:disabled .pf-field-heading > span:first-child {
   line-height: 1.3;
 }
 .pf-dialog p {
-  margin-top: 10px;
+  margin-top: 8px;
   color: var(--pf-ink-2);
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.6;
 }
 .pf-dialog-actions {
@@ -692,10 +881,10 @@ fieldset:disabled .pf-field-heading > span:first-child {
   margin-top: 24px;
 }
 .pf-dialog-actions .pf-button {
-  min-width: 88px;
+  min-width: 92px;
 }
 
-/* Skip link, update toast */
+/* Skip link and update toast */
 .pf-skip-link {
   position: fixed;
   top: 8px;
@@ -704,7 +893,7 @@ fieldset:disabled .pf-field-heading > span:first-child {
   padding: 8px 12px;
   border-radius: var(--pf-radius);
   background: var(--pf-ink);
-  color: var(--pf-paper);
+  color: var(--pf-sheet);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -715,39 +904,34 @@ fieldset:disabled .pf-field-heading > span:first-child {
 }
 .pf-update-toast {
   position: fixed;
-  right: 16px;
-  bottom: calc(var(--pf-footer) + 16px);
+  right: 20px;
+  bottom: calc(var(--pf-footer) + 20px);
   z-index: 900;
   display: flex;
   align-items: center;
   gap: 16px;
   max-width: min(440px, calc(100vw - 32px));
   padding: 12px 12px 12px 16px;
-  border-radius: var(--pf-radius);
-  background: var(--pf-ink);
-  color: var(--pf-paper);
+  border-radius: var(--pf-radius-lg);
+  background: var(--pf-raised);
+  color: var(--pf-ink);
   font-size: 13px;
   line-height: 1.45;
   box-shadow: var(--pf-shadow-pop);
+  animation: pf-rise var(--pf-base) var(--pf-ease);
 }
-.pf-update-button {
+.pf-update-toast .pf-button {
   flex: none;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: var(--pf-radius);
-  background: var(--pf-signal);
-  color: var(--pf-on-signal);
-  font-size: 13px;
-  font-weight: 600;
 }
 
 @media (forced-colors: active) {
-  .pf-selection-rail > button[aria-pressed='true'],
-  .pf-segmented > button[aria-pressed='true'],
-  .pf-radio-rail > button[aria-checked='true'],
+  .pf-segmented-indicator,
   .pf-switch.is-checked {
     background: Highlight;
+    forced-color-adjust: none;
+  }
+  .pf-segmented > button[aria-pressed='true'],
+  .pf-segmented > button[aria-checked='true'] {
     color: HighlightText;
     forced-color-adjust: none;
   }

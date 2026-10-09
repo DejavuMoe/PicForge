@@ -1,108 +1,196 @@
-/* Landing: a title sheet, one real sample on the stage, and the tool index. */
+/* Home: a title sheet, the tool index and one real sample on the stage. */
 .pf-landing {
   flex: 1;
   min-height: 0;
+  padding: 0 var(--pf-frame);
   overflow-y: auto;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable both-edges;
 }
 .pf-landing-main {
   display: grid;
-  gap: 48px;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 56px 48px 48px;
+  grid-template-areas:
+    'intro sample'
+    'index sample';
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: 44px clamp(40px, 5vw, 88px);
+  min-height: 100%;
+  padding: clamp(36px, 7vh, 80px) clamp(32px, 4.6vw, 80px) clamp(32px, 6vh, 64px);
+  border-radius: var(--pf-radius-lg);
+  background: var(--pf-sheet);
+  box-shadow: var(--pf-shadow-sheet);
 }
-.pf-landing-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
-  align-items: center;
-  gap: 64px;
+.pf-landing-main:focus {
+  outline: none;
 }
 .pf-landing-intro {
   display: grid;
+  grid-area: intro;
+  align-self: end;
   justify-items: start;
-  align-content: center;
 }
 .pf-landing-intro h1 {
   color: var(--pf-ink);
-  font-size: clamp(44px, 5.6vw, 80px);
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 1;
+  font-size: clamp(48px, 5.6vw, 88px);
+  font-weight: 600;
+  letter-spacing: var(--pf-display-tracking);
+  line-height: 0.98;
   text-wrap: balance;
 }
 .pf-landing-intro h1::after {
   content: '';
   display: inline-block;
-  width: 0.16em;
-  height: 0.16em;
-  margin-left: 0.08em;
+  width: 0.15em;
+  height: 0.15em;
+  margin-left: 0.07em;
   background: var(--pf-signal);
 }
 .pf-landing-summary {
-  max-width: 440px;
-  margin-top: 28px;
+  max-width: 30em;
+  margin-top: 24px;
   color: var(--pf-ink-2);
   font-size: 17px;
-  line-height: 1.6;
+  line-height: 1.55;
   text-wrap: pretty;
 }
 .pf-landing-privacy {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 28px;
-  padding-top: 14px;
-  border-top: 1px solid var(--pf-rule);
-  color: var(--pf-ink-2);
+  gap: 8px;
+  margin-top: 18px;
+  color: var(--pf-ink-3);
   font-size: 13px;
 }
 .pf-landing-privacy svg {
   width: 14px;
   height: 14px;
-  color: var(--pf-ink-3);
 }
 
-/* Sample on a graphite stage */
-.pf-demo {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-  margin: 0;
-  padding: 16px 32px 14px;
-  border-radius: var(--pf-radius);
-  background: var(--pf-paper);
-  color: var(--pf-ink);
+/* Tool index: one shared column template across rows and locales. */
+.pf-entry-tools {
+  --pf-entry-columns: 32px minmax(0, 1fr) 22ch 20px;
+  grid-area: index;
+  align-self: start;
+  border-top: 1px solid var(--pf-ink);
 }
-.pf-demo > figcaption {
-  display: flex;
-  justify-content: space-between;
-  color: var(--pf-ink-2);
+.pf-entry-tool {
+  position: relative;
+  display: grid;
+  grid-template-areas:
+    'number title formats arrow'
+    'number description description arrow';
+  grid-template-columns: var(--pf-entry-columns);
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--pf-rule);
+  color: var(--pf-ink);
+  text-decoration: none;
+  transition: background-color var(--pf-fast) var(--pf-ease);
+}
+.pf-entry-number {
+  grid-area: number;
+  color: var(--pf-ink-3);
   font-family: var(--pf-font-mono);
   font-size: 11px;
   font-weight: 500;
+  transition: color var(--pf-fast) var(--pf-ease);
+}
+.pf-entry-tool strong {
+  grid-area: title;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: var(--pf-heading-tracking);
+  line-height: 1.25;
+}
+.pf-entry-description {
+  grid-area: description;
+  color: var(--pf-ink-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.pf-entry-formats {
+  grid-area: formats;
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: right;
+  white-space: nowrap;
+}
+.pf-entry-arrow {
+  grid-area: arrow;
+  align-self: center;
+  width: 20px;
+  height: 20px;
+  color: var(--pf-ink-3);
+  transition:
+    color var(--pf-fast) var(--pf-ease),
+    transform var(--pf-base) var(--pf-ease);
+}
+:where(html[data-pf-input='keyboard']) .pf-entry-tool:focus {
+  outline-offset: -2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-entry-tool:hover {
+    background: var(--pf-hover);
+  }
+  .pf-entry-tool:hover .pf-entry-number {
+    color: var(--pf-signal-ink);
+  }
+  .pf-entry-tool:hover .pf-entry-arrow {
+    color: var(--pf-ink);
+    transform: translateX(4px);
+  }
+}
+
+/* Sample on a graphite plate; the split is a native range under a drawn fader cap. */
+.pf-demo {
+  display: grid;
+  grid-area: sample;
+  align-self: center;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 18px 28px 12px;
+  border-radius: var(--pf-radius-lg);
+  background: var(--pf-sheet);
+  color: var(--pf-ink);
+}
+.pf-demo-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 11px;
   line-height: 18px;
 }
+.pf-demo-side {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.pf-demo-format {
+  color: var(--pf-ink-2);
+  font-weight: 600;
+}
+.pf-demo-side > .pf-mono {
+  color: var(--pf-ink);
+}
+.pf-demo-side .pf-file-ratio {
+  margin-left: 0;
+  color: var(--pf-signal);
+}
 .pf-demo-image {
-  --pf-mark: var(--pf-ink-3);
+  --pf-mark: var(--pf-ink-4);
+  --pf-mark-length: 12px;
   position: relative;
   aspect-ratio: 3 / 2;
 }
 .pf-demo-image::after {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  --pf-mark-length: 12px;
-  background:
-    linear-gradient(var(--pf-mark) 0 0) top left / var(--pf-mark-length) 1px no-repeat,
-    linear-gradient(var(--pf-mark) 0 0) top left / 1px var(--pf-mark-length) no-repeat,
-    linear-gradient(var(--pf-mark) 0 0) top right / var(--pf-mark-length) 1px no-repeat,
-    linear-gradient(var(--pf-mark) 0 0) top right / 1px var(--pf-mark-length) no-repeat,
-    linear-gradient(var(--pf-mark) 0 0) bottom left / var(--pf-mark-length) 1px no-repeat,
-    linear-gradient(var(--pf-mark) 0 0) bottom left / 1px var(--pf-mark-length) no-repeat,
-    linear-gradient(var(--pf-mark) 0 0) bottom right / var(--pf-mark-length) 1px no-repeat,
-    linear-gradient(var(--pf-mark) 0 0) bottom right / 1px var(--pf-mark-length) no-repeat;
-  pointer-events: none;
+  inset: -9px;
 }
 .pf-demo-image img {
   display: block;
@@ -121,7 +209,7 @@
   bottom: 0;
   left: var(--split);
   width: 1px;
-  background: #f4f2ec;
+  background: #f4f4f4;
   box-shadow: 0 0 0 0.5px rgb(0 0 0 / 30%);
   pointer-events: none;
 }
@@ -129,21 +217,7 @@
   position: absolute;
   top: 50%;
   left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 44px;
-  border-radius: var(--pf-radius);
-  background: #f4f2ec;
-  color: #171714;
-  box-shadow: 0 1px 6px rgb(0 0 0 / 35%);
   transform: translate(-50%, -50%);
-}
-.pf-demo-divider svg {
-  width: 10px;
-  height: 14px;
-  margin: 0 -2px;
 }
 .pf-demo-image input[type='range'] {
   position: absolute;
@@ -158,14 +232,14 @@
 }
 :where(html[data-pf-input='keyboard']) .pf-demo-image input:focus ~ .pf-demo-divider > span {
   outline: 2px solid var(--pf-signal);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 .pf-demo-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 32px;
+  min-height: 36px;
 }
 .pf-demo-note {
   color: var(--pf-ink-3);
@@ -174,204 +248,122 @@
 .pf-demo-note[role='alert'] {
   color: var(--pf-alert);
 }
-.pf-demo-footer .pf-text-button {
-  color: var(--pf-ink);
+.pf-demo-try {
+  flex: none;
+  font-weight: 600;
 }
-.pf-demo-footer .pf-text-button svg {
+.pf-demo-try svg {
   color: var(--pf-signal);
-}
-
-/* Tool index: one shared column template across rows and locales. */
-.pf-entry-tools {
-  --pf-entry-columns: 40px minmax(220px, 1fr) minmax(220px, 1.25fr) 24ch 20px;
-  border-top: 1px solid var(--pf-ink);
-}
-.pf-entry-tool {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--pf-entry-columns);
-  align-items: center;
-  gap: 24px;
-  min-height: 84px;
-  padding: 20px;
-  border-bottom: 1px solid var(--pf-rule);
-  color: var(--pf-ink);
-  text-decoration: none;
-  transition: background-color 150ms;
-}
-.pf-entry-tool::before {
-  content: '';
-  position: absolute;
-  top: -1px;
-  bottom: -1px;
-  left: 0;
-  width: 2px;
-  background: transparent;
-  transition: background-color 150ms;
-}
-.pf-entry-number {
-  color: var(--pf-ink-3);
-  font-family: var(--pf-font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  transition: color 150ms;
-}
-.pf-entry-tool strong {
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-.pf-entry-description {
-  color: var(--pf-ink-2);
-  font-size: 14px;
-  line-height: 1.55;
-}
-.pf-entry-formats {
-  color: var(--pf-ink-3);
-  font-family: var(--pf-font-mono);
-  font-size: 11px;
-  line-height: 1.5;
-}
-.pf-entry-arrow {
-  width: 20px;
-  height: 20px;
-  color: var(--pf-ink-2);
-  transition:
-    color 150ms,
-    transform 150ms;
-}
-:where(html[data-pf-input='keyboard']) .pf-entry-tool:focus {
-  outline-offset: -2px;
+  transition: transform var(--pf-base) var(--pf-ease);
 }
 @media (hover: hover) and (pointer: fine) {
-  .pf-entry-tool:hover {
-    background: var(--pf-paper-sunk);
-  }
-  .pf-entry-tool:hover::before {
-    background: var(--pf-signal);
-  }
-  .pf-entry-tool:hover .pf-entry-number {
-    color: var(--pf-signal-ink);
-  }
-  .pf-entry-tool:hover .pf-entry-arrow {
-    color: var(--pf-ink);
+  .pf-demo-try:hover:not(:disabled) svg {
     transform: translateX(3px);
   }
 }
+
 html:lang(zh-CN) .pf-landing-intro h1,
 html:lang(zh-TW) .pf-landing-intro h1,
 html:lang(ja) .pf-landing-intro h1,
 html:lang(ko) .pf-landing-intro h1 {
-  font-weight: 600;
-  letter-spacing: 0;
-  line-height: 1.15;
+  line-height: 1.12;
 }
 
-@media (min-width: 768px) and (max-height: 900px) {
-  .pf-landing-main {
-    gap: 36px;
-    padding-top: 40px;
-  }
-  .pf-landing-hero {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
-  }
-  .pf-demo-image {
-    aspect-ratio: 16 / 9;
-  }
-  .pf-landing-intro h1 {
-    font-size: clamp(44px, 4.8vw, 64px);
-  }
-  .pf-landing-summary {
-    margin-top: 22px;
-  }
-  .pf-landing-privacy {
-    margin-top: 22px;
-  }
-  .pf-entry-tool {
-    min-height: 72px;
-    padding-top: 16px;
-    padding-bottom: 16px;
-  }
-}
-@media (max-width: 1100px) {
-  .pf-landing-main {
-    padding: 40px 32px;
-  }
-  .pf-landing-hero {
-    gap: 36px;
-  }
+/* Two columns narrow below 1400 px: formats move out of the rows. */
+@media (max-width: 1399px) and (min-width: 1100px) {
   .pf-entry-tools {
-    --pf-entry-columns: 28px minmax(180px, 1fr) minmax(200px, 1.3fr) 20px;
-  }
-  .pf-entry-tool {
-    gap: 18px;
+    --pf-entry-columns: 28px minmax(0, 1fr) 0 20px;
   }
   .pf-entry-formats {
     display: none;
   }
-  .pf-entry-tool strong {
-    font-size: 19px;
+}
+@media (min-width: 768px) and (max-height: 760px) {
+  .pf-landing-main {
+    row-gap: 32px;
+  }
+  .pf-landing-intro h1 {
+    font-size: clamp(44px, 4.8vw, 68px);
+  }
+  .pf-landing-summary {
+    margin-top: 18px;
+  }
+  .pf-entry-tool {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .pf-demo-image {
+    aspect-ratio: 16 / 10;
+  }
+}
+@media (max-width: 1099px) {
+  .pf-landing-main {
+    grid-template-areas:
+      'intro'
+      'index'
+      'sample';
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 36px;
+    padding: 44px 36px 40px;
+  }
+  .pf-landing-intro {
+    align-self: start;
   }
 }
 @media (max-width: 767px) {
-  .pf-landing-main {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-    padding: 28px 16px 32px;
+  .pf-landing {
+    scrollbar-gutter: auto;
   }
-  .pf-landing-hero {
-    display: contents;
+  .pf-landing-main {
+    gap: 28px;
+    padding: 28px 16px 32px;
+    border-radius: 0;
+    box-shadow: none;
   }
   .pf-landing-intro {
-    order: 0;
     padding: 0 4px;
-  }
-  .pf-entry-tools {
-    --pf-entry-columns: 22px minmax(0, 1fr) 20px;
-    order: 1;
-  }
-  .pf-demo {
-    order: 2;
-    width: 100%;
-    padding: 12px 16px 10px;
   }
   .pf-landing-intro h1 {
     font-size: clamp(42px, 12vw, 56px);
   }
   .pf-landing-summary {
-    margin-top: 16px;
+    margin-top: 14px;
     font-size: 15px;
   }
   .pf-landing-privacy {
-    margin-top: 18px;
+    margin-top: 14px;
     font-size: 12px;
+  }
+  .pf-entry-tools {
+    --pf-entry-columns: 22px minmax(0, 1fr) 0 20px;
   }
   .pf-entry-tool {
     gap: 4px 12px;
-    min-height: 0;
-    padding: 16px 12px;
+    padding: 15px 12px;
   }
   .pf-entry-tool strong {
     font-size: 17px;
   }
   .pf-entry-number {
-    align-self: start;
-    padding-top: 3px;
-    font-size: 11px;
+    padding-top: 2px;
   }
   .pf-entry-description {
-    grid-row: 2;
-    grid-column: 2;
     font-size: 13px;
   }
-  .pf-entry-arrow {
-    grid-row: 1 / 3;
-    grid-column: 3;
+  .pf-entry-formats {
+    display: none;
   }
-  .pf-demo-divider > span {
-    width: 44px;
-    height: 44px;
+  .pf-demo {
+    padding: 12px 14px 8px;
+  }
+  .pf-demo-caption {
+    gap: 8px;
+  }
+  .pf-demo-footer {
+    min-height: 44px;
+  }
+  .pf-demo-try {
+    min-height: 44px;
   }
 }

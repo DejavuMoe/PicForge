@@ -269,6 +269,12 @@
     "formatHint": "JPEG · PNG / APNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "降低品質可縮小體積，下載前建議比較細節。",
     "losslessHint": "PNG 為無損壓縮，無需設定品質。",
+    "formatNotes": {
+      "mozjpeg": "適合照片。不支援透明，相容性最好。",
+      "webp": "保留透明與動畫。",
+      "oxipng": "無損壓縮，保留透明。",
+      "avif": "保留透明，編碼最慢。"
+    },
     "smaller": "體積減少 {{percent}}%",
     "larger": "體積增加 {{percent}}%",
     "batchActions": "批次操作"
@@ -284,7 +290,7 @@
     "sampleAlt": "淺藍天空下的金色沙丘，沙紋清晰可見。",
     "sampleCompare": "比較 JPEG 與 WebP 範例圖片",
     "samplePosition": "顯示 {{value}}% 的原始 JPEG",
-    "sampleNote": "範例圖片 · 拖曳比較",
+    "sampleNote": "預先編碼的範例圖片 · 拖曳比較",
     "trySample": "使用範例",
     "sampleFailed": "範例載入失敗，請加入圖片。"
   },

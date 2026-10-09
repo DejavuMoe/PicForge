@@ -1,24 +1,19 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { FiArrowRight, FiChevronLeft, FiChevronRight, FiLock } from 'react-icons/fi';
+import { useEffect, useRef, useState } from 'react';
+import { FiLock } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import sample from '../assets/dune-sample.jpg';
-import preview from '../assets/dune-preview.webp';
 import type { ToolId } from '../types';
+import { SampleCompare } from './SampleCompare';
+import { ToolIndex } from './ToolIndex';
 import './landing.css';
-
-const TOOLS = [
-  { id: 'compression', formats: 'JPG · PNG · WebP · AVIF' },
-  { id: 'android', formats: 'JPG → JPG + MP4' },
-  { id: 'ios', formats: 'HEIC + MOV → JPG + MP4' },
-] as const;
 
 export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void }) {
   const { t } = useTranslation();
-  const [position, setPosition] = useState(50);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const request = useRef<AbortController | null>(null);
   useEffect(() => () => request.current?.abort(), []);
+  // The sample opens in the real compressor, as an ordinary local file.
   const trySample = async () => {
     if (request.current) return;
     const controller = new AbortController();
@@ -52,97 +47,16 @@ export default function Landing({ onSelect }: { onSelect: (tool: ToolId) => void
         tabIndex={-1}
         aria-labelledby="pf-landing-title"
       >
-        <section className="pf-landing-hero">
-          <div className="pf-landing-intro">
-            <h1 id="pf-landing-title">{t('entry.title')}</h1>
-            <p className="pf-landing-summary">{t('entry.summary')}</p>
-            <p className="pf-landing-privacy">
-              <FiLock aria-hidden />
-              {t('entry.privacy')}
-            </p>
-          </div>
-          <figure className="pf-demo pf-stage-scope">
-            <figcaption>
-              <span>JPEG</span>
-              <span>WebP</span>
-            </figcaption>
-            <div className="pf-demo-image" style={{ '--split': `${position}%` } as CSSProperties}>
-              <img
-                src={preview}
-                alt={t('entry.sampleAlt')}
-                width="1200"
-                height="800"
-                fetchPriority="high"
-              />
-              <img
-                className="pf-demo-original"
-                src={sample}
-                alt=""
-                width="1200"
-                height="800"
-                decoding="async"
-              />
-              <input
-                type="range"
-                step="any"
-                min="0"
-                max="100"
-                value={position}
-                aria-label={t('entry.sampleCompare')}
-                aria-valuetext={t('entry.samplePosition', { value: Math.round(position) })}
-                onChange={(event) => setPosition(Number(event.target.value))}
-              />
-              <span className="pf-demo-divider" aria-hidden>
-                <span>
-                  <FiChevronLeft />
-                  <FiChevronRight />
-                </span>
-              </span>
-            </div>
-            <div className="pf-demo-footer">
-              <p className="pf-demo-note" role={failed ? 'alert' : undefined}>
-                {t(failed ? 'entry.sampleFailed' : 'entry.sampleNote')}
-              </p>
-              <button className="pf-text-button" disabled={loading} onClick={trySample}>
-                {t(loading ? 'motion.loading' : 'entry.trySample')}
-                <FiArrowRight aria-hidden />
-              </button>
-            </div>
-          </figure>
-        </section>
-        <nav className="pf-entry-tools" aria-label={t('workbench.tools')}>
-          {TOOLS.map(({ id, formats }, index) => {
-            const url = new URL(window.location.href);
-            url.searchParams.set('tool', id);
-            return (
-              <a
-                key={id}
-                className="pf-entry-tool"
-                href={`${url.pathname}${url.search}${url.hash}`}
-                onClick={(event) => {
-                  if (
-                    event.button !== 0 ||
-                    event.metaKey ||
-                    event.ctrlKey ||
-                    event.shiftKey ||
-                    event.altKey
-                  )
-                    return;
-                  event.preventDefault();
-                  onSelect(id);
-                }}
-              >
-                <span className="pf-entry-number" aria-hidden>
-                  0{index + 1}
-                </span>
-                <strong>{t(`motion.${id}`)}</strong>
-                <span className="pf-entry-description">{t(`entry.${id}`)}</span>
-                <span className="pf-entry-formats">{formats}</span>
-                <FiArrowRight className="pf-entry-arrow" aria-hidden />
-              </a>
-            );
-          })}
-        </nav>
+        <div className="pf-landing-intro">
+          <h1 id="pf-landing-title">{t('entry.title')}</h1>
+          <p className="pf-landing-summary">{t('entry.summary')}</p>
+          <p className="pf-landing-privacy">
+            <FiLock aria-hidden />
+            {t('entry.privacy')}
+          </p>
+        </div>
+        <ToolIndex onSelect={onSelect} />
+        <SampleCompare loading={loading} failed={failed} onTry={() => void trySample()} />
       </main>
     </div>
   );

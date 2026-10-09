@@ -1060,10 +1060,17 @@ try {
             );
             near(media.image.height, media.video.height, 'paired visible media height');
             near(media.image.y, media.video.y, 'paired visible media top');
-            const downloads = await active()
-              .locator('.pf-motion-media-pane > .pf-text-button')
+            // Captions share a row on the stage; each file's download is a row in the
+            // inspector footer.
+            const captions = await active()
+              .locator('.pf-motion-media-pane > figcaption')
               .evaluateAll((elements) => elements.map((el) => el.getBoundingClientRect().y));
-            near(downloads[0], downloads[1], 'paired download row');
+            near(captions[0], captions[1], 'paired caption row');
+            const downloads = await active()
+              .locator('.pf-inspector-footer .pf-output-file')
+              .evaluateAll((elements) => elements.map((el) => el.getBoundingClientRect().x));
+            assert.equal(downloads.length, 2, 'one download row per output file');
+            near(downloads[0], downloads[1], 'download rows share an edge');
           }
           await checkRanges();
           measurements.push({

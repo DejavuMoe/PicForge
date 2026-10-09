@@ -57,7 +57,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.colorScheme = colorMode;
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', colorMode === 'dark' ? '#161614' : '#f3f1ea');
+      ?.setAttribute('content', colorMode === 'dark' ? '#0b0b0a' : '#e6e4de');
   }, [colorMode]);
   const value = useMemo(
     () => ({ colorMode, setColorMode, toggleColorMode }),

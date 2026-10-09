@@ -1,4 +1,4 @@
-/* Reset, document typography and focus policy. */
+/* Reset, document typography and the focus policy. */
 *,
 *::before,
 *::after {
@@ -11,13 +11,18 @@ body,
   height: 100%;
   margin: 0;
 }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 body {
   min-width: 320px;
   overflow: hidden;
-  background: var(--pf-paper);
+  background: var(--pf-canvas);
   color: var(--pf-ink);
   font: 400 14px/1.5 var(--pf-font-sans);
   font-kerning: normal;
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -28,7 +33,9 @@ h3,
 p,
 figure,
 fieldset,
-legend {
+legend,
+dl,
+dd {
   margin: 0;
   padding: 0;
 }
@@ -37,6 +44,7 @@ h2,
 h3 {
   font-size: inherit;
   font-weight: 600;
+  letter-spacing: var(--pf-heading-tracking);
 }
 fieldset {
   min-width: 0;
@@ -46,6 +54,7 @@ button,
 input,
 select,
 textarea {
+  margin: 0;
   font: inherit;
   color: inherit;
   letter-spacing: inherit;
@@ -72,6 +81,10 @@ video {
 }
 svg {
   flex: none;
+}
+/* Feather icons draw at a finer weight than their 2px default. */
+svg[stroke='currentColor'][fill='none'] {
+  stroke-width: 1.7;
 }
 a {
   color: inherit;
@@ -123,18 +136,51 @@ button::-moz-focus-inner {
   border: 0;
 }
 
-/* Ledger voice: numbers are set in Plex Mono with tabular figures. */
+/* Figures are real values: tabular, monospaced where they line up in columns. */
 .pf-mono {
   font-family: var(--pf-font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
+.pf-figure {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
 .pf-eyebrow {
-  font-family: var(--pf-font-mono);
-  font-size: 11px;
+  color: var(--pf-ink-3);
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
-  color: var(--pf-ink-3);
+}
+.pf-eyebrow > .pf-mono {
+  margin-right: 8px;
+  color: var(--pf-signal-ink);
+  font-size: 11px;
+}
+
+/* Format tags: the file types a tool reads and writes. */
+.pf-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid var(--pf-rule-strong);
+  border-radius: var(--pf-radius-xs);
+  color: var(--pf-ink-2);
+  font-family: var(--pf-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.pf-tag-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: var(--pf-ink-4);
+  font-size: 12px;
 }
 
 @keyframes pf-spin {
@@ -148,6 +194,34 @@ button::-moz-focus-inner {
   }
   to {
     transform: translateX(250%);
+  }
+}
+@keyframes pf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pf-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pf-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

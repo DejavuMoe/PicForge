@@ -1,7 +1,9 @@
 /*
- * PicForge "darkroom ledger" tokens.
- * Warm paper and ink for chrome, one safelight-amber signal, and a hue-free
- * graphite stage for judging pixels. See docs/design/darkroom-ledger.md.
+ * PicForge "Proof" tokens.
+ *
+ * A framed sheet on a quiet canvas holds the tools. Media is judged on a hue-free
+ * stage in both themes. One amber signal marks action, selection and progress.
+ * Values are documented in docs/design/proof.md and docs/design/design-tokens.json.
  */
 
 @font-face {
@@ -58,17 +60,32 @@
     var(--pf-font-cjk), sans-serif;
   --pf-font-mono:
     'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, var(--pf-font-cjk), monospace;
+  /* Latin display tracking; CJK resets these to natural spacing below. */
+  --pf-display-tracking: -0.042em;
+  --pf-heading-tracking: -0.012em;
   --pf-label-tracking: 0.06em;
 
-  /* Geometry: hairlines and nearly square corners. */
-  --pf-radius: 2px;
+  /* Geometry */
+  --pf-radius-xs: 4px;
+  --pf-radius-sm: 6px;
+  --pf-radius: 8px;
+  --pf-radius-lg: 12px;
+  --pf-radius-xl: 16px;
   --pf-control: 32px;
   --pf-target: 32px;
   --pf-header: 52px;
-  --pf-footer: 32px;
-  --pf-queue: 288px;
-  --pf-inspector: 312px;
+  --pf-footer: 36px;
+  --pf-frame: 8px;
+  --pf-pane-head: 52px;
+  --pf-queue: 296px;
+  --pf-inspector: 320px;
   --pf-pad: 20px;
+
+  /* Motion: short, decelerating, colour/position only. */
+  --pf-ease: cubic-bezier(0.2, 0, 0, 1);
+  --pf-ease-spring: cubic-bezier(0.3, 1.25, 0.5, 1);
+  --pf-fast: 120ms;
+  --pf-base: 200ms;
 
   /* Media dock geometry, read by VideoPlayer's fit calculation. */
   --pf-video-seek-height: 24px;
@@ -77,46 +94,59 @@
     var(--pf-video-seek-height) + var(--pf-video-action-height) + 9px
   );
 
-  /* Paper */
-  --pf-paper: #f3f1ea;
-  --pf-paper-raised: #fbfaf6;
-  --pf-paper-sunk: #e9e6dd;
-  --pf-paper-press: #dedace;
+  /* Surfaces */
+  --pf-canvas: #e6e4de;
+  --pf-sheet: #f8f7f4;
+  --pf-raised: #ffffff;
+  --pf-raised-hover: #f3f2ee;
+  --pf-sunk: #efede8;
+  --pf-hover: rgb(23 23 20 / 4.5%);
+  --pf-press: rgb(23 23 20 / 8.5%);
+  --pf-track: rgb(23 23 20 / 6%);
+
+  /* Ink */
   --pf-ink: #171714;
-  --pf-ink-2: #504e48;
-  --pf-ink-3: #69665d;
-  --pf-ink-4: #a19d91;
-  --pf-rule: #dbd7cc;
-  --pf-rule-strong: #c4bfb1;
-  --pf-control-line: #8b867a;
+  --pf-ink-2: #4b4944;
+  --pf-ink-3: #6c6962;
+  --pf-ink-4: #a5a29a;
 
-  /* Signal: safelight amber. Fill with ink text; text-on-paper uses signal-ink. */
+  /* Lines */
+  --pf-rule: rgb(23 23 20 / 8.5%);
+  --pf-rule-strong: rgb(23 23 20 / 14%);
+  --pf-line: rgb(23 23 20 / 20%);
+  --pf-line-hover: rgb(23 23 20 / 34%);
+
+  /* Signal: safelight amber. Fills carry ink; text on light surfaces uses signal-ink. */
   --pf-signal: #f2b100;
-  --pf-signal-hover: #e2a500;
-  --pf-signal-press: #cf9600;
+  --pf-signal-hover: #f8bd16;
+  --pf-signal-press: #dfa300;
   --pf-on-signal: #171714;
-  --pf-signal-ink: #7a5300;
-  --pf-signal-wash: #f6e4ae;
-  --pf-alert: #b3261e;
+  --pf-signal-ink: #855b00;
+  --pf-signal-wash: rgb(242 177 0 / 16%);
+  --pf-signal-edge: rgb(133 91 0 / 32%);
+  --pf-alert: #c2341f;
   --pf-on-alert: #ffffff;
-  --pf-alert-wash: #f5dcd6;
+  --pf-alert-wash: rgb(194 52 31 / 9%);
   --pf-focus: #171714;
-  --pf-scrim: rgb(23 23 20 / 42%);
-  --pf-shadow-pop: 0 1px 0 rgb(23 23 20 / 4%), 0 12px 32px rgb(23 23 20 / 16%);
 
-  /* Stage: neutral graphite in both themes, so surroundings do not tint judgement. */
-  --pf-stage: #2a2a29;
-  --pf-stage-raised: #323231;
-  --pf-stage-hover: #3a3a39;
-  --pf-stage-press: #454544;
-  --pf-stage-line: #3d3d3b;
-  --pf-stage-line-strong: #545452;
-  --pf-stage-control: #797976;
-  --pf-stage-ink: #edece8;
-  --pf-stage-ink-2: #b8b6b0;
-  --pf-stage-ink-3: #94928c;
-  --pf-checker-a: #3a3a39;
-  --pf-checker-b: #2f2f2e;
+  /* Depth: hairline-led; shadows only lift keys and overlays. */
+  --pf-shadow-key: 0 1px 2px rgb(23 23 20 / 9%), 0 0 0 0.5px rgb(23 23 20 / 7%);
+  --pf-shadow-sheet: 0 1px 2px rgb(23 23 20 / 4%), 0 0 0 1px rgb(23 23 20 / 5%);
+  --pf-shadow-pop:
+    0 18px 44px -14px rgb(23 23 20 / 30%), 0 4px 12px -4px rgb(23 23 20 / 10%),
+    0 0 0 1px rgb(23 23 20 / 7%);
+  --pf-signal-bevel: inset 0 1px 0 rgb(255 255 255 / 34%), inset 0 -1px 0 rgb(122 82 0 / 14%);
+  --pf-scrim: rgb(23 23 20 / 38%);
+
+  /* Stage: hue-free graphite, so surroundings never tint judgement. */
+  --pf-stage: #262626;
+  --pf-stage-raised: #353535;
+  --pf-stage-ink: #ededed;
+  --pf-stage-ink-2: #b6b6b6;
+  --pf-stage-ink-3: #8c8c8c;
+  --pf-stage-ink-4: #5e5e5e;
+  --pf-checker-a: #353535;
+  --pf-checker-b: #2c2c2c;
 }
 
 html:lang(zh-TW) {
@@ -133,66 +163,82 @@ html:lang(zh-CN),
 html:lang(zh-TW),
 html:lang(ja),
 html:lang(ko) {
-  /* Tracking is a Latin capitals device; CJK labels keep natural spacing. */
+  /* Tracking is a Latin device; CJK keeps its natural spacing. */
+  --pf-display-tracking: 0;
+  --pf-heading-tracking: 0;
   --pf-label-tracking: 0;
 }
 
 html[data-pf-theme='dark'] {
   color-scheme: dark;
-  --pf-paper: #161614;
-  --pf-paper-raised: #1e1e1b;
-  --pf-paper-sunk: #262622;
-  --pf-paper-press: #302f2b;
-  --pf-ink: #eeebe3;
-  --pf-ink-2: #b3afa5;
-  --pf-ink-3: #959186;
-  --pf-ink-4: #5c5a53;
-  --pf-rule: #2b2b27;
-  --pf-rule-strong: #3c3b36;
-  --pf-control-line: #6c6960;
+  --pf-canvas: #0b0b0a;
+  --pf-sheet: #171716;
+  --pf-raised: #222220;
+  --pf-raised-hover: #2b2b29;
+  --pf-sunk: #121211;
+  --pf-hover: rgb(255 255 250 / 5%);
+  --pf-press: rgb(255 255 250 / 9%);
+  --pf-track: rgb(255 255 250 / 6%);
+  --pf-ink: #eeece6;
+  --pf-ink-2: #b7b4ac;
+  --pf-ink-3: #918e86;
+  --pf-ink-4: #5d5b56;
+  --pf-rule: rgb(255 255 250 / 7%);
+  --pf-rule-strong: rgb(255 255 250 / 12%);
+  --pf-line: rgb(255 255 250 / 17%);
+  --pf-line-hover: rgb(255 255 250 / 30%);
   --pf-signal: #f5b400;
-  --pf-signal-hover: #ffc526;
-  --pf-signal-press: #e0a400;
+  --pf-signal-hover: #ffc532;
+  --pf-signal-press: #e0a500;
   --pf-signal-ink: #f5b400;
-  --pf-signal-wash: #3b3116;
-  --pf-alert: #ff8e7f;
+  --pf-signal-wash: rgb(245 180 0 / 13%);
+  --pf-signal-edge: rgb(245 180 0 / 36%);
+  --pf-alert: #ff8a78;
   --pf-on-alert: #1d0b08;
-  --pf-alert-wash: #3d231e;
+  --pf-alert-wash: rgb(255 138 120 / 11%);
   --pf-focus: #f5b400;
-  --pf-scrim: rgb(0 0 0 / 60%);
-  --pf-shadow-pop: 0 12px 32px rgb(0 0 0 / 50%);
-  --pf-stage: #0f0f0f;
-  --pf-stage-raised: #181818;
-  --pf-stage-hover: #212121;
-  --pf-stage-press: #2b2b2b;
-  --pf-stage-line: #262626;
-  --pf-stage-line-strong: #383838;
-  --pf-stage-control: #5f5f5f;
-  --pf-stage-ink: #eeebe3;
-  --pf-stage-ink-2: #b3afa5;
-  --pf-stage-ink-3: #8f8b81;
-  --pf-checker-a: #242424;
-  --pf-checker-b: #1b1b1b;
+  --pf-shadow-key: 0 1px 2px rgb(0 0 0 / 50%), inset 0 0 0 0.5px rgb(255 255 250 / 9%);
+  --pf-shadow-sheet: 0 0 0 1px rgb(255 255 250 / 6%);
+  --pf-shadow-pop:
+    0 22px 52px -12px rgb(0 0 0 / 72%), 0 0 0 1px rgb(255 255 250 / 8%);
+  --pf-signal-bevel: inset 0 1px 0 rgb(255 255 255 / 30%), inset 0 -1px 0 rgb(122 82 0 / 18%);
+  --pf-scrim: rgb(0 0 0 / 62%);
+  --pf-stage: #0d0d0d;
+  --pf-stage-raised: #232323;
+  --pf-stage-ink: #ececec;
+  --pf-stage-ink-2: #b2b2b2;
+  --pf-stage-ink-3: #8a8a8a;
+  --pf-stage-ink-4: #565656;
+  --pf-checker-a: #1f1f1f;
+  --pf-checker-b: #171717;
 }
 
-/* Everything inside a stage renders against graphite, including shared controls. */
+/* Everything inside a stage renders against graphite, shared controls included. */
 .pf-stage-scope {
   color-scheme: dark;
-  --pf-paper: var(--pf-stage);
-  --pf-paper-raised: var(--pf-stage-raised);
-  --pf-paper-sunk: var(--pf-stage-hover);
-  --pf-paper-press: var(--pf-stage-press);
+  --pf-sheet: var(--pf-stage);
+  --pf-raised: var(--pf-stage-raised);
+  --pf-raised-hover: color-mix(in srgb, var(--pf-stage-raised), #ffffff 7%);
+  --pf-sunk: rgb(0 0 0 / 24%);
+  --pf-hover: rgb(255 255 255 / 7%);
+  --pf-press: rgb(255 255 255 / 12%);
+  --pf-track: rgb(255 255 255 / 7%);
   --pf-ink: var(--pf-stage-ink);
   --pf-ink-2: var(--pf-stage-ink-2);
   --pf-ink-3: var(--pf-stage-ink-3);
-  --pf-ink-4: var(--pf-stage-line-strong);
-  --pf-rule: var(--pf-stage-line);
-  --pf-rule-strong: var(--pf-stage-line-strong);
-  --pf-control-line: var(--pf-stage-control);
+  --pf-ink-4: var(--pf-stage-ink-4);
+  --pf-rule: rgb(255 255 255 / 8%);
+  --pf-rule-strong: rgb(255 255 255 / 13%);
+  --pf-line: rgb(255 255 255 / 18%);
+  --pf-line-hover: rgb(255 255 255 / 32%);
   --pf-signal-ink: var(--pf-signal);
+  --pf-signal-wash: rgb(245 180 0 / 14%);
+  --pf-signal-edge: rgb(245 180 0 / 36%);
   --pf-focus: var(--pf-signal);
-  --pf-alert: #ff8e7f;
+  --pf-alert: #ff8a78;
   --pf-on-alert: #1d0b08;
+  --pf-alert-wash: rgb(255 138 120 / 12%);
+  --pf-shadow-key: 0 1px 2px rgb(0 0 0 / 45%), inset 0 0 0 0.5px rgb(255 255 255 / 10%);
 }
 
 @media (max-width: 767px), (pointer: coarse) {
@@ -205,6 +251,7 @@ html[data-pf-theme='dark'] {
     --pf-control: 44px;
     --pf-header: 56px;
     --pf-pad: 16px;
+    --pf-frame: 0px;
     --pf-video-seek-height: 44px;
     --pf-video-action-height: 44px;
   }

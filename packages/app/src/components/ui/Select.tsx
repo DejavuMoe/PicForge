@@ -1,0 +1,247 @@
+import {
+  Children,
+  isValidElement,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { createPortal } from 'react-dom';
+import { FiCheck, FiChevronDown } from 'react-icons/fi';
+import { cx } from './cx';
+
+interface SelectProps {
+  value: string | number;
+  onValueChange: (value: string) => void;
+  /** `<option>` elements describe the choices; they are never rendered as a native select. */
+  children: ReactNode;
+  /** `field` sits in forms; `quiet` sits in toolbars and the header. */
+  variant?: 'field' | 'quiet';
+  className?: string;
+  disabled?: boolean;
+  description?: string;
+  'aria-label'?: string;
+}
+
+interface Popup {
+  left: number;
+  top?: number;
+  bottom?: number;
+  width: number;
+  maxHeight: number;
+}
+
+const COARSE_QUERY = '(pointer: coarse), (max-width: 767px)';
+
+/** One themed select-only combobox for every tool, including its popup. */
+export function Select({
+  value,
+  onValueChange,
+  children,
+  variant = 'field',
+  className,
+  disabled,
+  description,
+  'aria-label': label,
+}: SelectProps) {
+  const options = Children.toArray(children).filter(
+    isValidElement<{ value: string | number; children: ReactNode; disabled?: boolean }>,
+  );
+  const selected = Math.max(
+    0,
+    options.findIndex((option) => String(option.props.value) === String(value)),
+  );
+  const [popup, setPopup] = useState<Popup | null>(null);
+  const [active, setActive] = useState(selected);
+  const [keyboard, setKeyboard] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const search = useRef({ text: '', time: 0 });
+  const id = useId();
+  const open = (fromKeyboard: boolean) => {
+    const element = trigger.current;
+    if (!element || element.matches(':disabled') || element.closest('[hidden]')) return;
+    const rect = element.getBoundingClientRect();
+    const row = matchMedia(COARSE_QUERY).matches ? 44 : 32;
+    const width = Math.min(Math.max(rect.width, 180), innerWidth - 24);
+    const height = Math.min(options.length * (row + 1) + 8, 296);
+    const below = innerHeight - rect.bottom - 12;
+    const above = rect.top - 12;
+    const down = below >= Math.min(height, above);
+    const maxHeight = Math.max(row + 8, Math.min(height, down ? below : above));
+    setActive(selected);
+    setKeyboard(fromKeyboard);
+    setPopup({
+      left: Math.max(12, Math.min(rect.left, innerWidth - width - 12)),
+      ...(down ? { top: rect.bottom + 4 } : { bottom: innerHeight - rect.top + 4 }),
+      width,
+      maxHeight,
+    });
+  };
+  const choose = (index: number) => {
+    const option = options[index];
+    if (!option || option.props.disabled || trigger.current?.matches(':disabled')) return;
+    onValueChange(String(option.props.value));
+    setPopup(null);
+  };
+  useLayoutEffect(() => {
+    if (popup && (trigger.current?.matches(':disabled') || trigger.current?.closest('[hidden]')))
+      setPopup(null);
+  }, [popup, disabled]);
+  useEffect(() => {
+    if (!popup) return;
+    const close = () => setPopup(null);
+    const outside = (event: PointerEvent) => {
+      if (
+        !trigger.current?.contains(event.target as Node) &&
+        !menu.current?.contains(event.target as Node)
+      )
+        close();
+    };
+    // Close only when a scroll actually moved the trigger. Focusing a trigger below the
+    // fold scrolls it into view, and that scroll event can arrive after the popup opened.
+    const anchor = trigger.current?.getBoundingClientRect();
+    const scroll = (event: Event) => {
+      if (menu.current?.contains(event.target as Node)) return;
+      const now = trigger.current?.getBoundingClientRect();
+      if (
+        !anchor ||
+        !now ||
+        Math.abs(now.top - anchor.top) > 1 ||
+        Math.abs(now.left - anchor.left) > 1
+      )
+        close();
+    };
+    const visibility = () => {
+      if (document.hidden) close();
+    };
+    window.addEventListener('pointerdown', outside);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', scroll, true);
+    window.addEventListener('popstate', close);
+    document.addEventListener('fullscreenchange', close);
+    document.addEventListener('visibilitychange', visibility);
+    return () => {
+      window.removeEventListener('pointerdown', outside);
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', scroll, true);
+      window.removeEventListener('popstate', close);
+      document.removeEventListener('fullscreenchange', close);
+      document.removeEventListener('visibilitychange', visibility);
+    };
+  }, [popup]);
+  useEffect(() => {
+    if (popup && keyboard) menu.current?.children[active]?.scrollIntoView({ block: 'nearest' });
+  }, [active, popup, keyboard]);
+  return (
+    <>
+      <button
+        ref={trigger}
+        type="button"
+        role="combobox"
+        className={cx('pf-select', variant === 'quiet' && 'is-quiet', className)}
+        disabled={disabled}
+        data-value={value}
+        aria-label={label}
+        aria-description={description}
+        aria-haspopup="listbox"
+        aria-expanded={!!popup}
+        aria-controls={popup ? id : undefined}
+        aria-activedescendant={popup ? `${id}-${active}` : undefined}
+        onBlur={() => setPopup(null)}
+        onClick={(event) => (popup ? setPopup(null) : open(event.detail === 0))}
+        onKeyDown={(event) => {
+          const key = event.key;
+          if (key === 'Escape' && popup) {
+            event.preventDefault();
+            event.stopPropagation();
+            setPopup(null);
+            return;
+          }
+          if (key === 'Tab') {
+            setPopup(null);
+            return;
+          }
+          if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter', ' '].includes(key)) {
+            event.preventDefault();
+            if (!popup) {
+              open(true);
+              return;
+            }
+            if (key === 'Enter' || key === ' ') choose(active);
+            else {
+              setKeyboard(true);
+              const direction = key === 'ArrowUp' || key === 'End' ? -1 : 1;
+              let next =
+                key === 'Home'
+                  ? 0
+                  : key === 'End'
+                    ? options.length - 1
+                    : (active + direction + options.length) % options.length;
+              for (let tries = 0; tries < options.length && options[next].props.disabled; tries++)
+                next = (next + direction + options.length) % options.length;
+              setActive(next);
+            }
+          } else if (key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            const now = Date.now();
+            search.current = {
+              text:
+                (now - search.current.time < 700 ? search.current.text : '') + key.toLowerCase(),
+              time: now,
+            };
+            const index = options.findIndex(
+              (option) =>
+                !option.props.disabled &&
+                String(option.props.children).toLowerCase().startsWith(search.current.text),
+            );
+            if (index >= 0) {
+              if (!popup) open(true);
+              setKeyboard(true);
+              setActive(index);
+            }
+          }
+        }}
+      >
+        <span>{options[selected]?.props.children}</span>
+        <FiChevronDown aria-hidden />
+      </button>
+      {popup &&
+        createPortal(
+          <div
+            ref={menu}
+            id={id}
+            role="listbox"
+            aria-label={label}
+            className="pf-select-menu"
+            style={popup}
+            onPointerDown={(event) => event.preventDefault()}
+            onPointerMove={(event) => {
+              if (event.movementX || event.movementY) setKeyboard(false);
+            }}
+          >
+            {options.map((option, index) => (
+              <button
+                type="button"
+                role="option"
+                tabIndex={-1}
+                key={String(option.props.value)}
+                id={`${id}-${index}`}
+                data-value={option.props.value}
+                aria-selected={index === selected}
+                disabled={option.props.disabled}
+                data-active={keyboard && index === active}
+                className="pf-select-option"
+                onClick={() => choose(index)}
+              >
+                <span>{option.props.children}</span>
+                {index === selected && <FiCheck aria-hidden />}
+              </button>
+            ))}
+          </div>,
+          document.fullscreenElement ?? document.body,
+        )}
+    </>
+  );
+}

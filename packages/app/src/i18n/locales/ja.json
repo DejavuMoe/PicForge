@@ -269,6 +269,12 @@
     "formatHint": "JPEG · PNG / APNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "画質を下げると容量が小さくなります。保存前に細部を比較してください。",
     "losslessHint": "PNG は可逆圧縮のため画質設定は不要です。",
+    "formatNotes": {
+      "mozjpeg": "写真向け。透明は保持せず、対応環境が最も広い形式です。",
+      "webp": "透明とアニメーションを保持します。",
+      "oxipng": "可逆圧縮。透明を保持します。",
+      "avif": "透明を保持します。エンコードは最も低速です。"
+    },
     "smaller": "{{percent}}% 小さくなりました",
     "larger": "{{percent}}% 大きくなりました",
     "batchActions": "一括操作"
@@ -284,7 +290,7 @@
     "sampleAlt": "淡い青空と、細かな砂紋が広がる金色の砂丘。",
     "sampleCompare": "JPEG と WebP のサンプルを比較",
     "samplePosition": "元の JPEG を {{value}}% 表示",
-    "sampleNote": "サンプル · ドラッグして比較",
+    "sampleNote": "エンコード済みのサンプル · ドラッグして比較",
     "trySample": "サンプルを開く",
     "sampleFailed": "サンプルを読み込めません。画像を追加してください。"
   },

@@ -1,0 +1,592 @@
+/* Stage: graphite surround, crop marks and labels in the mat, controls in their own row. */
+.pf-preview,
+.pf-motion-viewer {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--pf-sheet);
+  color: var(--pf-ink);
+}
+.pf-preview-header {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 6px 12px 6px 20px;
+  border-bottom: 1px solid var(--pf-rule);
+}
+.pf-preview-nav {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.pf-preview-file-heading {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.pf-preview-filename {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--pf-ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-preview-file-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 14px;
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+}
+.pf-preview-file-facts > span:empty {
+  display: none;
+}
+.pf-preview-file-facts > span:last-child:not(:first-child) {
+  color: var(--pf-ink-2);
+}
+.pf-preview-pagination {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+.pf-pager-count {
+  margin-right: 6px;
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.pf-pager-count > span {
+  margin: 0 3px;
+  color: var(--pf-ink-4);
+}
+.pf-preview-back {
+  display: none;
+  margin-left: -8px;
+}
+.pf-stage-progress {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  overflow: hidden;
+}
+.pf-stage-progress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--pf-signal);
+  transform: scaleX(var(--pf-progress, 0));
+  transform-origin: left;
+  transition: transform var(--pf-base) linear;
+}
+.pf-preview-notice,
+.pf-preview-feedback {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  padding: 9px 20px;
+  border-bottom: 1px solid var(--pf-rule);
+  color: var(--pf-ink-2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.pf-preview-feedback.is-error {
+  box-shadow: inset 3px 0 var(--pf-alert);
+}
+.pf-preview-feedback.is-error > p {
+  color: var(--pf-alert);
+}
+.pf-preview-feedback .pf-text-button {
+  min-height: 24px;
+  font-size: 12px;
+}
+.pf-preview-feedback details {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+}
+.pf-preview-feedback summary {
+  width: fit-content;
+  color: var(--pf-ink-2);
+  cursor: pointer;
+  text-decoration: underline 1px var(--pf-rule-strong);
+  text-underline-offset: 4px;
+}
+.pf-preview-feedback details p {
+  margin-top: 6px;
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+}
+.pf-preview-empty {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  color: var(--pf-ink-3);
+  font-size: 13px;
+}
+
+/* Viewport. The mat keeps labels and marks off the image. */
+.pf-preview-viewport {
+  --pf-mat-x: 44px;
+  --pf-mat-y: 44px;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  contain: layout paint;
+  container-type: size;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pf-preview-side-by-side,
+.pf-slider-compare,
+.pf-preview-single,
+.pf-slider-image-layer,
+.pf-slider-clip,
+.pf-slider-overlay-layer,
+.pf-preview-pane-image-layer,
+.pf-preview-pane-overlay-layer {
+  position: absolute;
+  inset: 0;
+}
+.pf-preview-side-by-side,
+.pf-preview-single {
+  display: flex;
+}
+.pf-preview-pane {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  contain: layout paint;
+  container-type: size;
+}
+.pf-preview-pane.has-divider {
+  box-shadow: inset -1px 0 var(--pf-rule);
+}
+.pf-slider-image-layer,
+.pf-slider-clip,
+.pf-preview-pane-image-layer {
+  contain: layout paint;
+  pointer-events: none;
+}
+.pf-slider-overlay-layer,
+.pf-preview-pane-overlay-layer {
+  z-index: 2;
+  pointer-events: none;
+}
+.pf-preview-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: calc(100% - 2 * var(--pf-mat-x));
+  max-height: calc(100% - 2 * var(--pf-mat-y));
+  object-fit: contain;
+  transform-origin: center;
+  backface-visibility: hidden;
+  /* Visible only through transparent pixels. */
+  background: repeating-conic-gradient(var(--pf-checker-a) 0 25%, var(--pf-checker-b) 0 50%) 50% /
+    16px 16px;
+}
+
+/* The fitted image box, derived from the same constraints as the image. */
+.pf-plate,
+.pf-preview-label,
+.pf-preview-info-badge,
+.pf-slider-line {
+  --pf-label-width: var(--pf-source-width, 100000px);
+  --pf-label-aspect: var(--pf-source-aspect, 1.5);
+  --pf-plate-w: min(
+    calc(100cqw - 2 * var(--pf-mat-x)),
+    var(--pf-label-width),
+    calc((100cqh - 2 * var(--pf-mat-y)) * var(--pf-label-aspect))
+  );
+  --pf-plate-h: calc(var(--pf-plate-w) / var(--pf-label-aspect));
+}
+.pf-preview-label.is-right,
+.pf-preview-pane:nth-child(2) .pf-plate,
+.pf-preview-pane:nth-child(2) .pf-preview-label,
+.pf-preview-pane:nth-child(2) .pf-preview-info-badge {
+  --pf-label-width: var(--pf-result-width, 100000px);
+  --pf-label-aspect: var(--pf-result-aspect, 1.5);
+}
+.pf-plate {
+  --pf-mark: var(--pf-ink-4);
+  --pf-mark-length: 12px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--pf-plate-w);
+  height: var(--pf-plate-h);
+  transform: translate(-50%, -50%);
+}
+.pf-plate::before {
+  inset: -9px;
+}
+.pf-preview-label {
+  position: absolute;
+  top: calc(50% - var(--pf-plate-h) / 2 - 28px);
+  left: calc(50% - var(--pf-plate-w) / 2);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: calc(var(--pf-plate-w) / 2 - 8px);
+  overflow: hidden;
+  color: var(--pf-ink-3);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+  transition: opacity var(--pf-fast) var(--pf-ease);
+}
+.pf-preview-label-name {
+  color: var(--pf-ink-2);
+  letter-spacing: var(--pf-label-tracking);
+  text-transform: uppercase;
+}
+.pf-preview-pane .pf-preview-label {
+  max-width: var(--pf-plate-w);
+}
+.pf-preview-label.is-right {
+  right: calc(50% - var(--pf-plate-w) / 2);
+  left: auto;
+  justify-content: flex-end;
+}
+.pf-preview-label > .pf-mono {
+  color: var(--pf-ink);
+}
+.pf-preview-label .pf-file-ratio {
+  margin-left: 0;
+  color: var(--pf-signal);
+}
+.pf-preview-label .pf-file-ratio.is-larger {
+  color: var(--pf-alert);
+}
+.pf-preview-info-badge {
+  position: absolute;
+  top: calc(50% + var(--pf-plate-h) / 2 + 12px);
+  left: calc(50% - var(--pf-plate-w) / 2);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: var(--pf-plate-w);
+  overflow: hidden;
+  color: var(--pf-ink-3);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  white-space: nowrap;
+}
+.pf-stage-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pf-ink-2);
+  font-family: var(--pf-font-sans);
+  font-size: 11.5px;
+}
+.pf-stage-status > .pf-mono {
+  color: var(--pf-ink);
+}
+.pf-preview-label.is-interacting,
+.pf-preview-info-badge.is-interacting {
+  opacity: 0.3;
+}
+.pf-preview-viewport[data-zoomed='true'] .pf-plate,
+.pf-preview-viewport[data-zoomed='true'] .pf-preview-info-badge {
+  display: none;
+}
+/* Zoomed, the image fills the stage; labels become small chips in the corners. */
+.pf-preview-viewport[data-zoomed='true'] .pf-preview-label {
+  top: 10px;
+  left: 10px;
+  max-width: calc(50% - 20px);
+  padding: 2px 8px;
+  border-radius: var(--pf-radius-sm);
+  background: rgb(14 14 14 / 78%);
+  color: #cfcfcf;
+}
+.pf-preview-viewport[data-zoomed='true'] .pf-preview-label.is-right {
+  right: 10px;
+  left: auto;
+}
+.pf-preview-viewport[data-zoomed='true'] .pf-preview-label > .pf-mono {
+  color: #f2f2f2;
+}
+
+/* Split line and its fader cap */
+.pf-slider-line {
+  position: absolute;
+  top: calc(50% - var(--pf-plate-h) / 2);
+  width: 1px;
+  height: var(--pf-plate-h);
+  background: #f4f4f4;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 35%);
+  transform: translateX(-50%);
+}
+.pf-preview-viewport[data-zoomed='true'] .pf-slider-line {
+  top: 0;
+  height: 100%;
+}
+.pf-slider-handle {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ew-resize;
+  pointer-events: auto;
+  touch-action: none;
+  transform: translate(-50%, -50%);
+}
+.pf-slider-grip,
+.pf-demo-divider > span {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 40px;
+  border-radius: 8px;
+  background: #f4f4f4;
+  box-shadow:
+    0 0 0 0.5px rgb(0 0 0 / 30%),
+    0 2px 8px rgb(0 0 0 / 40%);
+  transition: transform var(--pf-fast) var(--pf-ease);
+}
+.pf-slider-grip::before,
+.pf-demo-divider > span::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 14px;
+  background: #8c8c8c;
+  box-shadow: 3px 0 #8c8c8c;
+  transform: translate(-2px, -50%);
+}
+:where(html[data-pf-input='keyboard']) .pf-slider-handle:focus {
+  outline: none;
+}
+:where(html[data-pf-input='keyboard']) .pf-slider-handle:focus .pf-slider-grip {
+  outline: 2px solid var(--pf-signal);
+  outline-offset: 3px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-slider-handle:hover .pf-slider-grip {
+    transform: scaleY(1.06);
+  }
+}
+
+/* Dock: what is shown, how large, and fullscreen. It sits under the stage, never on it. */
+.pf-viewer-footer {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  padding: 10px 16px 14px;
+}
+.pf-viewer-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px;
+  border-radius: var(--pf-radius-lg);
+  background: var(--pf-raised);
+  box-shadow:
+    0 0 0 1px var(--pf-rule),
+    0 8px 24px -12px rgb(0 0 0 / 60%);
+}
+.pf-dock-rule,
+.pf-view-switch-rule {
+  flex: none;
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+  background: var(--pf-rule-strong);
+}
+.pf-view-switch-rule {
+  margin: 0 2px;
+}
+.pf-view-switch {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+.pf-view-switch > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--pf-radius);
+  background: transparent;
+  color: var(--pf-ink-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color var(--pf-fast) var(--pf-ease),
+    color var(--pf-fast) var(--pf-ease);
+}
+.pf-view-switch > button.is-icon {
+  width: 34px;
+  padding: 0;
+}
+.pf-view-switch > button > svg {
+  width: 16px;
+  height: 16px;
+}
+.pf-view-switch > button[aria-pressed='true'] {
+  background: var(--pf-press);
+  color: var(--pf-ink);
+}
+.pf-view-switch > button[aria-pressed='true'].is-icon {
+  color: var(--pf-signal);
+}
+.pf-view-switch > button:disabled {
+  color: var(--pf-ink-4);
+}
+.pf-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.pf-zoom-select {
+  width: 78px;
+  font-family: var(--pf-font-mono);
+  font-size: 12px;
+}
+.pf-dock-button {
+  width: 32px;
+  height: 32px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-view-switch > button:hover:not(:disabled):not([aria-pressed='true']) {
+    background: var(--pf-hover);
+    color: var(--pf-ink);
+  }
+}
+.pf-preview:fullscreen {
+  width: 100%;
+  height: 100%;
+  background: var(--pf-sheet);
+}
+
+@media (max-width: 1100px) {
+  .pf-preview-back {
+    display: inline-grid;
+  }
+  .pf-preview-header {
+    padding-left: 12px;
+  }
+}
+@media (max-width: 767px) {
+  .pf-preview {
+    flex: none;
+  }
+  .pf-preview-header {
+    padding: 4px 4px 4px 12px;
+  }
+  .pf-preview-file-facts {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  /* The output format is repeated in the result ledger under the stage. */
+  .pf-preview-file-facts > span:nth-child(3) {
+    display: none;
+  }
+  .pf-pager-count {
+    display: none;
+  }
+  /* The stage hugs the fitted source plus its mat instead of a fixed graphite block. */
+  .pf-preview-viewport {
+    --pf-mat-x: 16px;
+    --pf-mat-y: 34px;
+    --pf-fit-height: calc(
+      (100vw - 2 * var(--pf-mat-x)) / var(--pf-stage-aspect, 1.5) + 2 * var(--pf-mat-y)
+    );
+    flex: none;
+    height: clamp(320px, var(--pf-fit-height), 68dvh);
+  }
+  .pf-preview.is-two-up .pf-preview-viewport {
+    height: clamp(560px, 2 * var(--pf-fit-height), 136dvh);
+  }
+  .pf-preview-side-by-side {
+    flex-direction: column;
+  }
+  .pf-preview-pane.has-divider {
+    box-shadow: inset 0 -1px var(--pf-rule);
+  }
+  .pf-slider-handle {
+    width: 44px;
+    height: 56px;
+  }
+  .pf-viewer-footer {
+    padding: 4px 8px 8px;
+  }
+  .pf-viewer-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 6px;
+    width: 100%;
+    padding: 4px;
+    box-shadow: 0 0 0 1px var(--pf-rule);
+  }
+  .pf-dock-rule {
+    display: none;
+  }
+  .pf-view-switch {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+  .pf-view-switch > button {
+    flex: 1;
+    min-width: 44px;
+    height: 44px;
+  }
+  .pf-view-switch > button.is-icon {
+    flex: none;
+    width: 48px;
+  }
+  .pf-dock-button {
+    width: 44px;
+    height: 44px;
+  }
+  /* Second row: zoom out, the level, zoom in — spread like the row above. */
+  .pf-zoom-controls {
+    flex: 1 1 100%;
+  }
+  .pf-zoom-select {
+    flex: 1;
+    width: auto;
+    justify-content: center;
+  }
+}

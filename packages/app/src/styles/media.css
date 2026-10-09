@@ -3,9 +3,9 @@
   display: flex;
   flex: 1;
   align-items: stretch;
-  gap: 24px;
+  gap: 32px;
   min-height: 0;
-  padding: 20px 28px 16px;
+  padding: 20px 32px 28px;
 }
 .pf-motion-media-pane {
   display: flex;
@@ -18,18 +18,25 @@
   margin: 0;
 }
 .pf-motion-media-pane > figcaption {
-  color: var(--pf-ink-3);
-  font-family: var(--pf-font-mono);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  color: var(--pf-ink-2);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: var(--pf-label-tracking);
-  text-align: center;
+  line-height: 18px;
   text-transform: uppercase;
+}
+.pf-motion-media-pane > figcaption > .pf-mono {
+  color: var(--pf-ink-3);
+  letter-spacing: 0;
 }
 .pf-motion-media-frame {
   position: relative;
   display: flex;
-  flex: 0 1 75%;
+  flex: 0 1 82%;
   align-items: center;
   justify-content: center;
   min-height: 0;
@@ -41,18 +48,6 @@
   height: auto;
   max-height: 100%;
   object-fit: contain;
-}
-.pf-motion-media-pane > .pf-text-button {
-  flex-wrap: wrap;
-  justify-content: center;
-  justify-self: center;
-  align-self: center;
-}
-.pf-motion-media-pane > .pf-text-button > span {
-  color: var(--pf-ink-3);
-  font-family: var(--pf-font-mono);
-  font-size: 11px;
-  font-weight: 400;
 }
 .pf-media-placeholder {
   width: 32px;
@@ -69,17 +64,18 @@
 .pf-motion-media-pane:only-child {
   grid-column: 1 / -1;
 }
+/* Captions, frames and notes share rows across both panes. */
 @supports (grid-template-rows: subgrid) {
   @media (min-width: 768px) {
     .pf-motion-output {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: auto minmax(0, 1fr) auto auto;
-      gap: 0 24px;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 0 32px;
     }
     .pf-motion-media-pane {
       display: grid;
-      grid-row: span 4;
+      grid-row: span 3;
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: subgrid;
       justify-content: stretch;
@@ -97,9 +93,6 @@
   .pf-motion-media-pane > .pf-motion-preview-note {
     grid-row: 3;
   }
-  .pf-motion-media-pane > .pf-text-button {
-    grid-row: 4;
-  }
 }
 
 /* Video: the player is sized by VideoPlayer to the visible frame plus its dock. */
@@ -109,7 +102,7 @@
   width: var(--pf-video-width, 100%);
   height: var(--pf-video-height, 100%);
   min-height: 0;
-  background: var(--pf-paper);
+  background: var(--pf-sheet);
 }
 .pf-motion-media-frame .pf-video-player video {
   flex: 1;
@@ -130,15 +123,26 @@
   height: var(--pf-video-controls-height);
   padding: 4px 8px;
   border-top: 1px solid var(--pf-rule);
-  background: var(--pf-paper-raised);
+  border-radius: 0 0 var(--pf-radius) var(--pf-radius);
+  background: var(--pf-raised);
 }
 .pf-video-controls input[type='range'] {
   grid-row: 1;
   grid-column: 1 / -1;
   height: var(--pf-video-seek-height);
   min-height: var(--pf-video-seek-height);
+  --pf-thumb-w: 12px;
+  --pf-thumb-h: 12px;
 }
-.pf-video-controls .pf-icon-control {
+.pf-video-controls input[type='range']::-webkit-slider-thumb {
+  border-radius: 50%;
+  background: #f4f4f4;
+}
+.pf-video-controls input[type='range']::-moz-range-thumb {
+  border-radius: 50%;
+  background: #f4f4f4;
+}
+.pf-video-controls .pf-icon-button {
   grid-row: 2;
   width: 100%;
   min-width: 24px;
@@ -159,6 +163,7 @@
   grid-row: 2;
   grid-column: 2;
   min-width: 0;
+  padding-left: 4px;
   color: var(--pf-ink-2);
   font-family: var(--pf-font-mono);
   font-size: 11px;
@@ -174,6 +179,7 @@
 .pf-video-player[data-compact='true']:not(:fullscreen) .pf-video-time {
   grid-row: 3;
   grid-column: 1 / -1;
+  padding-left: 0;
   text-align: center;
 }
 .pf-video-player[data-compact='true']:not(:fullscreen) .pf-video-mute {
@@ -185,32 +191,49 @@
 .pf-video-player:fullscreen {
   width: 100%;
   height: 100%;
-  background: var(--pf-paper);
+  background: var(--pf-sheet);
 }
 .pf-video-player:fullscreen video {
   object-fit: contain;
 }
+.pf-video-player:fullscreen .pf-video-controls {
+  border-radius: 0;
+}
 
-/* Photo strip: fitted to the rendered picture, not the pane. */
-.pf-photo-preview {
+/* Photo strip: fitted to the rendered picture, not the pane. An undecodable video's
+   still keeps the same frame and strip height, so the pair stays aligned. */
+.pf-photo-preview,
+.pf-still-fallback {
   --pf-photo-controls-height: var(--pf-video-controls-height);
   padding-bottom: var(--pf-photo-controls-height);
 }
-.pf-photo-controls {
+.pf-photo-controls,
+.pf-still-note {
   position: absolute;
   top: var(--pf-photo-bottom);
   left: 50%;
+  width: var(--pf-photo-width);
+  height: var(--pf-photo-controls-height);
+  border-top: 1px solid var(--pf-rule);
+  border-radius: 0 0 var(--pf-radius) var(--pf-radius);
+  background: var(--pf-raised);
+  transform: translateX(-50%);
+}
+.pf-photo-controls {
   display: flex;
   flex-wrap: wrap;
   align-content: center;
   align-items: center;
   gap: 0 8px;
-  width: var(--pf-photo-width);
-  height: var(--pf-photo-controls-height);
   padding: 4px 8px 4px 12px;
-  border-top: 1px solid var(--pf-rule);
-  background: var(--pf-paper-raised);
-  transform: translateX(-50%);
+}
+.pf-motion-media-pane > .pf-still-fallback > .pf-still-note {
+  display: grid;
+  place-items: center;
+  padding: 4px 14px;
+  overflow: hidden;
+  line-height: 1.45;
+  text-wrap: balance;
 }
 .pf-photo-dimensions {
   flex: 1;
@@ -220,7 +243,7 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.pf-photo-controls .pf-icon-control {
+.pf-photo-controls .pf-icon-button {
   width: var(--pf-video-action-height);
   min-width: var(--pf-video-action-height);
   height: var(--pf-video-action-height);
@@ -230,12 +253,13 @@
 .pf-photo-preview:fullscreen {
   width: 100%;
   height: 100%;
-  background: var(--pf-paper);
+  background: var(--pf-sheet);
 }
 .pf-photo-preview:fullscreen .pf-photo-controls {
   top: auto;
   bottom: 0;
   width: 100%;
+  border-radius: 0;
 }
 @media (min-width: 768px) {
   .pf-motion-output:has(.pf-video-player[data-compact='true']) .pf-photo-preview {
@@ -243,7 +267,7 @@
   }
 }
 
-/* Waiting/queued/error state of a selected item */
+/* Waiting, queued or failed: the item's still, its state and what to do next. */
 .pf-motion-waiting {
   display: grid;
   flex: 1;
@@ -253,38 +277,51 @@
   padding: 32px 24px;
   text-align: center;
 }
-.pf-motion-waiting .pf-motion-thumb {
-  width: 112px;
-  height: 112px;
-  margin-bottom: 4px;
+.pf-motion-thumb.is-large {
+  width: 128px;
+  height: 128px;
+  margin-bottom: 8px;
+  border-radius: var(--pf-radius-lg);
 }
-.pf-motion-waiting .pf-motion-thumb svg {
+.pf-motion-thumb.is-large svg {
   width: 28px;
   height: 28px;
 }
 .pf-motion-waiting h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--pf-ink);
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 600;
 }
-.pf-motion-waiting .pf-field-hint {
+.pf-motion-waiting h2 .pf-status-glyph {
+  width: 14px;
+  height: 14px;
+}
+.pf-motion-sources {
+  max-width: 460px;
+  color: var(--pf-ink-3);
   font-family: var(--pf-font-mono);
   font-size: 11px;
   overflow-wrap: anywhere;
 }
-.pf-motion-waiting .pf-field-error {
+.pf-motion-waiting .pf-field-error,
+.pf-motion-waiting .pf-field-hint {
   max-width: 460px;
 }
 .pf-motion-waiting progress {
   width: min(240px, 100%);
-  height: 2px;
+  height: 3px;
+  overflow: hidden;
   border: 0;
-  background: var(--pf-rule);
+  border-radius: 2px;
+  background: var(--pf-track);
   appearance: none;
   accent-color: var(--pf-signal);
 }
 .pf-motion-waiting progress::-webkit-progress-bar {
-  background: var(--pf-rule);
+  background: var(--pf-track);
 }
 .pf-motion-waiting progress::-webkit-progress-value {
   background: var(--pf-signal);
@@ -292,14 +329,14 @@
 .pf-motion-waiting progress::-moz-progress-bar {
   background: var(--pf-signal);
 }
+.pf-motion-waiting .pf-button {
+  margin-top: 8px;
+}
 
 @media (max-width: 767px) {
   .pf-motion-viewer {
     flex: none;
     min-height: 450px;
-  }
-  .pf-output-file .pf-button {
-    min-height: 44px;
   }
   .pf-motion-output {
     flex-direction: column;
@@ -320,13 +357,12 @@
   .pf-motion-media-frame:has(.pf-video-player) .pf-video-player:not(:fullscreen) {
     height: var(--pf-video-height, calc(min(62dvh, 440px) + var(--pf-video-controls-height)));
   }
-  .pf-photo-preview {
+  .pf-photo-preview,
+  .pf-still-fallback {
     --pf-photo-controls-height: 56px;
   }
-  .pf-photo-preview img {
+  .pf-photo-preview img,
+  .pf-still-fallback img {
     max-height: min(62dvh, 440px);
-  }
-  .pf-motion-media-pane > .pf-text-button {
-    min-height: 44px;
   }
 }

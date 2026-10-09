@@ -1,10 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TooltipLayer } from './components/TooltipLayer';
-import { ProjectInfo } from './components/ProjectInfo';
-import { Header } from './components/Header';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { SERVICE_WORKER_UPDATE_EVENT, applyServiceWorkerUpdate } from './registerServiceWorker';
+import { ErrorBoundary } from './components/shell/ErrorBoundary';
+import { Header } from './components/shell/Header';
+import { SiteFooter } from './components/shell/SiteFooter';
+import { UpdateToast } from './components/shell/UpdateToast';
+import { TooltipLayer } from './components/ui/TooltipLayer';
 import type { ToolId } from './types';
 
 function toolFromLocation(): ToolId {
@@ -12,13 +12,37 @@ function toolFromLocation(): ToolId {
   return value === 'compression' || value === 'android' || value === 'ios' ? value : 'home';
 }
 
-const MotionWorkspace = lazy(() => import('./motion/MotionWorkspace'));
-const CompressionWorkspace = lazy(() => import('./CompressionWorkspace'));
+const MotionWorkspace = lazy(() => import('./workspaces/motion/MotionWorkspace'));
+const CompressionWorkspace = lazy(() => import('./workspaces/compression/CompressionWorkspace'));
 const Landing = lazy(() => import('./landing/Landing'));
+
+const NAVIGATION_KEYS = new Set([
+  'Tab',
+  'Enter',
+  ' ',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Home',
+  'End',
+  'PageUp',
+  'PageDown',
+]);
+
+function ToolLoading() {
+  const { t } = useTranslation();
+  return (
+    <div className="pf-tool-loading" role="status">
+      <span className="pf-tool-loading-bar" aria-hidden />
+      {t('motion.loading')}
+    </div>
+  );
+}
 
 export default function App() {
   const { t } = useTranslation();
-  const [updateReady, setUpdateReady] = useState(false);
+  // Focus frames follow the input method: keyboard navigation shows them, pointers do not.
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.pfInput = 'pointer';
@@ -26,22 +50,7 @@ export default function App() {
       root.dataset.pfInput = 'pointer';
     };
     const keyboard = (event: KeyboardEvent) => {
-      if (
-        [
-          'Tab',
-          'Enter',
-          ' ',
-          'ArrowLeft',
-          'ArrowRight',
-          'ArrowUp',
-          'ArrowDown',
-          'Home',
-          'End',
-          'PageUp',
-          'PageDown',
-        ].includes(event.key)
-      )
-        root.dataset.pfInput = 'keyboard';
+      if (NAVIGATION_KEYS.has(event.key)) root.dataset.pfInput = 'keyboard';
     };
     document.addEventListener('pointerdown', pointer, true);
     document.addEventListener('keydown', keyboard, true);
@@ -49,12 +58,6 @@ export default function App() {
       document.removeEventListener('pointerdown', pointer, true);
       document.removeEventListener('keydown', keyboard, true);
     };
-  }, []);
-
-  useEffect(() => {
-    const ready = () => setUpdateReady(true);
-    window.addEventListener(SERVICE_WORKER_UPDATE_EVENT, ready);
-    return () => window.removeEventListener(SERVICE_WORKER_UPDATE_EVENT, ready);
   }, []);
 
   const [tool, setTool] = useState<ToolId>(toolFromLocation);
@@ -98,16 +101,10 @@ export default function App() {
         <a className="pf-skip-link" href="#pf-main">
           {t('workbench.skipToContent')}
         </a>
-        <Header onHome={goHome} tool={tool} onSelect={openTool} />
+        <Header tool={tool} onHome={goHome} onSelect={openTool} />
 
         {tool === 'home' && (
-          <Suspense
-            fallback={
-              <div className="pf-tool-loading" role="status">
-                {t('motion.loading')}
-              </div>
-            }
-          >
+          <Suspense fallback={<ToolLoading />}>
             <Landing onSelect={openTool} />
           </Suspense>
         )}
@@ -120,13 +117,7 @@ export default function App() {
 
         {visited.map((value) => (
           <div className="pf-tool-panel" key={value} hidden={tool !== value}>
-            <Suspense
-              fallback={
-                <div className="pf-tool-loading" role="status">
-                  {t('motion.loading')}
-                </div>
-              }
-            >
+            <Suspense fallback={<ToolLoading />}>
               {value === 'compression' ? (
                 <CompressionWorkspace active={tool === value} />
               ) : (
@@ -136,17 +127,9 @@ export default function App() {
           </div>
         ))}
 
-        <ProjectInfo />
+        <SiteFooter />
         <TooltipLayer />
-
-        {updateReady && (
-          <div className="pf-update-toast" role="status">
-            <span>{t('pwa.updateReady')}</span>
-            <button className="pf-update-button" onClick={applyServiceWorkerUpdate}>
-              {t('pwa.refresh')}
-            </button>
-          </div>
-        )}
+        <UpdateToast />
       </div>
     </ErrorBoundary>
   );

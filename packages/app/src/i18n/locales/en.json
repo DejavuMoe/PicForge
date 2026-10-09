@@ -269,6 +269,12 @@
     "formatHint": "JPEG · PNG / APNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "Lower quality makes smaller files. Compare before downloading.",
     "losslessHint": "PNG is lossless; quality does not apply.",
+    "formatNotes": {
+      "mozjpeg": "For photos. No transparency; opens everywhere.",
+      "webp": "Keeps transparency and animation.",
+      "oxipng": "Lossless. Keeps transparency.",
+      "avif": "Keeps transparency. Slowest to encode."
+    },
     "smaller": "{{percent}}% smaller",
     "larger": "{{percent}}% larger",
     "batchActions": "Batch actions"
@@ -284,7 +290,7 @@
     "sampleAlt": "Golden dunes with fine sand ripples under a pale blue sky.",
     "sampleCompare": "Compare the JPEG and WebP sample",
     "samplePosition": "{{value}}% original JPEG",
-    "sampleNote": "Sample · Drag to compare",
+    "sampleNote": "Pre-encoded sample · Drag to compare",
     "trySample": "Try sample",
     "sampleFailed": "Sample could not load. Add an image instead."
   },

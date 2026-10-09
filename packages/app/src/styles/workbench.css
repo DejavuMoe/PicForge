@@ -1,4 +1,4 @@
-/* Workbench: queue ledger, stage, inspector and batch ledger. */
+/* Workbench sheet: queue, stage and inspector columns; batch ledger under the queue. */
 .pf-app,
 .pf-motion-workspace {
   display: flex;
@@ -15,6 +15,10 @@
   grid-template-columns: var(--pf-queue) minmax(0, 1fr) var(--pf-inspector);
   grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
+  overflow: hidden;
+  border-radius: var(--pf-radius-lg);
+  background: var(--pf-sheet);
+  box-shadow: var(--pf-shadow-sheet);
 }
 .pf-file-list-panel {
   display: flex;
@@ -30,7 +34,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--pf-paper);
+  background: var(--pf-sheet);
   color: var(--pf-ink);
 }
 .pf-batch-slot {
@@ -38,18 +42,20 @@
   min-width: 0;
   border-top: 1px solid var(--pf-rule);
   border-right: 1px solid var(--pf-rule);
-  background: var(--pf-paper);
+  background: var(--pf-sheet);
 }
 .pf-batch-slot:empty {
   display: none;
 }
 
-/* Column headers share one height so the three panes read as one ruled sheet. */
+/* Pane heads share one height, so the three columns read as one ruled sheet. */
 .pf-file-list-header,
-.pf-inspector-disclosure > summary,
+.pf-inspector-head,
 .pf-preview-header {
-  min-height: 48px;
+  min-height: var(--pf-pane-head);
 }
+
+/* Queue */
 .pf-file-list {
   display: flex;
   flex: 1;
@@ -60,40 +66,46 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 4px;
-  padding: 0 8px 0 16px;
+  gap: 2px;
+  padding: 0 10px 0 16px;
   border-bottom: 1px solid var(--pf-rule);
 }
-.pf-file-list-header h2,
-.pf-inspector-disclosure > summary h2 {
+.pf-file-list-header h2 {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   margin-right: auto;
   color: var(--pf-ink);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: var(--pf-label-tracking);
-  text-transform: uppercase;
 }
-.pf-file-list-header h2 > span {
-  color: var(--pf-ink-3);
+.pf-queue-count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--pf-track);
+  color: var(--pf-ink-2);
   font-family: var(--pf-font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0;
+  line-height: 16px;
+  text-align: center;
+}
+.pf-queue-count:empty {
+  display: none;
 }
 .pf-add-files {
-  min-height: var(--pf-target);
-  padding: 0 6px;
+  padding: 0 10px 0 8px;
 }
-.pf-file-list > .pf-field-error {
+.pf-queue-notice {
   padding: 8px 16px;
   border-bottom: 1px solid var(--pf-rule);
 }
 .pf-file-list-scroll {
   flex: 1;
   min-height: 0;
+  padding: 6px 0 12px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -102,82 +114,76 @@
   display: grid;
   flex: 1;
   align-content: start;
-  gap: 10px;
+  gap: 12px;
   padding: 20px 16px;
   color: var(--pf-ink-3);
-  font-size: 12px;
+  font-size: 12.5px;
 }
-.pf-queue-empty::before {
-  content: '';
-  height: 1px;
-  background: repeating-linear-gradient(to right, var(--pf-rule-strong) 0 4px, transparent 4px 8px);
+.pf-queue-empty-rule {
+  border-top: 1px dashed var(--pf-rule-strong);
 }
 
-/* Ledger rows */
+/* Queue rows: a raised key marks the selection; an amber tick marks it without colour too. */
 .pf-file-row,
 .pf-motion-row {
   position: relative;
-  border-bottom: 1px solid var(--pf-rule);
-  background: transparent;
-  transition: background-color 120ms;
+  margin: 0 8px 2px;
+  border-radius: var(--pf-radius-lg);
+  transition:
+    background-color var(--pf-fast) var(--pf-ease),
+    box-shadow var(--pf-fast) var(--pf-ease);
 }
 .pf-file-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
 }
 .pf-file-select,
 .pf-motion-row {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
-  align-items: start;
+  align-items: center;
   gap: 0 12px;
   width: 100%;
-  min-height: 72px;
-  padding: 12px 16px 12px 16px;
+  min-height: 66px;
+  padding: 10px;
   border: 0;
+  border-radius: var(--pf-radius-lg);
   background: transparent;
   color: var(--pf-ink);
   text-align: left;
 }
-.pf-file-select {
-  grid-area: 1 / 1 / 2 / 3;
-}
 .pf-motion-row {
-  border-bottom: 1px solid var(--pf-rule);
+  width: calc(100% - 16px);
 }
 .pf-file-row.is-selected,
 .pf-motion-row.is-selected {
-  background: var(--pf-paper-sunk);
+  background: var(--pf-raised);
+  box-shadow: var(--pf-shadow-key);
 }
 .pf-file-row-selected-bar,
 .pf-motion-row.is-selected::before {
   content: '';
   position: absolute;
-  top: -1px;
-  bottom: -1px;
+  top: 16px;
+  bottom: 16px;
   left: 0;
   z-index: 1;
-  width: 2px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
   background: var(--pf-signal);
 }
 :where(html[data-pf-input='keyboard']) .pf-file-select:focus,
 :where(html[data-pf-input='keyboard']) .pf-motion-row:focus {
   outline-offset: -2px;
 }
-@media (hover: hover) and (pointer: fine) {
-  .pf-file-row:not(.is-selected):hover,
-  .pf-motion-row:not(.is-selected):hover {
-    background: color-mix(in srgb, var(--pf-paper-sunk) 55%, transparent);
-  }
-}
-.pf-file-thumb-skeleton,
+.pf-file-thumb-frame,
 .pf-motion-thumb {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
   overflow: hidden;
-  background: var(--pf-paper-sunk);
+  border-radius: var(--pf-radius-sm);
+  background: var(--pf-sunk);
   color: var(--pf-ink-3);
   box-shadow: inset 0 0 0 1px var(--pf-rule);
 }
@@ -194,9 +200,8 @@
 .pf-file-row-main,
 .pf-motion-row-content {
   display: grid;
-  gap: 3px;
+  gap: 5px;
   min-width: 0;
-  padding-top: 1px;
 }
 .pf-file-name,
 .pf-motion-row-content > strong {
@@ -205,29 +210,38 @@
   color: var(--pf-ink);
   font-size: 13px;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.pf-file-name {
+/* The name line leaves room for the row actions; a long name gives way before its tag. */
+.pf-file-name-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   padding-right: 60px;
 }
 .pf-file-status-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
+  color: var(--pf-ink-3);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
 }
 .pf-file-status-text,
 .pf-motion-row-status {
+  flex: none;
   color: var(--pf-ink-2);
-  font-size: 12px;
-  line-height: 1.35;
 }
 .pf-file-status-text.is-processing {
   color: var(--pf-ink);
   font-family: var(--pf-font-mono);
   font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 .pf-file-status-text.is-pending,
 .pf-file-status-text.is-cancelled,
@@ -238,38 +252,18 @@
 .pf-motion-row-status.is-error {
   color: var(--pf-alert);
 }
-.pf-file-status-text.is-done::before,
-.pf-motion-row-status.is-done::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 6px;
-  background: var(--pf-signal);
-  vertical-align: 1px;
-}
-.pf-file-custom-label {
-  padding: 0 4px;
-  border: 1px solid var(--pf-rule-strong);
-  border-radius: var(--pf-radius);
-  color: var(--pf-ink-2);
-  font-family: var(--pf-font-mono);
-  font-size: 10px;
-  line-height: 15px;
-}
 .pf-file-meta,
 .pf-motion-row-meta {
-  display: flex;
+  display: inline-flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
   overflow: hidden;
   color: var(--pf-ink-3);
   font-family: var(--pf-font-mono);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
-  line-height: 1.4;
-  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .pf-motion-row-meta {
   font-family: var(--pf-font-sans);
@@ -278,10 +272,24 @@
 .pf-file-result-size {
   color: var(--pf-ink);
 }
+.pf-file-custom-label {
+  flex: none;
+  padding: 0 5px;
+  border-radius: var(--pf-radius-xs);
+  background: var(--pf-track);
+  color: var(--pf-ink-2);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 16px;
+}
 .pf-file-ratio {
+  flex: none;
   margin-left: auto;
   color: var(--pf-signal-ink);
+  font-family: var(--pf-font-mono);
+  font-size: 11px;
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 .pf-file-ratio.is-larger {
   color: var(--pf-alert);
@@ -290,45 +298,60 @@
 .pf-file-row-progress {
   position: relative;
   display: block;
-  height: 2px;
-  margin-top: 5px;
+  height: 3px;
   overflow: hidden;
-  background: var(--pf-rule);
+  border-radius: 2px;
+  background: var(--pf-track);
 }
 .pf-file-delta::before {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
   width: calc(var(--pf-delta, 1) * 100%);
-  background: var(--pf-ink-3);
+  border-radius: inherit;
+  background: var(--pf-ink-4);
 }
 .pf-file-delta.is-larger::before {
   width: 100%;
   background: var(--pf-alert);
 }
-.pf-file-row-progress > span,
-.pf-motion-row .pf-file-row-progress > span {
+.pf-file-row-progress > span {
   position: absolute;
   inset: 0 auto 0 0;
+  border-radius: inherit;
   background: var(--pf-signal);
-  transition: width 200ms linear;
+  transition: width var(--pf-base) linear;
 }
 .pf-file-row-actions {
-  position: relative;
+  position: absolute;
+  top: 7px;
+  right: 6px;
   z-index: 2;
   display: flex;
-  grid-area: 1 / 2 / 2 / 3;
-  align-self: start;
-  gap: 0;
-  margin: 6px 6px 0 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--pf-fast) var(--pf-ease);
+}
+.pf-file-row.is-selected .pf-file-row-actions,
+.pf-file-row:hover .pf-file-row-actions,
+.pf-file-row:focus-within .pf-file-row-actions {
+  opacity: 1;
+  pointer-events: auto;
 }
 .pf-row-action {
-  width: 28px;
-  height: 28px;
+  color: var(--pf-ink-3);
 }
-.pf-row-action svg {
-  width: 15px;
-  height: 15px;
+@media (hover: hover) and (pointer: fine) {
+  .pf-file-row:not(.is-selected):hover,
+  .pf-motion-row:not(.is-selected):hover {
+    background: var(--pf-hover);
+  }
+}
+@media (hover: none), (pointer: coarse) {
+  .pf-file-row-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 /* Batch ledger */
@@ -344,17 +367,18 @@
   align-items: baseline;
   gap: 4px 12px;
   color: var(--pf-ink);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
 }
-.pf-batch-status > span:first-child {
+.pf-batch-count {
   font-family: var(--pf-font-mono);
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .pf-batch-status .pf-text-button {
   min-height: 24px;
   margin-left: auto;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 .pf-batch-status .pf-field-error {
   flex-basis: 100%;
@@ -365,7 +389,7 @@
   gap: 6px;
   color: var(--pf-ink-3);
   font-family: var(--pf-font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
   font-variant-numeric: tabular-nums;
 }
 .pf-batch-totals > * {
@@ -377,6 +401,7 @@
 }
 .pf-batch-totals .pf-file-ratio {
   margin-left: auto;
+  font-size: 11.5px;
 }
 .pf-export-button {
   width: 100%;
@@ -388,92 +413,91 @@
   left: 0;
   height: 2px;
   overflow: hidden;
-  background: var(--pf-rule);
+  background: var(--pf-track);
 }
 .pf-batch-progress > span {
   display: block;
   height: 100%;
   background: var(--pf-signal);
-  transition: width 200ms linear;
+  transition: width var(--pf-base) linear;
 }
 .pf-motion-actions {
   display: grid;
   gap: 8px;
 }
-.pf-motion-actions > .pf-text-button {
-  justify-self: start;
-}
 .pf-motion-actions > .pf-button {
   width: 100%;
 }
 
-/* Inspector */
+/* Inspector: a fixed title, a scrolling body and a footer for the selected item's output. */
 .pf-inspector {
   display: flex;
   grid-area: inspector;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
   border-left: 1px solid var(--pf-rule);
-  background: var(--pf-paper);
+  background: var(--pf-sheet);
 }
-/* The details element is the scroller (its content box cannot flex); the title stays pinned. */
-.pf-inspector-disclosure {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.pf-inspector-disclosure > summary {
-  position: sticky;
-  top: 0;
-  z-index: 3;
+.pf-inspector-head {
   display: flex;
+  flex: none;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 0 16px 0 20px;
+  padding: 0 20px;
   border-bottom: 1px solid var(--pf-rule);
-  background: var(--pf-paper);
-  cursor: pointer;
-  user-select: none;
 }
-.pf-disclosure-mark {
-  width: 7px;
-  height: 7px;
-  margin-right: 4px;
-  border-right: 1.5px solid var(--pf-ink-3);
-  border-bottom: 1.5px solid var(--pf-ink-3);
-  transform: translateY(-2px) rotate(45deg);
-  transition: transform 140ms;
+.pf-inspector-head h2 {
+  color: var(--pf-ink);
+  font-size: 13px;
+  font-weight: 600;
 }
-.pf-inspector-disclosure[open] > summary .pf-disclosure-mark {
-  transform: translateY(2px) rotate(-135deg);
-}
-:where(html[data-pf-input='keyboard']) .pf-inspector-disclosure > summary:focus {
-  outline-offset: -2px;
-}
+/* Body and footer reserve the same gutter, so the rail and download share both edges. */
 .pf-inspector-body {
   display: grid;
+  flex: 1 1 auto;
   align-content: start;
-  gap: 20px;
-  padding: 20px 20px 24px;
+  gap: 26px;
+  min-height: 0;
+  padding: 20px 20px 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.pf-inspector-footer {
+  display: grid;
+  flex: none;
+  gap: 12px;
+  /* The same bottom inset as the batch ledger: both downloads end on one line. */
+  padding: 16px 20px;
+  overflow: hidden;
+  scrollbar-gutter: stable;
+  border-top: 1px solid var(--pf-rule);
+  background: var(--pf-sheet);
+}
+.pf-inspector-section {
+  display: grid;
+  gap: 10px;
+}
+.pf-section-title {
+  color: var(--pf-ink);
+  font-size: 13px;
+  font-weight: 600;
 }
 .pf-settings-fields {
   display: grid;
-  gap: 20px;
+  gap: 22px;
   min-width: 0;
+}
+.pf-format-note {
+  min-height: 1.55em;
 }
 .pf-settings-section {
   display: grid;
   gap: 14px;
-  padding-top: 18px;
+  padding-top: 20px;
   border-top: 1px solid var(--pf-rule);
-}
-.pf-settings-section h3 {
-  color: var(--pf-ink);
-  font-size: 13px;
-  font-weight: 600;
 }
 .pf-resize-controls {
   display: grid;
@@ -481,112 +505,171 @@
 }
 .pf-dimensions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+}
+.pf-dimensions-times {
+  display: grid;
+  place-items: center;
+  height: var(--pf-control);
+  color: var(--pf-ink-4);
+  font-size: 12px;
+}
+.pf-settings-fields > .pf-settings-extra > :not(summary) + :not(summary) {
+  margin-top: 14px;
 }
 .pf-resize-mode-setting {
   display: grid;
   gap: 8px;
-  margin-bottom: 8px;
 }
 .pf-resize-mode-setting > legend {
   margin-bottom: 8px;
-  color: var(--pf-ink-2);
-  font-size: 12px;
-  font-weight: 500;
-}
-.pf-settings-fields > .pf-settings-extra {
-  margin-top: 0;
+  padding: 0;
 }
 .pf-scope-note {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 4px 12px;
-  padding: 8px 10px;
-  border-left: 2px solid var(--pf-signal);
-  background: var(--pf-paper-sunk);
+  gap: 2px 12px;
+  padding: 8px 12px 8px 14px;
+  overflow: hidden;
+  border-radius: var(--pf-radius);
+  background: var(--pf-sunk);
   color: var(--pf-ink-2);
   font-size: 12px;
 }
+.pf-scope-note::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--pf-signal);
+}
 .pf-scope-note .pf-text-button {
-  min-height: 24px;
+  min-height: 28px;
   font-size: 12px;
 }
-.pf-scope-switch + .pf-field-hint {
-  margin-top: -10px;
-}
 
-/* Presets: a 2×2 sheet of labelled recipes. */
+/* Presets: a ruled list of recipes. A filled mark and a raised row show the current one. */
 .pf-presets {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 .pf-presets-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 24px;
 }
 .pf-presets-heading .pf-text-button {
   min-height: 24px;
   color: var(--pf-ink-2);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 .pf-preset-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  overflow: hidden;
+  border: 1px solid var(--pf-rule-strong);
+  border-radius: var(--pf-radius);
+  container-type: inline-size;
 }
 .pf-preset {
   display: grid;
-  align-content: center;
-  gap: 1px;
+  grid-template-columns: 8px minmax(0, 1fr);
+  align-items: center;
+  gap: 1px 10px;
   min-width: 0;
-  min-height: 46px;
-  padding: 6px 10px;
-  border: 1px solid var(--pf-rule-strong);
-  border-radius: var(--pf-radius);
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 0;
+  border-top: 1px solid var(--pf-rule);
   background: transparent;
   color: var(--pf-ink);
   text-align: left;
+  transition: background-color var(--pf-fast) var(--pf-ease);
+}
+.pf-preset:first-child {
+  border-top: 0;
+}
+.pf-preset::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--pf-ink-4);
   transition:
-    background-color 120ms,
-    border-color 120ms;
+    background-color var(--pf-fast) var(--pf-ease),
+    box-shadow var(--pf-fast) var(--pf-ease);
 }
 .pf-preset > strong {
-  font-size: 12px;
-  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .pf-preset > span {
+  grid-column: 2;
+  min-width: 0;
+  overflow: hidden;
   color: var(--pf-ink-3);
   font-family: var(--pf-font-mono);
-  font-size: 10px;
+  font-size: 10.5px;
   line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .pf-preset[aria-current='true'] {
-  border-color: var(--pf-ink);
-  box-shadow: inset 2px 0 var(--pf-signal);
+  background: var(--pf-raised);
+}
+.pf-preset[aria-current='true']::before {
+  background: var(--pf-signal);
+  box-shadow: none;
+}
+.pf-preset[aria-current='true'] > strong {
+  font-weight: 600;
+}
+.pf-preset[aria-current='true'] > span {
+  color: var(--pf-ink-2);
 }
 .pf-preset:active {
-  background: var(--pf-paper-press);
+  background: var(--pf-press);
+}
+:where(html[data-pf-input='keyboard']) .pf-preset:focus {
+  outline-offset: -2px;
+}
+/* A full-width list (phones) has room for name and recipe on one line. */
+@container (min-width: 320px) {
+  .pf-preset {
+    grid-template-columns: 8px minmax(0, auto) minmax(0, 1fr);
+  }
+  .pf-preset > span {
+    grid-column: 3;
+    text-align: right;
+  }
 }
 @media (hover: hover) and (pointer: fine) {
-  .pf-preset:hover {
-    border-color: var(--pf-ink-3);
-    background: var(--pf-paper-sunk);
+  .pf-preset:not([aria-current='true']):hover {
+    background: var(--pf-hover);
+  }
+  .pf-preset:not([aria-current='true']):hover::before {
+    box-shadow: inset 0 0 0 1.5px var(--pf-ink-3);
+  }
+}
+@media (pointer: coarse), (max-width: 767px) {
+  .pf-preset {
+    min-height: 44px;
   }
 }
 
 /* Inspector footer: source → result ledger for the selected item. */
-.pf-inspector-footer {
-  display: grid;
-  flex: none;
-  gap: 12px;
-  padding: 16px 20px 20px;
-  border-top: 1px solid var(--pf-rule);
-}
 .pf-result-ledger {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -624,9 +707,6 @@
   align-items: center;
   gap: 12px;
 }
-.pf-result-delta > .pf-file-delta {
-  margin: 0;
-}
 .pf-result-saving {
   color: var(--pf-signal-ink);
   font-family: var(--pf-font-mono);
@@ -646,72 +726,102 @@
   width: 100%;
 }
 
-/* Android output files: one shared column keeps the download buttons equal. */
+/* Motion outputs: one row per produced file, sizes outside the buttons. */
 .pf-output-files {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 20px 12px;
+  gap: 10px;
 }
 .pf-output-file {
   display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
   align-items: center;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--pf-rule);
+  gap: 12px;
 }
-/* The following section's top rule closes the list; avoid a doubled rule. */
-.pf-output-file:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
+.pf-output-kind {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--pf-radius);
+  background: var(--pf-sunk);
+  color: var(--pf-ink-4);
+  box-shadow: inset 0 0 0 1px var(--pf-rule);
 }
-.pf-output-file h3 {
+.pf-output-kind svg {
+  width: 15px;
+  height: 15px;
+}
+.pf-output-file.is-ready .pf-output-kind {
+  color: var(--pf-ink);
+}
+.pf-output-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.pf-output-name {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
   color: var(--pf-ink);
   font-size: 13px;
   font-weight: 500;
 }
-.pf-output-file p {
-  margin-top: 2px;
+.pf-output-name .pf-mono {
+  color: var(--pf-ink-3);
+  font-size: 10.5px;
+}
+.pf-output-size {
+  overflow: hidden;
   color: var(--pf-ink-3);
   font-family: var(--pf-font-mono);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.pf-output-file .pf-button {
-  min-height: 30px;
-  padding: 0 10px;
-  font-size: 12px;
+/* Words, not a figure: set in the text face like every other pending state. */
+.pf-output-size.is-pending {
+  color: var(--pf-ink-4);
+  font-family: var(--pf-font-sans);
+  font-size: 11.5px;
 }
-.pf-settings-section > .pf-field-hint {
-  margin-top: -6px;
+.pf-locked-note {
+  padding-top: 14px;
+  border-top: 1px solid var(--pf-rule);
+}
+.pf-settings-extra .pf-motion-note + .pf-motion-note {
+  margin-top: 10px;
 }
 
-/* Empty stage: a registration-marked drop sheet. */
+/* Empty stage: one large target framed by crop marks. */
 .pf-drop-zone {
   position: relative;
   display: flex;
   flex: 1;
   min-height: 0;
-  padding: 24px;
+  padding: 20px;
 }
 .pf-drop-surface {
-  --pf-mark: var(--pf-ink-3);
+  --pf-mark: var(--pf-ink-4);
+  --pf-mark-length: 22px;
   position: relative;
   display: grid;
   flex: 1;
-  align-content: center;
+  grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
-  padding: 48px clamp(28px, 7%, 96px);
-  border-radius: var(--pf-radius);
+  padding: clamp(28px, 6vh, 64px) clamp(28px, 7%, 88px) 24px;
+  border-radius: var(--pf-radius-lg);
   cursor: pointer;
-  transition: background-color 150ms;
+  transition: background-color var(--pf-base) var(--pf-ease);
 }
 .pf-drop-surface::before,
-.pf-plate::before {
+.pf-plate::before,
+.pf-demo-image::after {
   content: '';
   position: absolute;
   inset: 0;
-  --pf-mark-length: 18px;
   background:
     linear-gradient(var(--pf-mark) 0 0) top left / var(--pf-mark-length) 1px no-repeat,
     linear-gradient(var(--pf-mark) 0 0) top left / 1px var(--pf-mark-length) no-repeat,
@@ -722,62 +832,89 @@
     linear-gradient(var(--pf-mark) 0 0) bottom right / var(--pf-mark-length) 1px no-repeat,
     linear-gradient(var(--pf-mark) 0 0) bottom right / 1px var(--pf-mark-length) no-repeat;
   pointer-events: none;
-  transition: inset 160ms;
+  transition: inset var(--pf-base) var(--pf-ease);
 }
 .pf-drop-content {
   position: relative;
   display: grid;
+  align-self: center;
   justify-items: start;
-  gap: 20px;
-  max-width: 460px;
+  gap: 18px;
+  max-width: 520px;
 }
 .pf-drop-content .pf-eyebrow {
-  margin-bottom: -8px;
+  display: flex;
+  align-items: baseline;
 }
 .pf-drop-main-text {
   color: var(--pf-ink);
-  font-size: clamp(24px, 2.6vw, 34px);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-size: clamp(30px, 3.1vw, 44px);
+  font-weight: 600;
+  letter-spacing: var(--pf-display-tracking);
+  line-height: 1.05;
+  text-wrap: balance;
 }
 .pf-drop-secondary-text {
-  margin-top: 10px;
+  max-width: 34em;
+  margin-top: -8px;
   color: var(--pf-ink-2);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
+  text-wrap: pretty;
+}
+.pf-drop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: 8px;
 }
 .pf-drop-cta {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding: 0 16px;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 18px 0 14px;
   border-radius: var(--pf-radius);
   background: var(--pf-signal);
   color: var(--pf-on-signal);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
-  transition: background-color 120ms;
+  box-shadow:
+    var(--pf-signal-bevel),
+    0 1px 2px rgb(122 82 0 / 22%);
+  transition: background-color var(--pf-fast) var(--pf-ease);
 }
-.pf-drop-format-hint {
+.pf-drop-cta svg {
+  width: 16px;
+  height: 16px;
+}
+.pf-drop-privacy {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--pf-ink-3);
-  font-family: var(--pf-font-mono);
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: 12px;
+}
+.pf-drop-privacy svg {
+  width: 13px;
+  height: 13px;
 }
 .pf-drop-zone.is-dragging .pf-drop-surface {
   --pf-mark: var(--pf-signal-ink);
-  background: color-mix(in srgb, var(--pf-signal-wash) 45%, transparent);
+  background: var(--pf-signal-wash);
 }
 .pf-drop-zone.is-dragging .pf-drop-surface::before {
-  inset: 8px;
+  inset: 10px;
 }
 :where(html[data-pf-input='keyboard']) .pf-drop-surface:focus {
   outline-offset: -2px;
 }
 @media (hover: hover) and (pointer: fine) {
   .pf-drop-surface:hover {
-    --pf-mark: var(--pf-ink);
+    --pf-mark: var(--pf-ink-2);
+    background: var(--pf-hover);
   }
   .pf-drop-surface:hover .pf-drop-cta {
     background: var(--pf-signal-hover);
@@ -796,15 +933,17 @@
   bottom: 40px;
   left: 50%;
   z-index: 5;
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: var(--pf-radius);
   background: var(--pf-ink);
-  color: var(--pf-paper);
-  font-size: 12px;
+  color: var(--pf-sheet);
+  font-size: 12.5px;
+  box-shadow: var(--pf-shadow-pop);
   transform: translateX(-50%);
+  animation: pf-rise var(--pf-base) var(--pf-ease);
 }
 
-/* Tablet: stage or queue share the main column; the inspector stays. */
+/* Tablet: queue or stage share the main column; the inspector stays. */
 @media (max-width: 1100px) and (min-width: 768px) {
   :root {
     --pf-inspector: 288px;
@@ -831,7 +970,7 @@
   .pf-status-bar {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    padding: 12px 16px;
+    padding: 16px;
   }
   .pf-status-bar .pf-batch-totals {
     grid-row: 2;
@@ -845,10 +984,25 @@
   .pf-motion-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
   .pf-motion-actions > .pf-button {
     width: auto;
+  }
+  /* The narrow inspector keeps each file's size whole: the row names the file, the
+     button keeps its full name for assistive technology and shows only its icon. */
+  .pf-output-download {
+    width: 32px;
+    min-height: 32px;
+    padding: 0;
+  }
+  .pf-output-download-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
@@ -879,8 +1033,11 @@
   .pf-workbench {
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
+    border-radius: 0;
+    box-shadow: none;
   }
   .pf-file-list-panel {
     flex: none;
@@ -907,19 +1064,20 @@
     border-top: 1px solid var(--pf-rule);
     border-left: 0;
   }
-  .pf-inspector,
-  .pf-inspector-disclosure {
+  .pf-inspector-body {
     flex: none;
     overflow: visible;
+    padding: 18px 16px 28px;
   }
-  .pf-inspector-disclosure > summary {
-    position: static;
-  }
-  .pf-inspector-body {
-    padding: 18px 16px 24px;
-  }
+  /* In the preview the selected item's result sits directly under the stage. */
   .pf-inspector-footer {
+    order: -1;
     padding: 16px;
+    border-top: 0;
+    border-bottom: 1px solid var(--pf-rule);
+  }
+  .pf-inspector-head {
+    padding: 0 16px;
   }
   .pf-batch-slot {
     position: sticky;
@@ -928,6 +1086,7 @@
     flex: none;
     margin-top: auto;
     border-right: 0;
+    box-shadow: 0 -8px 24px -18px rgb(0 0 0 / 40%);
   }
   .pf-status-bar {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -947,32 +1106,47 @@
   .pf-motion-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
   .pf-motion-actions > .pf-button {
     width: auto;
   }
+  /* Two actions do not fit beside the count: give them their own row. */
+  .pf-status-bar > .pf-motion-actions:has(> .pf-button + .pf-button) {
+    grid-row: auto;
+    grid-column: 1 / -1;
+  }
+  .pf-status-bar > .pf-motion-actions:has(> .pf-button + .pf-button) > .pf-button {
+    flex: 1;
+  }
+  .pf-file-row,
+  .pf-motion-row {
+    margin: 0 8px 2px;
+  }
   .pf-file-select,
   .pf-motion-row {
-    min-height: 76px;
-    padding: 14px 16px;
+    min-height: 72px;
+    padding: 12px;
   }
-  .pf-file-name {
+  .pf-file-name-line {
     padding-right: 92px;
   }
-  .pf-row-action {
-    width: 44px;
-    height: 44px;
-  }
   .pf-file-row-actions {
-    margin: 0 2px 0 0;
+    top: 2px;
+    right: 2px;
   }
   .pf-drop-zone {
     flex: none;
-    min-height: 380px;
+    min-height: 420px;
     padding: 12px;
   }
   .pf-drop-surface {
-    padding: 40px 24px;
+    padding: 40px 24px 20px;
+  }
+  .pf-drop-main-text {
+    font-size: 30px;
+  }
+  .pf-drop-secondary-text {
+    font-size: 14px;
   }
 }

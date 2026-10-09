@@ -269,6 +269,12 @@
     "formatHint": "JPEG · PNG / APNG · WebP · AVIF · GIF · BMP",
     "qualityHint": "품질을 낮추면 용량이 줄어듭니다. 다운로드 전에 디테일을 비교하세요.",
     "losslessHint": "PNG는 무손실 압축으로 품질 설정이 필요 없습니다.",
+    "formatNotes": {
+      "mozjpeg": "사진용. 투명도를 지원하지 않으며 호환성이 가장 넓습니다.",
+      "webp": "투명도와 애니메이션을 유지합니다.",
+      "oxipng": "무손실 압축. 투명도를 유지합니다.",
+      "avif": "투명도를 유지합니다. 인코딩이 가장 느립니다."
+    },
     "smaller": "{{percent}}% 작아짐",
     "larger": "{{percent}}% 커짐",
     "batchActions": "일괄 작업"
@@ -284,7 +290,7 @@
     "sampleAlt": "옅은 푸른 하늘 아래 고운 모래 무늬가 있는 황금빛 사구.",
     "sampleCompare": "JPEG와 WebP 예제 비교",
     "samplePosition": "원본 JPEG {{value}}% 표시",
-    "sampleNote": "예제 · 드래그하여 비교",
+    "sampleNote": "미리 인코딩된 예제 · 드래그하여 비교",
     "trySample": "예제 사용",
     "sampleFailed": "예제를 불러오지 못했습니다. 이미지를 추가하세요."
   },
